@@ -10,6 +10,7 @@ import BrainDumpSpace from './components/views/BrainDumpSpace';
 import Reports from './components/views/Reports';
 import QuickCaptureButton from './components/QuickCaptureButton';
 import Payroll from './components/views/Payroll';
+import Creators from './components/views/Creators';
 
 function App() {
   const [dbInitialized, setDbInitialized] = useState(false);
@@ -52,6 +53,7 @@ function App() {
         {currentView === 'brain-dump' && <BrainDumpSpace />}
         {currentView === 'reports' && <Reports />}
         {currentView === 'payroll' && <Payroll />}
+        {currentView === 'creators' && <Creators />}
       </main>
       <QuickCaptureButton />
     </div>

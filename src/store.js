@@ -104,8 +104,8 @@ export const useStore = create((set, get) => ({
   },
 
   // Creator operations
-  addCreator: (agencyId, stageName, dailyGoal = 0, weeklyGoal = 0, monthlyGoal = 0, notes = '', commissionRate = 0) => {
-    const id = db.createCreator(agencyId, stageName, dailyGoal, weeklyGoal, monthlyGoal, notes, commissionRate);
+  addCreator: (agencyId, stageName, dailyGoal = 0, weeklyGoal = 0, monthlyGoal = 0, notes = '', commissionRate = 0, driveUrl = '') => {
+    const id = db.createCreator(agencyId, stageName, dailyGoal, weeklyGoal, monthlyGoal, notes, commissionRate, driveUrl);
     const creator = {
       id,
       agency_id: agencyId,
@@ -116,6 +116,7 @@ export const useStore = create((set, get) => ({
       is_active: 1,
       notes,
       commission_rate: commissionRate,
+      drive_url: driveUrl,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -124,13 +125,13 @@ export const useStore = create((set, get) => ({
     return id;
   },
 
-  updateCreatorData: (id, stageName, dailyGoal, weeklyGoal, monthlyGoal, notes, isActive, commissionRate) => {
-    db.updateCreator(id, stageName, dailyGoal, weeklyGoal, monthlyGoal, notes, isActive, commissionRate);
+  updateCreatorData: (id, stageName, dailyGoal, weeklyGoal, monthlyGoal, notes, isActive, commissionRate, driveUrl) => {
+    db.updateCreator(id, stageName, dailyGoal, weeklyGoal, monthlyGoal, notes, isActive, commissionRate, driveUrl);
     const state = get();
     set({
       creators: state.creators.map(c =>
         c.id === id
-          ? { ...c, stage_name: stageName, daily_goal: dailyGoal, weekly_goal: weeklyGoal, monthly_goal: monthlyGoal, notes, is_active: isActive ? 1 : 0, commission_rate: commissionRate !== undefined ? commissionRate : (c.commission_rate || 0), updated_at: new Date().toISOString() }
+          ? { ...c, stage_name: stageName, daily_goal: dailyGoal, weekly_goal: weeklyGoal, monthly_goal: monthlyGoal, notes, is_active: isActive ? 1 : 0, commission_rate: commissionRate !== undefined ? commissionRate : (c.commission_rate || 0), drive_url: driveUrl !== undefined ? driveUrl : (c.drive_url || ''), updated_at: new Date().toISOString() }
           : c
       )
     });

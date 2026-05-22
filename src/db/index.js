@@ -52,6 +52,12 @@ export async function initDB() {
     if (!db._nextIds.team_schedule) { db._nextIds.team_schedule = 1; teamDirty = true; }
     if (!db._nextIds.team_day_note) { db._nextIds.team_day_note = 1; teamDirty = true; }
     if (teamDirty) saveDB();
+    // Creator drive_url migration
+    let driveDirty = false;
+    db.creators.forEach(c => {
+      if (c.drive_url === undefined) { c.drive_url = ''; driveDirty = true; }
+    });
+    if (driveDirty) saveDB();
   } else {
     db = {
       agencies: [],
@@ -155,7 +161,7 @@ export function getCreator(id) {
   return db.creators.find(c => c.id === id);
 }
 
-export function createCreator(agencyId, stageName, dailyGoal = 0, weeklyGoal = 0, monthlyGoal = 0, notes = '', commissionRate = 0) {
+export function createCreator(agencyId, stageName, dailyGoal = 0, weeklyGoal = 0, monthlyGoal = 0, notes = '', commissionRate = 0, driveUrl = '') {
   const id = getNextId('creators');
   const creator = {
     id,
@@ -167,6 +173,7 @@ export function createCreator(agencyId, stageName, dailyGoal = 0, weeklyGoal = 0
     is_active: 1,
     notes,
     commission_rate: commissionRate,
+    drive_url: driveUrl,
     created_at: now(),
     updated_at: now(),
   };
@@ -175,7 +182,7 @@ export function createCreator(agencyId, stageName, dailyGoal = 0, weeklyGoal = 0
   return id;
 }
 
-export function updateCreator(id, stageName, dailyGoal, weeklyGoal, monthlyGoal, notes, isActive, commissionRate) {
+export function updateCreator(id, stageName, dailyGoal, weeklyGoal, monthlyGoal, notes, isActive, commissionRate, driveUrl) {
   const creator = db.creators.find(c => c.id === id);
   if (creator) {
     creator.stage_name = stageName;
@@ -185,6 +192,7 @@ export function updateCreator(id, stageName, dailyGoal, weeklyGoal, monthlyGoal,
     creator.notes = notes;
     creator.is_active = isActive ? 1 : 0;
     if (commissionRate !== undefined) creator.commission_rate = commissionRate;
+    if (driveUrl !== undefined) creator.drive_url = driveUrl;
     creator.updated_at = now();
     saveDB();
   }
