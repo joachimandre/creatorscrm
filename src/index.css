@@ -1,16 +1,16 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 * {
   box-sizing: border-box;
 }
 
 html {
-  background-color: #0f172a;
-  color: #f1f5f9;
+  background: linear-gradient(135deg, #0a0e27 0%, #141829 100%);
+  color: #ffffff;
 }
 
 body {
@@ -18,6 +18,8 @@ body {
   font-family: 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background: linear-gradient(135deg, #0a0e27 0%, #141829 100%);
+  min-height: 100dvh;
 }
 
 ::-webkit-scrollbar {
@@ -41,10 +43,40 @@ body {
 /* Form elements */
 input, textarea, select {
   font-family: 'Inter', system-ui, sans-serif;
+  background-color: #1a1f3a;
+  color: #ffffff;
+  border-color: #00d9ff;
+}
+
+input::placeholder, textarea::placeholder {
+  color: #6b7494;
 }
 
 input[type="number"] {
   font-family: 'JetBrains Mono', monospace;
+}
+
+select {
+  background-color: #1a1f3a !important;
+  color: #ffffff !important;
+  border: 1px solid #00d9ff !important;
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+
+select option {
+  background-color: #141829;
+  color: #ffffff;
+}
+
+input[type="date"] {
+  background-color: #1a1f3a !important;
+  color: #ffffff !important;
+  border: 1px solid #00d9ff !important;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
 }
 
 /* Focus ring for accessibility */

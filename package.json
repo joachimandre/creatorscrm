@@ -15,7 +15,7 @@
     "lucide-react": "^0.294.0",
     "clsx": "^2.0.0",
     "date-fns": "^2.30.0",
-    "sql.js": "^1.8.0"
+    "recharts": "^2.10.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.1.0",

@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HOTTTR — Creator Report Builder</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root {
+  --pink: #ff006e;
+  --pink-glow: rgba(255,0,110,0.2);
+  --pink-light: rgba(255,0,110,0.08);
+  --cyan: #00d9ff;
+  --green: #00ff88;
+  --orange: #ff6b35;
+  --red: #ff4040;
+  --border: rgba(255,255,255,0.08);
+  --border-accent: rgba(255,0,110,0.3);
+  --card: rgba(255,255,255,0.035);
+  --card-hover: rgba(255,255,255,0.065);
+  --bg-0: #0a0c1e;
+  --bg-1: #0e1020;
+  --bg-2: #131628;
+  --bg-sidebar: #0c0e20;
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-tertiary: #64748b;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, var(--bg-0) 0%, #0d0f22 50%, #10122a 100%);
+  color: var(--text-primary);
+  min-height: 100vh;
+}
+
+/* ── Header ─────────────────────────────────────────────── */
+.header {
+  background: rgba(12,14,32,0.95);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 13px 24px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 100;
+}
+.header-brand {
+  font-size: 18px; font-weight: 800; letter-spacing: .02em;
+  background: linear-gradient(90deg, var(--pink), #ff6b9d);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.header-sub { font-size: 10px; color: var(--text-tertiary); margin-top: 2px; }
+.header-actions { display: flex; gap: 8px; }
+
+/* ── Buttons ─────────────────────────────────────────────── */
+.btn {
+  padding: 8px 18px; border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 600; cursor: pointer; border: none;
+  transition: all .15s; font-family: inherit; white-space: nowrap;
+}
+.btn-ghost {
+  background: transparent;
+  border: 1.5px solid rgba(255,255,255,0.12);
+  color: var(--text-secondary);
+}
+.btn-ghost:hover { border-color: rgba(255,255,255,0.25); color: var(--text-primary); }
+.btn-pink {
+  background: var(--pink); color: #fff;
+  box-shadow: 0 0 20px rgba(255,0,110,0.3);
+}
+.btn-pink:hover { background: #e0005f; box-shadow: 0 0 28px rgba(255,0,110,0.45); }
+.btn-dark {
+  background: rgba(255,255,255,0.06); color: var(--text-secondary);
+  border: 1.5px solid var(--border);
+}
+.btn-dark:hover { background: rgba(255,255,255,0.1); color: var(--text-primary); }
+.btn-green { background: #00a060; color: #fff; }
+.btn-green:hover { background: #008f55; }
+.btn-sm { padding: 6px 14px; font-size: 12px; }
+
+/* ── Shell ───────────────────────────────────────────────── */
+.shell { display: flex; min-height: calc(100vh - 53px); }
+
+.sidebar {
+  width: 215px; flex-shrink: 0;
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border);
+  padding: 16px 0;
+  position: sticky; top: 53px;
+  height: calc(100vh - 53px); overflow-y: auto;
+}
+
+.main { flex: 1; padding: 28px; max-width: 900px; }
+
+/* ── Sidebar nav ─────────────────────────────────────────── */
+.nav-section-label {
+  padding: 0 16px 6px;
+  font-size: 10px; font-weight: 700; color: var(--text-tertiary);
+  text-transform: uppercase; letter-spacing: .1em;
+  margin-top: 18px; display: block;
+}
+.nav-section-label:first-child { margin-top: 0; }
+
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 18px; font-size: 13px; color: var(--text-secondary);
+  cursor: pointer; border-left: 3px solid transparent;
+  transition: all .15s; user-select: none;
+}
+.nav-item:hover { background: var(--pink-light); color: var(--pink); }
+.nav-item.active {
+  background: var(--pink-light); color: var(--pink);
+  border-left-color: var(--pink); font-weight: 600;
+}
+.nav-icon { font-size: 14px; width: 20px; text-align: center; }
+.nav-divider { height: 1px; background: var(--border); margin: 10px 16px; }
+
+/* ── Creator list ────────────────────────────────────────── */
+.creator-list { padding: 0 12px; display: flex; flex-direction: column; gap: 5px; }
+.creator-chip {
+  padding: 7px 10px; border-radius: var(--radius-sm);
+  font-size: 12px; cursor: pointer;
+  border: 1.5px solid var(--border);
+  background: transparent; color: var(--text-secondary);
+  text-align: left; font-family: inherit;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 100%; transition: all .12s;
+}
+.creator-chip.active {
+  border-color: var(--pink); color: var(--pink);
+  background: var(--pink-light); font-weight: 600;
+}
+.creator-chip:hover:not(.active) {
+  border-color: rgba(255,255,255,0.15);
+  background: var(--card); color: var(--text-primary);
+}
+.creator-add {
+  padding: 7px 10px; border-radius: var(--radius-sm);
+  font-size: 12px; cursor: pointer;
+  border: 1.5px dashed var(--border);
+  background: transparent; color: var(--text-tertiary);
+  font-family: inherit; text-align: left; width: 100%;
+  margin-top: 2px; transition: all .12s;
+}
+.creator-add:hover { border-color: var(--pink); color: var(--pink); background: var(--pink-light); }
+
+.crm-import-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 10px; margin: 6px 12px 0;
+  border-radius: var(--radius-sm); font-size: 11px; font-weight: 600;
+  cursor: pointer;
+  border: 1.5px solid rgba(0,217,255,0.2);
+  background: rgba(0,217,255,0.05); color: #00d9ff;
+  font-family: inherit; width: calc(100% - 24px);
+  transition: all .15s;
+}
+.crm-import-btn:hover {
+  border-color: rgba(0,217,255,0.45);
+  background: rgba(0,217,255,0.1);
+}
+
+/* ── Panels ─────────────────────────────────────────────── */
+.panel { display: none; }
+.panel.active { display: block; }
+.panel-title { font-size: 20px; font-weight: 700; margin-bottom: 4px; color: var(--text-primary); }
+.panel-desc { font-size: 13px; color: var(--text-secondary); margin-bottom: 22px; line-height: 1.6; }
+
+/* ── Cards ──────────────────────────────────────────────── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px; margin-bottom: 14px;
+  backdrop-filter: blur(10px);
+  transition: border-color .15s;
+}
+.card:hover { border-color: rgba(255,255,255,0.12); }
+.card-title {
+  font-size: 10.5px; font-weight: 700; color: var(--text-tertiary);
+  text-transform: uppercase; letter-spacing: .08em;
+  margin-bottom: 16px; padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ── Grid ───────────────────────────────────────────────── */
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+.full { grid-column: 1 / -1; }
+
+/* ── Fields ─────────────────────────────────────────────── */
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field label {
+  font-size: 10.5px; font-weight: 600; color: var(--text-tertiary);
+  text-transform: uppercase; letter-spacing: .06em;
+}
+.field input,
+.field select,
+.field textarea {
+  padding: 9px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 13.5px; font-family: inherit;
+  color: var(--text-primary);
+  background: rgba(255,255,255,0.04);
+  outline: none; transition: border-color .15s, background .15s;
+}
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: var(--pink);
+  background: rgba(255,0,110,0.04);
+}
+.field textarea { resize: vertical; min-height: 90px; line-height: 1.6; }
+.field-hint { font-size: 11px; color: var(--text-tertiary); margin-top: 3px; }
+.field input::placeholder,
+.field textarea::placeholder { color: var(--text-tertiary); opacity: 0.55; }
+.field select option { background: #0e1020; color: var(--text-primary); }
+
+.pct-pair { display: grid; grid-template-columns: 1fr 88px; gap: 6px; }
+
+/* ── Dynamic items ──────────────────────────────────────── */
+.dyn-item {
+  background: rgba(255,255,255,0.025);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px; margin-bottom: 10px;
+  transition: border-color .15s;
+}
+.dyn-item:hover { border-color: rgba(255,255,255,0.12); }
+.dyn-item-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.dyn-item-label { font-size: 10.5px; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: .06em; }
+.dyn-del {
+  background: transparent; border: none; cursor: pointer;
+  color: var(--text-tertiary); font-size: 18px; line-height: 1;
+  padding: 0 4px; border-radius: 4px; transition: color .15s;
+}
+.dyn-del:hover { color: var(--red); }
+
+.add-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px;
+  border: 1.5px dashed var(--border);
+  border-radius: var(--radius-sm); cursor: pointer;
+  color: var(--text-tertiary); font-size: 13px;
+  background: transparent; width: 100%; margin-top: 6px;
+  font-family: inherit; transition: all .12s;
+}
+.add-row:hover { border-color: var(--pink); color: var(--pink); background: var(--pink-light); }
+
+/* ── Trends ─────────────────────────────────────────────── */
+.trend-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+.trend-row input { flex: 1; }
+.trend-del {
+  background: transparent; border: none; cursor: pointer;
+  color: var(--text-tertiary); font-size: 18px;
+  padding: 2px 6px; border-radius: 4px; transition: color .15s;
+}
+.trend-del:hover { color: var(--red); }
+
+/* ── Export ─────────────────────────────────────────────── */
+.export-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+.export-card {
+  border: 1.5px solid var(--border); border-radius: var(--radius);
+  padding: 20px; background: var(--card);
+  display: flex; flex-direction: column; transition: border-color .15s;
+}
+.export-card:hover { border-color: rgba(255,255,255,0.15); }
+.export-card.featured {
+  border-color: rgba(255,0,110,0.3);
+  background: rgba(255,0,110,0.05);
+}
+.export-card.featured:hover { border-color: var(--pink); }
+.export-icon { font-size: 26px; margin-bottom: 8px; }
+.export-name { font-size: 14px; font-weight: 700; margin-bottom: 4px; color: var(--text-primary); }
+.export-desc { font-size: 12px; color: var(--text-secondary); margin-bottom: 16px; line-height: 1.55; flex: 1; }
+.export-action { width: 100%; }
+
+/* ── Preview box ─────────────────────────────────────────── */
+.preview-box {
+  background: rgba(0,0,0,0.4); color: #6b7a99;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 18px; font-family: 'Courier New', monospace;
+  font-size: 11.5px; line-height: 1.8;
+  white-space: pre-wrap; max-height: 460px; overflow-y: auto;
+  margin-top: 10px;
+}
+.preview-actions { display: flex; gap: 8px; margin-top: 10px; }
+
+/* ── Profile badge ───────────────────────────────────────── */
+.profile-badge {
+  display: flex; align-items: center; gap: 12px;
+  background: rgba(255,0,110,0.07);
+  border: 1.5px solid rgba(255,0,110,0.18);
+  border-radius: var(--radius); padding: 14px 18px; margin-bottom: 20px;
+}
+.profile-avatar {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--pink), #ff6b9d);
+  color: #fff; display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 14px; flex-shrink: 0;
+  box-shadow: 0 0 16px rgba(255,0,110,0.35);
+}
+.profile-name { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+.profile-meta { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+
+/* ── Toast ───────────────────────────────────────────────── */
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: rgba(14,16,32,0.97); backdrop-filter: blur(20px);
+  color: var(--text-primary); padding: 11px 18px;
+  border-radius: var(--radius-sm); font-size: 13px; font-weight: 500;
+  transform: translateY(70px); opacity: 0; transition: all .25s;
+  z-index: 999;
+  border: 1px solid var(--border); border-left: 3px solid var(--pink);
+  pointer-events: none;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+
+/* ── Screenshot zone ─────────────────────────────────────── */
+.ss-zone {
+  border: 2px dashed var(--border); border-radius: var(--radius);
+  padding: 20px 16px; text-align: center; cursor: pointer;
+  transition: all .15s; background: var(--card);
+  position: relative; overflow: hidden;
+}
+.ss-zone:hover, .ss-zone.drag { border-color: var(--pink); background: var(--pink-light); }
+.ss-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.ss-zone-icon { font-size: 22px; margin-bottom: 5px; }
+.ss-zone-label { font-size: 13px; color: var(--text-secondary); }
+.ss-zone-hint { font-size: 11px; color: var(--text-tertiary); margin-top: 3px; }
+
+.ss-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; margin-top: 12px; }
+.ss-thumb {
+  position: relative; border-radius: var(--radius-sm); overflow: hidden;
+  border: 1.5px solid var(--border); background: rgba(0,0,0,0.3);
+}
+.ss-thumb img { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; }
+.ss-thumb-del {
+  position: absolute; top: 4px; right: 4px;
+  background: rgba(0,0,0,0.7); color: #fff; border: none;
+  border-radius: 50%; width: 22px; height: 22px;
+  font-size: 13px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .12s;
+}
+.ss-thumb-del:hover { background: var(--red); }
+.ss-name {
+  font-size: 10px; color: var(--text-tertiary);
+  padding: 4px 6px; background: rgba(0,0,0,0.3);
+  border-top: 1px solid var(--border);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* ── Scrollbar ───────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-brand">🔥 HOTTTR</div>
+    <div class="header-sub">Creator Report Builder</div>
+  </div>
+  <div class="header-actions">
+    <button class="btn btn-ghost btn-sm" onclick="saveAllData()">💾 Save draft</button>
+    <button class="btn btn-pink btn-sm" onclick="showPanel('export')">Export Report →</button>
+  </div>
+</div>
+
+<div class="shell">
+  <div class="sidebar">
+    <span class="nav-section-label">Creators</span>
+    <div class="creator-list" id="creator-list"></div>
+    <div style="padding:4px 12px 0">
+      <button class="creator-add" onclick="addCreator()">+ New creator</button>
+    </div>
+    <button class="crm-import-btn" onclick="importFromCRM()" title="Pull active creators from your CRM">
+      ⬇ Import from CRM
+    </button>
+
+    <div class="nav-divider"></div>
+    <span class="nav-section-label">Report sections</span>
+
+    <div class="nav-item active" onclick="showPanel('info')" id="nav-info"><span class="nav-icon">👤</span>Creator info</div>
+    <div class="nav-item" onclick="showPanel('earnings')" id="nav-earnings"><span class="nav-icon">💰</span>Earnings</div>
+    <div class="nav-item" onclick="showPanel('subs')" id="nav-subs"><span class="nav-icon">📊</span>Subs stats</div>
+    <div class="nav-item" onclick="showPanel('outreach')" id="nav-outreach"><span class="nav-icon">🌍</span>Outreach</div>
+    <div class="nav-item" onclick="showPanel('reels')" id="nav-reels"><span class="nav-icon">🎬</span>IG Reels</div>
+    <div class="nav-item" onclick="showPanel('mmpv')" id="nav-mmpv"><span class="nav-icon">🎥</span>MMPVs</div>
+    <div class="nav-item" onclick="showPanel('trends')" id="nav-trends"><span class="nav-icon">🔥</span>Trends &amp; Notes</div>
+
+    <div class="nav-divider"></div>
+    <div class="nav-item" onclick="showPanel('export')" id="nav-export"><span class="nav-icon">📤</span>Export report</div>
+  </div>
+
+  <div class="main">
+
+    <!-- INFO -->
+    <div class="panel active" id="panel-info">
+      <div class="panel-title">Creator info</div>
+      <div class="panel-desc">Basic details for this creator and report week.</div>
+      <div id="profile-badge-area"></div>
+      <div class="card">
+        <div class="card-title">Creator details</div>
+        <div class="grid2">
+          <div class="field full"><label>Creator name</label><input id="creator_name" type="text" placeholder="e.g. Emma Storm" oninput="updateBadge()"></div>
+          <div class="field"><label>Week start date</label><input id="week_start" type="date" onchange="updateBadge()"></div>
+          <div class="field"><label>Week end date</label><input id="week_end" type="date" onchange="updateBadge()"></div>
+          <div class="field full"><label>Manager / agency</label><input id="manager_name" type="text" placeholder="e.g. HOTTTR Management"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EARNINGS -->
+    <div class="panel" id="panel-earnings">
+      <div class="panel-title">Earnings summary</div>
+      <div class="panel-desc">Enter this week's earnings. The % change column shows green for up, red for down in the PDF.</div>
+      <div class="card">
+        <div class="card-title">Revenue breakdown — value &amp; % vs last week</div>
+        <div class="grid2">
+          <div class="field"><label>Total earnings ($)</label><div class="pct-pair"><input id="e_total" type="text" placeholder="e.g. 14268.62"><input id="e_total_pct" type="number" step="0.1" placeholder="% chg"></div></div>
+          <div class="field"><label>Subscriptions ($)</label><div class="pct-pair"><input id="e_subs" type="text" placeholder="e.g. 2542.12"><input id="e_subs_pct" type="number" step="0.1" placeholder="% chg"></div></div>
+          <div class="field"><label>Messages ($)</label><div class="pct-pair"><input id="e_msg" type="text" placeholder="e.g. 10017.44"><input id="e_msg_pct" type="number" step="0.1" placeholder="% chg"></div></div>
+          <div class="field"><label>Tips ($)</label><div class="pct-pair"><input id="e_tips" type="text" placeholder="e.g. 1709.06"><input id="e_tips_pct" type="number" step="0.1" placeholder="% chg"></div></div>
+          <div class="field"><label>Posts / PPV ($)</label><div class="pct-pair"><input id="e_ppv" type="text" placeholder="0.00"><input id="e_ppv_pct" type="number" step="0.1" placeholder="% chg"></div></div>
+          <div class="field"><label>Referrals ($)</label><div class="pct-pair"><input id="e_ref" type="text" placeholder="0.00"><input id="e_ref_pct" type="number" step="0.1" placeholder="% chg"></div></div>
+        </div>
+        <div class="field-hint" style="margin-top:12px">Leave % blank if no comparison data available</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Screenshots <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-tertiary)">— optional, included in PDF</span></div>
+        <div class="ss-zone" id="ss-zone-earnings" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleDrop(event,'earnings')">
+          <input type="file" accept="image/*" multiple onchange="handleFiles(this.files,'earnings')">
+          <div class="ss-zone-icon">📸</div>
+          <div class="ss-zone-label">Drop screenshots here or click to upload</div>
+          <div class="ss-zone-hint">Earnings summary, overview charts etc. — PNG, JPG</div>
+        </div>
+        <div class="ss-grid" id="ss-grid-earnings"></div>
+      </div>
+    </div>
+
+    <!-- SUBS -->
+    <div class="panel" id="panel-subs">
+      <div class="panel-title">Subscriber statistics</div>
+      <div class="panel-desc">Sub counts, renewals, cancellations, and rate.</div>
+      <div class="card">
+        <div class="card-title">Sub stats — value &amp; % vs last week</div>
+        <div class="grid2">
+          <div class="field"><label>Sub price ($)</label><input id="s_price" type="text" placeholder="e.g. 3.00"></div>
+          <div class="field"><label>Total subscribers</label><div class="pct-pair"><input id="s_total" type="number" placeholder="0"><input id="s_total_pct" type="number" step="0.1" placeholder="% chg"></div></div>
+          <div class="field"><label>New subscribers</label><div class="pct-pair"><input id="s_new" type="number" placeholder="0"><input id="s_new_pct" type="number" step="0.1" placeholder="% chg"></div></div>
+          <div class="field"><label>Renewals</label><div class="pct-pair"><input id="s_renew" type="number" placeholder="0"><input id="s_renew_pct" type="number" step="0.1" placeholder="% chg"></div></div>
+          <div class="field"><label>Cancellations</label><div class="pct-pair"><input id="s_cancel" type="number" placeholder="0"><input id="s_cancel_pct" type="number" step="0.1" placeholder="% chg"></div></div>
+          <div class="field"><label>Sub earnings ($)</label><div class="pct-pair"><input id="s_earn" type="text" placeholder="0.00"><input id="s_earn_pct" type="number" step="0.1" placeholder="% chg"></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Screenshots <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-tertiary)">— optional, included in PDF</span></div>
+        <div class="ss-zone" id="ss-zone-subs" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleDrop(event,'subs')">
+          <input type="file" accept="image/*" multiple onchange="handleFiles(this.files,'subs')">
+          <div class="ss-zone-icon">📸</div>
+          <div class="ss-zone-label">Drop screenshots here or click to upload</div>
+          <div class="ss-zone-hint">Sub stats graph, subscriber chart etc. — PNG, JPG</div>
+        </div>
+        <div class="ss-grid" id="ss-grid-subs"></div>
+      </div>
+    </div>
+
+    <!-- OUTREACH -->
+    <div class="panel" id="panel-outreach">
+      <div class="panel-title">Outreach ranking</div>
+      <div class="panel-desc">Top countries by reach this week.</div>
+      <div class="card">
+        <div class="card-title">Top countries</div>
+        <div id="country-list"></div>
+        <button class="add-row" onclick="addCountry()">＋ Add country</button>
+      </div>
+    </div>
+
+    <!-- REELS -->
+    <div class="panel" id="panel-reels">
+      <div class="panel-title">IG Reels</div>
+      <div class="panel-desc">Instagram reel activity for the week.</div>
+      <div class="card">
+        <div class="card-title">Reels stats</div>
+        <div class="grid2">
+          <div class="field"><label>IG handle</label><input id="ig_handle" type="text" placeholder="e.g. scottishemmastorm"></div>
+          <div class="field"><label>Reels uploaded</label><input id="ig_reels" type="number" placeholder="0"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Screenshots <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-tertiary)">— optional, included in PDF</span></div>
+        <div class="ss-zone" id="ss-zone-reels" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleDrop(event,'reels')">
+          <input type="file" accept="image/*" multiple onchange="handleFiles(this.files,'reels')">
+          <div class="ss-zone-icon">📸</div>
+          <div class="ss-zone-label">Drop screenshots here or click to upload</div>
+          <div class="ss-zone-hint">Reel grid, individual reel stats etc. — PNG, JPG</div>
+        </div>
+        <div class="ss-grid" id="ss-grid-reels"></div>
+      </div>
+    </div>
+
+    <!-- MMPVs -->
+    <div class="panel" id="panel-mmpv">
+      <div class="panel-title">MMPV performance</div>
+      <div class="panel-desc">How did each mass message PPV perform this week?</div>
+      <div class="card">
+        <div class="card-title">MMPVs</div>
+        <div id="mmpv-list"></div>
+        <button class="add-row" onclick="addMmpv()">＋ Add MMPV</button>
+      </div>
+    </div>
+
+    <!-- TRENDS -->
+    <div class="panel" id="panel-trends">
+      <div class="panel-title">Trends &amp; notes</div>
+      <div class="panel-desc">Trending requests seen in chats, plus manager recommendations.</div>
+      <div class="card">
+        <div class="card-title">Trending chat requests</div>
+        <div id="trend-list"></div>
+        <button class="add-row" onclick="addTrend()">＋ Add trend</button>
+      </div>
+      <div class="card">
+        <div class="card-title">Manager notes</div>
+        <div class="field">
+          <label>Notes / recommendations</label>
+          <textarea id="manager_notes" placeholder="Key observations, action items, content strategy for next week..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- EXPORT -->
+    <div class="panel" id="panel-export">
+      <div class="panel-title">Export report</div>
+      <div class="panel-desc">All exports are instant and work completely offline — no internet, no tokens.</div>
+      <div class="export-grid">
+        <div class="export-card featured">
+          <div class="export-icon">📄</div>
+          <div class="export-name">PDF report</div>
+          <div class="export-desc">Branded HOTTTR PDF with stat cards and screenshots. Download and send directly to your creator.</div>
+          <button class="btn btn-pink export-action" onclick="exportPDF()">Download PDF</button>
+        </div>
+        <div class="export-card">
+          <div class="export-icon">📋</div>
+          <div class="export-name">Plain text</div>
+          <div class="export-desc">Copy formatted report text — paste into WhatsApp, Slack, email, or Notes.</div>
+          <button class="btn btn-dark export-action" onclick="copyText()">Copy to clipboard</button>
+        </div>
+        <div class="export-card">
+          <div class="export-icon">📝</div>
+          <div class="export-name">Google Docs</div>
+          <div class="export-desc">Copies report text then opens a new Google Doc. Just paste (Ctrl+V) and save to Drive.</div>
+          <button class="btn btn-green export-action" onclick="exportGDoc()">Open Google Doc</button>
+        </div>
+        <div class="export-card">
+          <div class="export-icon">💾</div>
+          <div class="export-name">Save draft</div>
+          <div class="export-desc">Saves all creators and data to this browser. Still here next time you open the report builder.</div>
+          <button class="btn btn-dark export-action" onclick="saveAllData()">Save draft</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Plain text preview</div>
+        <div class="preview-box" id="preview-box">Click "Refresh" or navigate to Export to preview your report...</div>
+        <div class="preview-actions">
+          <button class="btn btn-dark btn-sm" onclick="refreshPreview()">🔄 Refresh</button>
+          <button class="btn btn-dark btn-sm" onclick="copyText()">📋 Copy</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────────────────────────────
+let creators = [], activeCreator = 0;
+let mmpvIdx = 0, countryIdx = 0, trendIdx = 0;
+let screenshots = { earnings: [], subs: [], reels: [] };
+
+window.onload = () => {
+  try { const s = localStorage.getItem('hotttr_v2'); if (s) creators = JSON.parse(s); } catch(e) {}
+  if (!creators.length) creators = [{ name: 'Creator', data: {} }];
+  renderCreatorList();
+  loadCreator(0);
+  updateBadge();
+};
+
+// ── CREATOR MANAGEMENT ─────────────────────────────────────────────────────────
+function renderCreatorList() {
+  const el = document.getElementById('creator-list');
+  el.innerHTML = '';
+  creators.forEach((c, i) => {
+    const b = document.createElement('button');
+    b.className = 'creator-chip' + (i === activeCreator ? ' active' : '');
+    b.textContent = c.name || 'Creator';
+    b.title = c.name;
+    b.onclick = () => { saveCurrentCreator(); loadCreator(i); };
+    el.appendChild(b);
+  });
+}
+
+function addCreator() {
+  const name = prompt('Creator name:');
+  if (!name) return;
+  saveCurrentCreator();
+  creators.push({ name, data: {} });
+  activeCreator = creators.length - 1;
+  renderCreatorList();
+  clearForm();
+  document.getElementById('creator_name').value = name;
+  addMmpv(); addCountry(); addTrend();
+  updateBadge();
+}
+
+function saveCurrentCreator() {
+  if (!creators[activeCreator]) return;
+  creators[activeCreator] = { name: gv('creator_name') || creators[activeCreator].name, data: collectData() };
+}
+
+function loadCreator(i) {
+  activeCreator = i;
+  clearForm();
+  const d = creators[i]?.data || {};
+  fillForm(d);
+  document.getElementById('mmpv-list').innerHTML = '';
+  document.getElementById('country-list').innerHTML = '';
+  document.getElementById('trend-list').innerHTML = '';
+  mmpvIdx = 0; countryIdx = 0; trendIdx = 0;
+  (d.mmpvs || []).forEach(m => addMmpv(m));
+  (d.outreach_countries || []).forEach(c => addCountry(c));
+  (d.trending_requests || []).forEach(t => addTrend(t));
+  if (!d.mmpvs?.length) addMmpv();
+  if (!d.outreach_countries?.length) addCountry();
+  if (!d.trending_requests?.length) addTrend();
+  const ss = d.screenshots || {};
+  screenshots = { earnings: ss.earnings || [], subs: ss.subs || [], reels: ss.reels || [] };
+  ['earnings', 'subs', 'reels'].forEach(s => renderScreenshots(s));
+  renderCreatorList();
+  updateBadge();
+}
+
+// ── CRM INTEGRATION ────────────────────────────────────────────────────────────
+function importFromCRM() {
+  try {
+    const raw = localStorage.getItem('crm_db');
+    if (!raw) { toast('⚠ No CRM data found — open the CRM first'); return; }
+    const crm = JSON.parse(raw);
+    const crmCreators = (crm.creators || []).filter(c => c.is_active);
+    if (!crmCreators.length) { toast('⚠ No active creators in CRM'); return; }
+
+    const agencyMap = {};
+    (crm.agencies || []).forEach(a => { agencyMap[a.id] = a.name; });
+
+    const existing = new Set(creators.map(c => (c.name || '').toLowerCase()));
+    // filter out default blank creator
+    const isDefault = creators.length === 1 && !creators[0].data?.creator_name && (creators[0].name === 'Creator' || !creators[0].name);
+
+    const toAdd = crmCreators.filter(c => !existing.has(c.stage_name.toLowerCase()));
+    if (!toAdd.length && !isDefault) { toast('✓ All CRM creators already imported'); return; }
+
+    saveCurrentCreator();
+
+    if (isDefault && toAdd.length) {
+      // Replace the blank default
+      creators = [];
+    }
+
+    toAdd.forEach(c => {
+      const agencyName = c.agency_id ? agencyMap[c.agency_id] : null;
+      creators.push({
+        name: c.stage_name,
+        data: { creator_name: c.stage_name, manager_name: agencyName || '' }
+      });
+    });
+
+    if (!creators.length) creators = [{ name: 'Creator', data: {} }];
+    renderCreatorList();
+    loadCreator(0);
+    saveAllData();
+    toast(`✓ Imported ${toAdd.length} creator${toAdd.length !== 1 ? 's' : ''} from CRM`);
+  } catch(e) {
+    toast('⚠ Import failed: ' + e.message);
+  }
+}
+
+// ── FORM ───────────────────────────────────────────────────────────────────────
+function gv(id) { return (document.getElementById(id)?.value || '').trim(); }
+function gn(id) { return parseFloat((gv(id) || '').replace(/[$,]/g, '')) || 0; }
+function gi(id) { return parseInt((gv(id) || '').replace(/[$,]/g, '')) || 0; }
+function gp(id) { const v = gv(id); return v === '' ? null : parseFloat(v); }
+
+function clearForm() {
+  ['creator_name','week_start','week_end','manager_name',
+   'e_total','e_total_pct','e_subs','e_subs_pct','e_msg','e_msg_pct',
+   'e_tips','e_tips_pct','e_ppv','e_ppv_pct','e_ref','e_ref_pct',
+   's_price','s_total','s_total_pct','s_new','s_new_pct','s_renew','s_renew_pct',
+   's_cancel','s_cancel_pct','s_earn','s_earn_pct',
+   'ig_handle','ig_reels','manager_notes'
+  ].forEach(id => { const e = document.getElementById(id); if (e) e.value = ''; });
+}
+
+function fillForm(d) {
+  const s = (id, val) => { const e = document.getElementById(id); if (e && val != null && val !== '') e.value = val; };
+  s('creator_name', d.creator_name); s('week_start', d.week_start_raw);
+  s('week_end', d.week_end_raw); s('manager_name', d.manager_name);
+  const es = d.earnings_summary || {};
+  s('e_total', es.total_earnings); s('e_total_pct', es.total_earnings_pct);
+  s('e_subs', es.subscriptions); s('e_subs_pct', es.subscriptions_pct);
+  s('e_msg', es.messages); s('e_msg_pct', es.messages_pct);
+  s('e_tips', es.tips); s('e_tips_pct', es.tips_pct);
+  s('e_ppv', es.posts_ppv); s('e_ppv_pct', es.posts_ppv_pct);
+  s('e_ref', es.referrals); s('e_ref_pct', es.referrals_pct);
+  const ss = d.subs_stats || {};
+  s('s_price', ss.sub_price);
+  s('s_total', ss.total_subs); s('s_total_pct', ss.total_subs_pct);
+  s('s_new', ss.new_subs); s('s_new_pct', ss.new_subs_pct);
+  s('s_renew', ss.renewals); s('s_renew_pct', ss.renewals_pct);
+  s('s_cancel', ss.cancellations); s('s_cancel_pct', ss.cancellations_pct);
+  s('s_earn', ss.sub_earnings); s('s_earn_pct', ss.sub_earnings_pct);
+  const ig = d.ig_reels || {};
+  s('ig_handle', ig.ig_handle); s('ig_reels', ig.reels_uploaded);
+  s('manager_notes', d.manager_notes);
+}
+
+function updateBadge() {
+  const name = gv('creator_name') || 'Creator';
+  const start = gv('week_start');
+  const end   = gv('week_end');
+  const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || '?';
+  const fmt = d => d ? new Date(d + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : null;
+  const startStr = fmt(start), endStr = fmt(end);
+  const rangeStr = startStr && endStr ? `${startStr} – ${endStr}` : startStr || endStr || '—';
+  document.getElementById('profile-badge-area').innerHTML = `
+    <div class="profile-badge">
+      <div class="profile-avatar">${initials}</div>
+      <div>
+        <div class="profile-name">${name}</div>
+        <div class="profile-meta">${rangeStr}</div>
+      </div>
+    </div>`;
+  if (creators[activeCreator]) creators[activeCreator].name = name;
+  renderCreatorList();
+}
+
+// ── NAV ────────────────────────────────────────────────────────────────────────
+function showPanel(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  const nav = document.getElementById('nav-' + name);
+  if (nav) nav.classList.add('active');
+  if (name === 'export') refreshPreview();
+}
+
+// ── DYNAMIC LISTS ──────────────────────────────────────────────────────────────
+function addMmpv(data) {
+  mmpvIdx++;
+  const id = 'mmpv_' + mmpvIdx;
+  const d = document.createElement('div');
+  d.className = 'dyn-item'; d.id = id;
+  const perf = data?.performance || '';
+  d.innerHTML = `
+  <div class="dyn-item-head"><span class="dyn-item-label">MMPV ${mmpvIdx}</span><button class="dyn-del" onclick="document.getElementById('${id}').remove()">×</button></div>
+  <div class="grid2">
+    <div class="field full"><label>Title / description</label><input class="m-title" type="text" placeholder="e.g. Bath scene – 15 min" value="${esc(data?.title||'')}"></div>
+    <div class="field"><label>Earnings ($)</label><input class="m-earn" type="number" step="0.01" placeholder="0.00" value="${data?.earnings||''}"></div>
+    <div class="field"><label>Views / unlocks</label><input class="m-views" type="number" placeholder="0" value="${data?.views||''}"></div>
+    <div class="field"><label>Performance</label>
+      <select class="m-perf">
+        <option${perf.includes('Excellent')?' selected':''}>🔥 Excellent</option>
+        <option${!perf||perf.includes('Good')?' selected':''}>✅ Good</option>
+        <option${perf.includes('Average')?' selected':''}>📊 Average</option>
+        <option${perf.includes('Below')?' selected':''}>⚠️ Below average</option>
+        <option${perf.includes('Poor')?' selected':''}>❌ Poor</option>
+      </select>
+    </div>
+    <div class="field full"><label>Notes</label><input class="m-notes" type="text" placeholder="Optional observations..." value="${esc(data?.notes||'')}"></div>
+  </div>`;
+  document.getElementById('mmpv-list').appendChild(d);
+}
+
+function autoTotal(input) {
+  const row = input.closest('.dyn-item');
+  const g = parseInt((row.querySelector('.c-guests')?.value || '').replace(/,/g, '')) || 0;
+  const u = parseInt((row.querySelector('.c-users')?.value || '').replace(/,/g, '')) || 0;
+  const totalEl = row.querySelector('.c-total');
+  if (totalEl && !totalEl._manuallyEdited) totalEl.value = g + u || '';
+}
+
+function addCountry(data) {
+  countryIdx++;
+  const id = 'country_' + countryIdx;
+  const d = document.createElement('div');
+  d.className = 'dyn-item'; d.id = id;
+  d.innerHTML = `
+  <div class="dyn-item-head"><span class="dyn-item-label">Country ${countryIdx}</span><button class="dyn-del" onclick="document.getElementById('${id}').remove()">×</button></div>
+  <div class="grid3">
+    <div class="field full"><label>Country name</label><input class="c-name" type="text" placeholder="United Kingdom" value="${esc(data?.country||'')}"></div>
+    <div class="field"><label>Guests</label><input class="c-guests" type="text" inputmode="numeric" placeholder="0" value="${data?.guests||''}" oninput="autoTotal(this)"></div>
+    <div class="field"><label>Users</label><input class="c-users" type="text" inputmode="numeric" placeholder="0" value="${data?.users||''}" oninput="autoTotal(this)"></div>
+    <div class="field"><label>Total</label><input class="c-total" type="text" inputmode="numeric" placeholder="auto" value="${data?.total||''}"></div>
+  </div>`;
+  document.getElementById('country-list').appendChild(d);
+}
+
+function addTrend(text) {
+  const d = document.createElement('div'); d.className = 'trend-row';
+  d.innerHTML = `<input type="text" placeholder="e.g. Feet content, JOI, outdoor teasing..." value="${esc(text||'')}"><button class="trend-del" onclick="this.parentElement.remove()">×</button>`;
+  document.getElementById('trend-list').appendChild(d);
+}
+
+function esc(s) { return String(s).replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+
+// ── SCREENSHOTS ────────────────────────────────────────────────────────────────
+function handleDrop(e, section) {
+  e.preventDefault();
+  document.getElementById('ss-zone-' + section).classList.remove('drag');
+  handleFiles(e.dataTransfer.files, section);
+}
+
+function handleFiles(files, section) {
+  [...files].forEach(file => {
+    if (!file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      screenshots[section].push({ name: file.name, data: e.target.result });
+      renderScreenshots(section);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderScreenshots(section) {
+  const grid = document.getElementById('ss-grid-' + section);
+  grid.innerHTML = '';
+  screenshots[section].forEach((ss, i) => {
+    const div = document.createElement('div');
+    div.className = 'ss-thumb';
+    div.innerHTML = `<img src="${ss.data}" alt="${esc(ss.name)}">
+      <button class="ss-thumb-del" onclick="removeScreenshot('${section}',${i})" title="Remove">×</button>
+      <div class="ss-name">${esc(ss.name)}</div>`;
+    grid.appendChild(div);
+  });
+}
+
+function removeScreenshot(section, i) {
+  screenshots[section].splice(i, 1);
+  renderScreenshots(section);
+}
+
+// ── COLLECT DATA ───────────────────────────────────────────────────────────────
+function collectData() {
+  const wsr = gv('week_start'), wer = gv('week_end');
+  const fmt = d => d ? new Date(d + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : null;
+  const startStr = fmt(wsr), endStr = fmt(wer);
+  const weekRange = startStr && endStr ? `${startStr} – ${endStr}` : startStr || endStr || '';
+  const countries = [...document.querySelectorAll('#country-list .dyn-item')].map(p => ({
+    country: (p.querySelector('.c-name')?.value || '').trim(),
+    guests: parseInt((p.querySelector('.c-guests')?.value || '').replace(/,/g, '')) || 0,
+    users:  parseInt((p.querySelector('.c-users')?.value || '').replace(/,/g, '')) || 0,
+    total:  parseInt((p.querySelector('.c-total')?.value || '').replace(/,/g, '')) || 0,
+  })).filter(c => c.country);
+  const mmpvs = [...document.querySelectorAll('#mmpv-list .dyn-item')].map(p => ({
+    title:       p.querySelector('.m-title').value.trim(),
+    earnings:    parseFloat(p.querySelector('.m-earn').value) || 0,
+    views:       parseInt(p.querySelector('.m-views').value) || 0,
+    performance: p.querySelector('.m-perf').value,
+    notes:       p.querySelector('.m-notes').value.trim(),
+  })).filter(m => m.title);
+  const trends = [...document.querySelectorAll('.trend-row input')].map(i => i.value.trim()).filter(Boolean);
+  return {
+    creator_name: gv('creator_name') || 'Creator',
+    week_range: weekRange, week_start_raw: wsr, week_end_raw: wer,
+    manager_name: gv('manager_name'),
+    earnings_summary: {
+      total_earnings: gn('e_total'), total_earnings_pct: gp('e_total_pct'),
+      subscriptions:  gn('e_subs'),  subscriptions_pct:  gp('e_subs_pct'),
+      messages:       gn('e_msg'),   messages_pct:       gp('e_msg_pct'),
+      tips:           gn('e_tips'),  tips_pct:           gp('e_tips_pct'),
+      posts_ppv:      gn('e_ppv'),   posts_ppv_pct:      gp('e_ppv_pct'),
+      referrals:      gn('e_ref'),   referrals_pct:      gp('e_ref_pct'),
+    },
+    subs_stats: {
+      sub_price:     gn('s_price'),
+      total_subs:    gi('s_total'), total_subs_pct:    gp('s_total_pct'),
+      new_subs:      gi('s_new'),   new_subs_pct:      gp('s_new_pct'),
+      renewals:      gi('s_renew'), renewals_pct:      gp('s_renew_pct'),
+      cancellations: gi('s_cancel'),cancellations_pct: gp('s_cancel_pct'),
+      sub_earnings:  gn('s_earn'), sub_earnings_pct:  gp('s_earn_pct'),
+    },
+    outreach_countries: countries,
+    ig_reels: { ig_handle: gv('ig_handle').replace('@', ''), reels_uploaded: gi('ig_reels') },
+    mmpvs, trending_requests: trends, manager_notes: gv('manager_notes'),
+    screenshots: {
+      earnings: screenshots.earnings.map(s => ({ name: s.name, data: s.data })),
+      subs:     screenshots.subs.map(s     => ({ name: s.name, data: s.data })),
+      reels:    screenshots.reels.map(s    => ({ name: s.name, data: s.data })),
+    },
+  };
+}
+
+// ── SAVE ───────────────────────────────────────────────────────────────────────
+function saveAllData() {
+  saveCurrentCreator();
+  localStorage.setItem('hotttr_v2', JSON.stringify(creators));
+  toast('✓ Saved to browser');
+}
+
+// ── TEXT / EXPORT HELPERS ──────────────────────────────────────────────────────
+function f$(n) { return '$' + (parseFloat(n) || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+function fN(n) { return (parseInt(n) || 0).toLocaleString(); }
+function fP(v) {
+  if (v === null || v === undefined || v === '') return '';
+  const f = parseFloat(v); if (isNaN(f) || f === 0) return '';
+  return f > 0 ? ` ↑ +${f.toFixed(1)}%` : ` ↓ ${f.toFixed(1)}%`;
+}
+
+function buildText(d) {
+  const es = d.earnings_summary || {}, ss = d.subs_stats || {}, ig = d.ig_reels || {};
+  const ln = '─'.repeat(52);
+  let t = `${ln}\n🔥  HOTTTR — CREATOR REPORT\n${ln}\nCreator  :  ${d.creator_name}\nWeek     :  ${d.week_range || '—'}\n`;
+  if (d.manager_name) t += `Manager  :  ${d.manager_name}\n`;
+  t += `${ln}\n\nEARNINGS SUMMARY\n${ln}\n`;
+  t += `Total earnings   :  ${f$(es.total_earnings)}${fP(es.total_earnings_pct)}\n`;
+  t += `Subscriptions    :  ${f$(es.subscriptions)}${fP(es.subscriptions_pct)}\n`;
+  t += `Messages         :  ${f$(es.messages)}${fP(es.messages_pct)}\n`;
+  t += `Tips             :  ${f$(es.tips)}${fP(es.tips_pct)}\n`;
+  t += `Posts / PPV      :  ${f$(es.posts_ppv)}${fP(es.posts_ppv_pct)}\n`;
+  t += `Referrals        :  ${f$(es.referrals)}${fP(es.referrals_pct)}\n\n`;
+  t += `SUBSCRIBER STATISTICS\n${ln}\n`;
+  if (ss.sub_price) t += `Sub price        :  ${f$(ss.sub_price)}\n`;
+  t += `Total subs       :  ${fN(ss.total_subs)}${fP(ss.total_subs_pct)}\n`;
+  t += `New subscribers  :  ${fN(ss.new_subs)}${fP(ss.new_subs_pct)}\n`;
+  t += `Renewals         :  ${fN(ss.renewals)}${fP(ss.renewals_pct)}\n`;
+  t += `Cancellations    :  ${fN(ss.cancellations)}${fP(ss.cancellations_pct)}\n`;
+  t += `Sub earnings     :  ${f$(ss.sub_earnings)}${fP(ss.sub_earnings_pct)}\n\n`;
+  if (d.outreach_countries?.length) {
+    t += `OUTREACH RANKING\n${ln}\n`;
+    d.outreach_countries.forEach(c => {
+      t += `${(c.country + '').padEnd(26)}Guests:${fN(c.guests).padStart(8)}   Users:${fN(c.users).padStart(8)}   Total:${fN(c.total).padStart(8)}\n`;
+    });
+    t += '\n';
+  }
+  t += `IG REELS${ig.ig_handle ? ' — @' + ig.ig_handle : ''}\n${ln}\n`;
+  t += `Reels uploaded   :  ${fN(ig.reels_uploaded)}\n\n`;
+  if (d.mmpvs?.length) {
+    t += `MMPV PERFORMANCE\n${ln}\n`;
+    let tot = 0;
+    d.mmpvs.forEach((m, i) => {
+      tot += m.earnings;
+      t += `${i + 1}. ${m.title}\n   Earnings: ${f$(m.earnings)}${m.views ? '   |   Views: ' + fN(m.views) : ''}\n   Performance: ${m.performance}\n`;
+      if (m.notes) t += `   Notes: ${m.notes}\n`;
+      t += '\n';
+    });
+    t += `Total MMPV earnings: ${f$(tot)}\n\n`;
+  }
+  if (d.trending_requests?.length) {
+    t += `TRENDING CHAT REQUESTS\n${ln}\n`;
+    d.trending_requests.forEach((r, i) => t += `${i + 1}. ${r}\n`);
+    t += '\n';
+  }
+  if (d.manager_notes) { t += `MANAGER NOTES\n${ln}\n${d.manager_notes}\n\n`; }
+  t += `${ln}\nHOTTTR Management — Confidential\n`;
+  return t;
+}
+
+function refreshPreview() {
+  document.getElementById('preview-box').textContent = buildText(collectData());
+}
+function copyText() {
+  saveCurrentCreator();
+  navigator.clipboard.writeText(buildText(collectData())).then(() => toast('✓ Copied to clipboard!'));
+}
+function exportGDoc() {
+  saveCurrentCreator();
+  copyText();
+  setTimeout(() => window.open('https://docs.google.com/document/create', '_blank'), 400);
+  toast('✓ Text copied — paste into the new Google Doc');
+}
+
+// ── PDF EXPORT ─────────────────────────────────────────────────────────────────
+function exportPDF() {
+  if (!window.jspdf) { toast('⚠ PDF library loading, try again in a moment'); return; }
+  saveCurrentCreator();
+  const { jsPDF } = window.jspdf;
+  const d = collectData();
+  const es = d.earnings_summary || {}, ss = d.subs_stats || {}, ig = d.ig_reels || {};
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const PW = 210, ML = 18, MR = 18, CW = PW - ML - MR;
+  let y = 0;
+
+  const PINK = '#FF006E', BLACK = '#0D0D0D', GRAY = '#888888',
+        CARD = '#F8F8F8', LGRAY = '#E2E2E2', WHITE = '#FFFFFF',
+        DKBG = '#1A1A1A', GREEN = '#15803d', RED = '#dc2626';
+
+  function chk(n) { if (y + n > 278) { doc.addPage(); y = 16; } }
+  function hline(yy, col, w) { doc.setDrawColor(col || LGRAY); doc.setLineWidth(w || 0.25); doc.line(ML, yy, PW - MR, yy); }
+  function safeStr(s) {
+    return String(s).replace(/[\u{1F000}-\u{1FFFF}]/gu, '').replace(/[^\x00-\xFF]/g, '').trim();
+  }
+  function txt(s, x, yy, sz, st, col) {
+    doc.setFontSize(sz || 10); doc.setFont('helvetica', st || 'normal');
+    doc.setTextColor(col || BLACK); doc.text(safeStr(s), x, yy);
+  }
+
+  // HEADER
+  y = 20;
+  doc.setFontSize(24); doc.setFont('helvetica', 'bold'); doc.setTextColor(PINK);
+  doc.text('HOTTTR', PW / 2, y, { align: 'center' });
+  y += 7; hline(y, PINK, 1); y += 7;
+  txt(`${d.creator_name.toUpperCase()} — WEEKLY REPORT`, PW / 2, y, 11, 'bold', BLACK);
+  y += 5;
+  const sl = (d.week_range || '') + (d.manager_name ? `   |   ${d.manager_name}` : '');
+  txt(sl, PW / 2, y, 8.5, 'normal', GRAY);
+  y += 12;
+
+  function secHead(title) {
+    chk(12); y += 2;
+    txt(title, PW / 2, y, 10, 'bold', BLACK);
+    y += 3; hline(y, PINK, 0.7); y += 6;
+  }
+
+  function statCards(rows) {
+    const cols = 3, ch = 16, cellW = CW / cols;
+    for (let r = 0; r < rows.length; r += cols) {
+      chk(ch + 3);
+      const slice = rows.slice(r, r + cols);
+      while (slice.length < cols) slice.push(null);
+      slice.forEach((item, ci) => {
+        const cx = ML + ci * cellW;
+        doc.setFillColor(CARD); doc.setDrawColor(LGRAY); doc.setLineWidth(0.2);
+        doc.roundedRect(cx, y, cellW, ch, 1, 1, 'FD');
+        if (!item) return;
+        doc.setFontSize(7.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(GRAY);
+        doc.text(item.label, cx + 3, y + 5);
+        doc.setFontSize(12); doc.setFont('helvetica', 'bold'); doc.setTextColor(BLACK);
+        const valStr = String(item.value);
+        const valW = doc.getTextWidth(valStr);
+        doc.text(valStr, cx + 3, y + 12);
+        if (item.pct !== null && item.pct !== undefined && item.pct !== '') {
+          const p = parseFloat(item.pct);
+          if (!isNaN(p) && p !== 0) {
+            const pLabel = p > 0 ? `+${p.toFixed(1)}%` : `${p.toFixed(1)}%`;
+            doc.setFontSize(6.5); doc.setFont('helvetica', 'bold');
+            doc.setTextColor(p > 0 ? GREEN : RED);
+            doc.text(pLabel, cx + 3 + valW + 2, y + 12);
+          }
+        }
+      });
+      y += ch + 3;
+    }
+  }
+
+  function embedScreenshots(ssArr, label) {
+    if (!ssArr || !ssArr.length) return;
+    chk(10);
+    doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(GRAY);
+    doc.text(label.toUpperCase(), ML, y); y += 4;
+    const maxPerRow = 2, imgH = 48, gap = 4;
+    const imgW = (CW - gap * (maxPerRow - 1)) / maxPerRow;
+    for (let i = 0; i < ssArr.length; i += maxPerRow) {
+      chk(imgH + 6);
+      const row = ssArr.slice(i, i + maxPerRow);
+      row.forEach((s, ci) => {
+        const ix = ML + ci * (imgW + gap);
+        try {
+          const fmt = s.data.includes('data:image/png') ? 'PNG' : 'JPEG';
+          doc.addImage(s.data, fmt, ix, y, imgW, imgH, undefined, 'FAST');
+          doc.setDrawColor(LGRAY); doc.setLineWidth(0.2);
+          doc.rect(ix, y, imgW, imgH, 'S');
+          doc.setFontSize(6.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(GRAY);
+          const cap = s.name.length > 28 ? s.name.slice(0, 25) + '…' : s.name;
+          doc.text(cap, ix, y + imgH + 3.5);
+        } catch(err) {}
+      });
+      y += imgH + 7;
+    }
+    y += 2;
+  }
+
+  // EARNINGS
+  secHead('EARNINGS SUMMARY');
+  statCards([
+    { label: 'Total earnings', value: f$(es.total_earnings), pct: es.total_earnings_pct },
+    { label: 'Subscriptions',  value: f$(es.subscriptions),  pct: es.subscriptions_pct },
+    { label: 'Messages',       value: f$(es.messages),       pct: es.messages_pct },
+    { label: 'Tips',           value: f$(es.tips),           pct: es.tips_pct },
+    { label: 'Posts / PPV',    value: f$(es.posts_ppv),      pct: es.posts_ppv_pct },
+    { label: 'Referrals',      value: f$(es.referrals),      pct: es.referrals_pct },
+  ]);
+  y += 4;
+  embedScreenshots(d.screenshots?.earnings, 'Earnings screenshots');
+
+  // SUBS
+  secHead('SUBSCRIBER STATISTICS');
+  if (ss.sub_price) { txt(`Subscription price: $${parseFloat(ss.sub_price).toFixed(2)}`, PW / 2, y, 8.5, 'normal', GRAY); y += 5; }
+  statCards([
+    { label: 'Total subscribers', value: fN(ss.total_subs),    pct: ss.total_subs_pct },
+    { label: 'New subscribers',   value: fN(ss.new_subs),      pct: ss.new_subs_pct },
+    { label: 'Renewals',          value: fN(ss.renewals),      pct: ss.renewals_pct },
+    { label: 'Cancellations',     value: fN(ss.cancellations), pct: ss.cancellations_pct },
+    { label: 'Sub earnings',      value: f$(ss.sub_earnings),  pct: ss.sub_earnings_pct },
+  ]);
+  y += 4;
+  embedScreenshots(d.screenshots?.subs, 'Subscriber screenshots');
+
+  // OUTREACH
+  if (d.outreach_countries?.length) {
+    secHead('OUTREACH RANKING — TOP COUNTRIES');
+    const colW = [CW * 0.38, CW * 0.2, CW * 0.2, CW * 0.22], rh = 7.5, hh = 8;
+    chk(hh + d.outreach_countries.length * rh + 4);
+    doc.setFillColor(DKBG); doc.roundedRect(ML, y, CW, hh, 1, 1, 'F');
+    let cx = ML + 2;
+    ['Country', 'Guests', 'Users', 'Total'].forEach((h, i) => { txt(h, cx, y + 5.5, 7, 'bold', '#FFFFFF'); cx += colW[i]; });
+    y += hh;
+    d.outreach_countries.forEach((c, ri) => {
+      chk(rh + 1);
+      doc.setFillColor(ri % 2 === 0 ? WHITE : CARD);
+      doc.rect(ML, y, CW, rh, 'F');
+      doc.setDrawColor(LGRAY); doc.setLineWidth(0.2); doc.rect(ML, y, CW, rh, 'D');
+      cx = ML + 2;
+      [c.country, fN(c.guests), fN(c.users), fN(c.total)].forEach((v, i) => {
+        txt(v, cx, y + 5, i === 3 ? 7.5 : 7, i === 3 ? 'bold' : 'normal', BLACK); cx += colW[i];
+      });
+      y += rh;
+    });
+    y += 6;
+  }
+
+  // REELS
+  secHead('IG REELS' + (ig.ig_handle ? ' — @' + ig.ig_handle : ''));
+  statCards([{ label: 'Reels uploaded', value: fN(ig.reels_uploaded), pct: null }]);
+  y += 4;
+  embedScreenshots(d.screenshots?.reels, 'IG Reels screenshots');
+
+  // MMPVs
+  if (d.mmpvs?.length) {
+    doc.addPage(); y = 16;
+    secHead('MMPV PERFORMANCE');
+    let tot = 0;
+    d.mmpvs.forEach((m, i) => {
+      tot += m.earnings;
+      const bh = m.notes ? 22 : 18;
+      chk(bh + 4);
+      doc.setFillColor(CARD); doc.setDrawColor(LGRAY); doc.setLineWidth(0.2);
+      doc.roundedRect(ML, y, CW, bh, 1, 1, 'FD');
+      txt(`${i + 1}. ${m.title}`, ML + 3, y + 5.5, 9.5, 'bold', BLACK);
+      const pc = m.performance.includes('Excellent') || m.performance.includes('Good') ? GREEN
+               : m.performance.includes('Poor') || m.performance.includes('Below') ? RED : GRAY;
+      txt(m.performance, ML + 3, y + 11, 7.5, 'normal', pc);
+      txt(`Earnings: ${f$(m.earnings)}${m.views ? '   |   Views: ' + fN(m.views) : ''}`, ML + 3, y + 16, 8, 'normal', BLACK);
+      if (m.notes) txt(`Notes: ${m.notes}`, ML + 3, y + 20.5, 7, 'normal', GRAY);
+      y += bh + 4;
+    });
+    chk(8); txt(`Total MMPV earnings: ${f$(tot)}`, ML, y, 9.5, 'bold', BLACK); y += 8;
+  }
+
+  // TRENDS
+  if (d.trending_requests?.length) {
+    chk(18 + d.trending_requests.length * 7);
+    secHead('TRENDING CHAT REQUESTS');
+    d.trending_requests.forEach((r, i) => { chk(8); txt(`${i + 1}.  ${r}`, ML + 3, y, 9, 'normal', BLACK); y += 7; });
+    y += 4;
+  }
+
+  // NOTES
+  if (d.manager_notes) {
+    chk(24);
+    secHead('MANAGER NOTES');
+    doc.splitTextToSize(d.manager_notes, CW - 4).forEach(l => { chk(7); txt(l, ML + 2, y, 9, 'normal', BLACK); y += 6; });
+    y += 4;
+  }
+
+  // FOOTER
+  chk(10); hline(y, PINK, 0.7); y += 5;
+  txt('HOTTTR Management — Confidential', PW / 2, y, 7.5, 'normal', GRAY);
+
+  const slug = (d.creator_name.replace(/[^\w\s]/gi, '').trim().replace(/\s+/g, '_')) || 'Creator';
+  const wk = d.week_start_raw ? '_' + d.week_start_raw : '';
+  doc.save(`${slug}${wk}_Report.pdf`);
+  toast('✓ PDF downloaded!');
+}
+
+// ── TOAST ──────────────────────────────────────────────────────────────────────
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>

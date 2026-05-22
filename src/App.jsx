@@ -4,8 +4,10 @@ import { useStore } from './store.js';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/views/Dashboard';
 import RevenueMaster from './components/views/RevenueMaster';
-import DailyIncomeInput from './components/views/DailyIncomeInput';
+import Team from './components/views/Team';
+import Tasks from './components/views/Tasks';
 import BrainDumpSpace from './components/views/BrainDumpSpace';
+import Reports from './components/views/Reports';
 import QuickCaptureButton from './components/QuickCaptureButton';
 
 function App() {
@@ -39,13 +41,15 @@ function App() {
   }
 
   return (
-    <div className="flex h-screen bg-surface-0 text-text-primary overflow-hidden">
+    <div className="flex h-screen bg-gradient-to-br from-bg-primary via-bg-secondary to-bg-tertiary text-text-primary overflow-hidden">
       <Sidebar />
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto bg-gradient-to-br from-bg-primary via-bg-secondary to-bg-tertiary">
         {currentView === 'dashboard' && <Dashboard />}
         {currentView === 'revenue-master' && <RevenueMaster />}
-        {currentView === 'daily-income' && <DailyIncomeInput />}
+        {currentView === 'tasks' && <Tasks />}
+        {currentView === 'team' && <Team />}
         {currentView === 'brain-dump' && <BrainDumpSpace />}
+        {currentView === 'reports' && <Reports />}
       </main>
       <QuickCaptureButton />
     </div>

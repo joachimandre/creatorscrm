@@ -20,11 +20,11 @@ const QuickCaptureButton = () => {
       {/* FAB Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-lg right-lg w-14 h-14 bg-accent-primary text-white rounded-full shadow-lg hover:bg-blue-600 active:scale-95 transition-all flex items-center justify-center z-40"
+        className="fixed bottom-lg right-lg w-16 h-16 bg-gradient-to-br from-accent-lime via-accent-cyan to-accent-blue text-bg-primary rounded-full shadow-glow hover:shadow-glow active:scale-95 transition-all flex items-center justify-center z-40 font-bold group animate-float"
         aria-label="Quick capture note"
-        title="Quick capture (Ctrl+K)"
+        title="Quick capture"
       >
-        <Plus size={24} />
+        <Plus size={28} className="group-hover:rotate-90 transition-transform" />
       </button>
 
       {/* Modal */}

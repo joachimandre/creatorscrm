@@ -16,6 +16,7 @@ export const useStore = create((set, get) => ({
   bookmarkedTasks: [],
   dailyEarnings: {},
   brainDump: [],
+  chatters: [],
 
   // UI Actions
   setSelectedCreator: (creatorId) => set({ selectedCreatorId: creatorId }),
@@ -37,11 +38,15 @@ export const useStore = create((set, get) => ({
       });
 
       const bookmarkedTasks = db.getBookmarkedTasks();
+      const chatters = db.getAllChatters();
+      const tasks = db.getAllTasksEnriched();
 
       set({
         agencies,
         creators: allCreators,
         bookmarkedTasks,
+        chatters,
+        tasks,
       });
     } catch (error) {
       console.error('Error loading data:', error);
@@ -50,10 +55,16 @@ export const useStore = create((set, get) => ({
 
   // Agency operations
   addAgency: (name, notes = '') => {
-    const id = db.createAgency(name, notes);
-    const state = get();
-    set({ agencies: [...state.agencies, { id, name, notes, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }] });
-    return id;
+    try {
+      const id = db.createAgency(name, notes);
+      const state = get();
+      const newAgency = { id, name, notes, created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+      set({ agencies: [...(state.agencies || []), newAgency] });
+      return id;
+    } catch (error) {
+      console.error('Error adding agency:', error);
+      return null;
+    }
   },
 
   updateAgencyData: (id, name, notes) => {
@@ -124,6 +135,35 @@ export const useStore = create((set, get) => ({
     });
   },
 
+  // Task CRUD
+  addTask: (agencyId, creatorId, title, description, dueDate, priority, link) => {
+    const task = db.createAgencyTask(agencyId, creatorId, title, description, dueDate, priority, link);
+    set(state => ({ tasks: [task, ...state.tasks] }));
+    return task;
+  },
+
+  updateTask: (id, updates) => {
+    db.updateAgencyTask(id, updates);
+    set(state => ({
+      tasks: state.tasks.map(t => t.id === id ? { ...t, ...updates, updated_at: new Date().toISOString() } : t)
+    }));
+  },
+
+  deleteTask: (id) => {
+    db.deleteTask(id);
+    set(state => ({
+      tasks: state.tasks.filter(t => t.id !== id),
+      bookmarkedTasks: state.bookmarkedTasks.filter(t => t.id !== id),
+    }));
+  },
+
+  clearCompletedTasks: (agencyId) => {
+    const state = get();
+    const toDelete = state.tasks.filter(t => t.is_completed && (!agencyId || t.agency_id === agencyId));
+    toDelete.forEach(t => db.deleteTask(t.id));
+    set(s => ({ tasks: s.tasks.filter(t => !(t.is_completed && (!agencyId || t.agency_id === agencyId))) }));
+  },
+
   // Task operations
   toggleBookmarkTask: (id, isBookmarked) => {
     db.toggleBookmarkedTask(id, isBookmarked);
@@ -133,6 +173,26 @@ export const useStore = create((set, get) => ({
         ? [...state.bookmarkedTasks, { id, is_bookmarked: 1 }]
         : state.bookmarkedTasks.filter(t => t.id !== id)
     });
+  },
+
+  // Chatter operations
+  addChatter: (agencyId, name, role = '', notes = '') => {
+    const id = db.createChatter(agencyId, name, role, notes);
+    const chatter = { id, agency_id: agencyId, name, role, notes, created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+    set(state => ({ chatters: [...state.chatters, chatter] }));
+    return id;
+  },
+
+  updateChatterData: (id, name, role, notes) => {
+    db.updateChatter(id, name, role, notes);
+    set(state => ({
+      chatters: state.chatters.map(c => c.id === id ? { ...c, name, role, notes, updated_at: new Date().toISOString() } : c)
+    }));
+  },
+
+  deleteChatterData: (id) => {
+    db.deleteChatter(id);
+    set(state => ({ chatters: state.chatters.filter(c => c.id !== id) }));
   },
 
   // Brain dump operations

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { FileText, MessageSquare, Plus, Trash2, Save } from 'lucide-react';
+import { FileText, MessageSquare, Plus, Trash2 } from 'lucide-react';
 import Card from '../Card';
-import Button from '../Button';
+import TaskCard from '../TaskCard';
 import * as db from '../../db/index.js';
 
 const CreatorWorkspace = ({ creator }) => {
@@ -9,7 +9,7 @@ const CreatorWorkspace = ({ creator }) => {
   const [brainDump, setBrainDump] = useState([]);
   const [brainDumpInput, setBrainDumpInput] = useState('');
   const [taskInput, setTaskInput] = useState('');
-  const [activeTab, setActiveTab] = useState('tasks'); // tasks or notes
+  const [activeTab, setActiveTab] = useState('tasks');
 
   useEffect(() => {
     if (creator) {
@@ -30,8 +30,18 @@ const CreatorWorkspace = ({ creator }) => {
 
   const handleAddTask = () => {
     if (!taskInput.trim()) return;
-    db.createTask(creator.id, taskInput.trim(), '', null, 'upcoming');
+    db.createTask(creator.id, taskInput.trim(), '', null, 'upcoming', '');
     setTaskInput('');
+    loadTasks();
+  };
+
+  const handleToggleTask = (taskId, isCompleted) => {
+    db.toggleTaskCompletion(taskId, isCompleted);
+    loadTasks();
+  };
+
+  const handleUpdateTask = (taskId, updates) => {
+    db.updateTask(taskId, updates);
     loadTasks();
   };
 
@@ -63,32 +73,31 @@ const CreatorWorkspace = ({ creator }) => {
 
   return (
     <div className="space-y-lg">
-      {/* Header */}
       <div className="flex items-baseline justify-between">
         <div>
           <h2 className="text-2xl font-semibold text-text-primary">{creator.stage_name}</h2>
-          <p className="text-text-tertiary text-sm mt-sm">Workspace & Notes</p>
+          <p className="text-text-tertiary text-sm mt-sm">Workspace & Tasks</p>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-md border-b border-surface-2">
+      <div className="flex gap-md border-b border-accent-cyan/20">
         <button
           onClick={() => setActiveTab('tasks')}
-          className={`pb-md px-md text-sm font-medium transition-colors ${
+          className={`pb-md px-md text-sm font-medium transition-all ${
             activeTab === 'tasks'
-              ? 'text-accent-primary border-b-2 border-accent-primary'
-              : 'text-text-secondary hover:text-text-primary'
+              ? 'text-accent-cyan border-b-2 border-accent-cyan'
+              : 'text-text-tertiary hover:text-text-secondary'
           }`}
         >
           <FileText className="inline mr-sm" size={16} /> Tasks
         </button>
         <button
           onClick={() => setActiveTab('notes')}
-          className={`pb-md px-md text-sm font-medium transition-colors ${
+          className={`pb-md px-md text-sm font-medium transition-all ${
             activeTab === 'notes'
-              ? 'text-accent-primary border-b-2 border-accent-primary'
-              : 'text-text-secondary hover:text-text-primary'
+              ? 'text-accent-cyan border-b-2 border-accent-cyan'
+              : 'text-text-tertiary hover:text-text-secondary'
           }`}
         >
           <MessageSquare className="inline mr-sm" size={16} /> Brain Dump
@@ -97,104 +106,91 @@ const CreatorWorkspace = ({ creator }) => {
 
       {/* Content */}
       {activeTab === 'tasks' ? (
-        <Card>
-          <div className="space-y-md">
-            {/* Input */}
-            <div className="flex gap-sm">
-              <input
-                type="text"
-                value={taskInput}
-                onChange={(e) => setTaskInput(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleAddTask()}
-                placeholder="Add a quick task..."
-                className="flex-1 bg-surface-0 border border-surface-2 rounded-lg px-lg py-sm text-text-primary placeholder-text-tertiary focus:border-accent-primary focus:outline-none"
-              />
-              <Button onClick={handleAddTask} size="md">
-                <Plus size={16} />
-              </Button>
-            </div>
-
-            {/* Tasks List */}
-            <div className="space-y-sm">
-              {tasks.length === 0 ? (
-                <p className="text-text-tertiary text-sm text-center py-lg">No tasks yet</p>
-              ) : (
-                tasks.map(task => (
-                  <div key={task.id} className="bg-surface-1 rounded-lg p-sm border-l-4 border-accent-primary">
-                    <div className="flex items-start justify-between gap-md">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-text-primary font-medium text-sm">{task.title}</p>
-                        {task.description && (
-                          <p className="text-text-secondary text-xs mt-1">{task.description}</p>
-                        )}
-                        {task.due_date && (
-                          <p className="text-text-tertiary text-xs mt-1">
-                            Due: {new Date(task.due_date).toLocaleDateString()}
-                          </p>
-                        )}
-                      </div>
-                      <button
-                        onClick={() => handleDeleteTask(task.id)}
-                        className="text-text-tertiary hover:text-accent-danger p-xs transition-all flex-shrink-0"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
+        <div className="space-y-lg">
+          {/* Add task input */}
+          <div className="flex gap-sm">
+            <input
+              type="text"
+              value={taskInput}
+              onChange={(e) => setTaskInput(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleAddTask()}
+              placeholder="Quick task (press Enter)..."
+              className="flex-1 bg-bg-tertiary/50 border border-accent-cyan/30 rounded-lg px-lg py-sm text-text-primary placeholder-text-tertiary focus:outline-none focus:border-accent-cyan transition-all"
+            />
+            <button
+              onClick={handleAddTask}
+              className="px-lg py-sm bg-gradient-to-r from-accent-cyan to-accent-blue text-bg-primary font-semibold rounded-lg hover:shadow-glow transition-all"
+            >
+              <Plus size={20} />
+            </button>
           </div>
-        </Card>
+
+          {/* Tasks Grid */}
+          {tasks.length === 0 ? (
+            <div className="text-center py-xl text-text-tertiary">
+              <p>No tasks yet. Create one to get started!</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-lg">
+              {tasks.map(task => (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  isCompleted={task.is_completed}
+                  onToggle={handleToggleTask}
+                  onUpdate={handleUpdateTask}
+                  onDelete={handleDeleteTask}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       ) : (
-        <Card>
-          <div className="space-y-md">
-            {/* Auto-saving note input */}
-            <div className="relative">
-              <textarea
-                value={brainDumpInput}
-                onChange={(e) => setBrainDumpInput(e.target.value)}
-                onBlur={handleAddNote}
-                placeholder="Quick notes, thoughts, reminders... (auto-saves on blur)"
-                rows="4"
-                className="w-full bg-surface-0 border border-surface-2 rounded-lg px-lg py-sm text-text-primary placeholder-text-tertiary focus:border-accent-primary focus:outline-none resize-none"
-              />
-            </div>
+        <div className="space-y-lg">
+          <textarea
+            value={brainDumpInput}
+            onChange={(e) => setBrainDumpInput(e.target.value)}
+            onBlur={handleAddNote}
+            placeholder="Quick notes... (auto-saves on blur)"
+            rows="4"
+            className="w-full bg-bg-tertiary/50 border border-accent-cyan/30 rounded-lg px-lg py-sm text-text-primary placeholder-text-tertiary focus:outline-none focus:border-accent-cyan transition-all resize-none"
+          />
 
-            {/* Notes List */}
-            <div className="space-y-sm">
-              {brainDump.length === 0 ? (
-                <p className="text-text-tertiary text-sm text-center py-lg">No notes yet</p>
-              ) : (
-                brainDump.map(note => (
-                  <div key={note.id} className="bg-surface-1 rounded-lg p-md border-l-4 border-accent-primary relative">
-                    <textarea
-                      defaultValue={note.content}
-                      onBlur={(e) => {
-                        if (e.target.value !== note.content) {
-                          handleUpdateNote(note.id, e.target.value);
-                        }
-                      }}
-                      className="w-full bg-surface-1 text-text-primary placeholder-text-tertiary focus:outline-none resize-none text-sm"
-                      rows="2"
-                    />
-                    <div className="flex items-center justify-between mt-sm">
-                      <p className="text-text-tertiary text-xs">
-                        {new Date(note.created_at).toLocaleDateString()} {new Date(note.created_at).toLocaleTimeString()}
-                      </p>
-                      <button
-                        onClick={() => handleDeleteNote(note.id)}
-                        className="text-text-tertiary hover:text-accent-danger p-xs transition-all"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
+          {brainDump.length === 0 ? (
+            <p className="text-center text-text-tertiary">No notes yet</p>
+          ) : (
+            <div className="space-y-md">
+              {brainDump.map(note => (
+                <div
+                  key={note.id}
+                  className="bg-bg-tertiary/50 border border-accent-purple/30 rounded-lg p-md group hover:border-accent-purple/60 hover:shadow-glow-purple transition-all animation-slide-up"
+                >
+                  <textarea
+                    defaultValue={note.content}
+                    onBlur={(e) => {
+                      if (e.target.value !== note.content) {
+                        handleUpdateNote(note.id, e.target.value);
+                      }
+                    }}
+                    className="w-full bg-transparent text-text-primary focus:outline-none resize-none text-sm"
+                    rows="2"
+                  />
+                  <div className="flex items-center justify-between mt-md pt-md border-t border-accent-purple/20">
+                    <p className="text-text-tertiary text-xs">
+                      {new Date(note.created_at).toLocaleDateString()}
+                    </p>
+                    <button
+                      onClick={() => handleDeleteNote(note.id)}
+                      className="text-text-tertiary hover:text-accent-pink opacity-0 group-hover:opacity-100 transition-all p-sm"
+                    >
+                      <Trash2 size={14} />
+                    </button>
                   </div>
-                ))
-              )}
+                </div>
+              ))}
             </div>
-          </div>
-        </Card>
+          )}
+        </div>
       )}
     </div>
   );
