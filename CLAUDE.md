@@ -38,17 +38,23 @@ Zustand store with a flat shape. All React components read state via `useStore(s
 
 **Payroll period** is stored as `{ periodStart: 'YYYY-MM-DD', periodEnd: 'YYYY-MM-DD' }` — no year/month/half fields.
 
+### App Shell (`src/App.jsx`)
+Layout: `[Sidebar (w-64)] | [flex-col: TopBar (h-[60px]) + main (flex-1 overflow-auto)]`. `TopBar.jsx` is a pure presentational header (search pill + bell + avatar) that renders above every view.
+
 ### Routing
-View routing is purely state-based: `currentView` in the Zustand store drives which component renders in `App.jsx`. No React Router. Valid view IDs: `dashboard`, `revenue-master`, `tasks`, `team`, `brain-dump`, `reports`, `payroll`.
+View routing is purely state-based: `currentView` in the Zustand store drives which component renders in `App.jsx`. No React Router. Valid view IDs: `dashboard`, `analytics`, `revenue-master`, `creators`, `tasks`, `team`, `chatters`, `brain-dump`, `reports`, `payroll`.
 
 ### Views (`src/components/views/`)
 | File | View ID | Notes |
 |------|---------|-------|
-| `Dashboard.jsx` | `dashboard` | |
+| `Dashboard.jsx` | `dashboard` | OverviewPanel + AgencyPanel; imports recharts directly for Revenue Trend chart |
+| `Analytics.jsx` | `analytics` | |
 | `RevenueMaster.jsx` | `revenue-master` | |
+| `Creators.jsx` | `creators` | |
 | `Tasks.jsx` | `tasks` | |
 | `Team.jsx` | `team` | Teams + shift schedule + member assignment |
-| `BrainDumpSpace.jsx` | `brain-dump` | |
+| `Chatters.jsx` | `chatters` | |
+| `BrainDumpSpace.jsx` | `brain-dump` | Uses inline glass pattern — does NOT use `Button.jsx` or `Card.jsx` |
 | `Reports.jsx` | `reports` | `<iframe src="/HOTTTR_Report_Builder.html">` |
 | `Payroll.jsx` | `payroll` | Calendar picker, inline editing, team filter |
 
@@ -79,7 +85,28 @@ Shadow utilities: `shadow-glow`, `shadow-glow-purple`, `shadow-glow-pink`, `shad
 
 Animation utilities: `animate-pulse-glow`, `animate-float`, `animate-slide-up`, `animate-fade-in`, `animate-scale-in`.
 
-The glassmorphism pattern used throughout: `bg-white/5 backdrop-blur-md border border-white/10 rounded-xl`.
+**Standard glass card pattern** (use this, not `bg-white/5`):
+```
+bg-gradient-to-br from-white/[0.06] to-white/[0.02] border border-white/10 rounded-2xl p-lg
+shadow-[inset_0_1px_0_rgba(255,255,255,0.07)]
+```
+Add `hover:border-white/20` for interactive cards.
+
+**Tokens that do NOT exist** (Tailwind silently ignores them — do not use):
+`accent-primary`, `accent-danger`, `surface-0`, `surface-1`, `surface-2`
+
+**Sidebar section colors** — each nav area has an assigned accent used for its icon, page title gradient, and primary CTA:
+| View | Accent | Title gradient |
+|------|--------|---------------|
+| Dashboard | `#00d9ff` | `from-accent-cyan to-accent-blue` |
+| Analytics | `#3b82f6` | `from-accent-cyan to-accent-blue` |
+| Revenue Master | `#00ff88` | `from-accent-lime to-accent-cyan` |
+| Creators / Tasks / Brain Dump | `#9d4edd` | `from-accent-purple to-accent-pink` |
+| Team | `#ff6b35` | `from-accent-orange to-accent-pink` |
+| Chatters / Payroll | `#00ff88` | `from-accent-lime to-accent-cyan` |
+| Reports | `#ff006e` | `from-accent-pink to-accent-orange` |
+
+Page titles use `bg-gradient-to-r [gradient] bg-clip-text text-transparent` — not plain `text-text-primary`.
 
 ### Report Builder (`public/HOTTTR_Report_Builder.html`)
 Standalone vanilla-JS HTML file served statically by Vite. Contains all its own CSS and JavaScript inline. The "Import from CRM" button reads `crm_db` from localStorage to pull active creators. Since the iframe and the CRM share the same origin (`localhost:5173`), localStorage is fully shared.
