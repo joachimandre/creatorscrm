@@ -17,6 +17,8 @@ export const useStore = create((set, get) => ({
   dailyEarnings: {},
   brainDump: [],
   chatters: [],
+  payrollRecords: [],
+  payrollPeriod: { year: new Date().getFullYear(), month: new Date().getMonth() + 1, half: 'first' },
 
   // UI Actions
   setSelectedCreator: (creatorId) => set({ selectedCreatorId: creatorId }),
@@ -85,8 +87,8 @@ export const useStore = create((set, get) => ({
   },
 
   // Creator operations
-  addCreator: (agencyId, stageName, dailyGoal = 0, weeklyGoal = 0, monthlyGoal = 0, notes = '') => {
-    const id = db.createCreator(agencyId, stageName, dailyGoal, weeklyGoal, monthlyGoal, notes);
+  addCreator: (agencyId, stageName, dailyGoal = 0, weeklyGoal = 0, monthlyGoal = 0, notes = '', commissionRate = 0) => {
+    const id = db.createCreator(agencyId, stageName, dailyGoal, weeklyGoal, monthlyGoal, notes, commissionRate);
     const creator = {
       id,
       agency_id: agencyId,
@@ -96,6 +98,7 @@ export const useStore = create((set, get) => ({
       monthly_goal: monthlyGoal,
       is_active: 1,
       notes,
+      commission_rate: commissionRate,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -104,13 +107,13 @@ export const useStore = create((set, get) => ({
     return id;
   },
 
-  updateCreatorData: (id, stageName, dailyGoal, weeklyGoal, monthlyGoal, notes, isActive) => {
-    db.updateCreator(id, stageName, dailyGoal, weeklyGoal, monthlyGoal, notes, isActive);
+  updateCreatorData: (id, stageName, dailyGoal, weeklyGoal, monthlyGoal, notes, isActive, commissionRate) => {
+    db.updateCreator(id, stageName, dailyGoal, weeklyGoal, monthlyGoal, notes, isActive, commissionRate);
     const state = get();
     set({
       creators: state.creators.map(c =>
         c.id === id
-          ? { ...c, stage_name: stageName, daily_goal: dailyGoal, weekly_goal: weeklyGoal, monthly_goal: monthlyGoal, notes, is_active: isActive ? 1 : 0, updated_at: new Date().toISOString() }
+          ? { ...c, stage_name: stageName, daily_goal: dailyGoal, weekly_goal: weeklyGoal, monthly_goal: monthlyGoal, notes, is_active: isActive ? 1 : 0, commission_rate: commissionRate !== undefined ? commissionRate : (c.commission_rate || 0), updated_at: new Date().toISOString() }
           : c
       )
     });
@@ -176,17 +179,17 @@ export const useStore = create((set, get) => ({
   },
 
   // Chatter operations
-  addChatter: (agencyId, name, role = '', notes = '') => {
-    const id = db.createChatter(agencyId, name, role, notes);
-    const chatter = { id, agency_id: agencyId, name, role, notes, created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+  addChatter: (agencyId, name, role = '', notes = '', commissionRate = 0, hourlyRate = 0) => {
+    const id = db.createChatter(agencyId, name, role, notes, commissionRate, hourlyRate);
+    const chatter = { id, agency_id: agencyId, name, role, notes, commission_rate: commissionRate, hourly_rate: hourlyRate, created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
     set(state => ({ chatters: [...state.chatters, chatter] }));
     return id;
   },
 
-  updateChatterData: (id, name, role, notes) => {
-    db.updateChatter(id, name, role, notes);
+  updateChatterData: (id, name, role, notes, commissionRate, hourlyRate) => {
+    db.updateChatter(id, name, role, notes, commissionRate, hourlyRate);
     set(state => ({
-      chatters: state.chatters.map(c => c.id === id ? { ...c, name, role, notes, updated_at: new Date().toISOString() } : c)
+      chatters: state.chatters.map(c => c.id === id ? { ...c, name, role, notes, commission_rate: commissionRate !== undefined ? commissionRate : (c.commission_rate || 0), hourly_rate: hourlyRate !== undefined ? hourlyRate : (c.hourly_rate || 0), updated_at: new Date().toISOString() } : c)
     }));
   },
 
@@ -254,5 +257,53 @@ export const useStore = create((set, get) => ({
       });
     });
     return total;
+  },
+
+  // Payroll actions
+  setPayrollPeriod: (year, month, half) => set({ payrollPeriod: { year, month, half } }),
+
+  loadPayrollRecords: (periodStart, periodEnd) => {
+    const records = db.getPayrollRecordsForPeriod(periodStart, periodEnd);
+    set({ payrollRecords: records });
+  },
+
+  generatePayroll: (periodStart, periodEnd) => {
+    const state = get();
+    state.agencies.forEach(agency => {
+      const agencyRevenue = db.getAgencyRevenueForDateRange(agency.id, periodStart, periodEnd);
+      // Creators
+      const creators = db.getCreatorsByAgency(agency.id, true);
+      creators.forEach(creator => {
+        const earnings = db.getEarningsForCreatorDateRange(creator.id, periodStart, periodEnd);
+        const baseRevenue = earnings.reduce((s, e) => s + e.amount, 0);
+        const commissionRate = creator.commission_rate || 0;
+        const commissionAmount = baseRevenue * (commissionRate / 100);
+        db.upsertPayrollRecord(periodStart, periodEnd, 'creator', creator.id, agency.id, baseRevenue, commissionRate, commissionAmount, 0);
+      });
+      // Chatters
+      const chatters = db.getChattersForAgency(agency.id);
+      chatters.forEach(chatter => {
+        const commissionRate = chatter.commission_rate || 0;
+        const hourlyRate = chatter.hourly_rate || 0;
+        const commissionAmount = agencyRevenue * (commissionRate / 100);
+        db.upsertPayrollRecord(periodStart, periodEnd, 'chatter', chatter.id, agency.id, agencyRevenue, commissionRate, commissionAmount, hourlyRate);
+      });
+    });
+    const records = db.getPayrollRecordsForPeriod(periodStart, periodEnd);
+    set({ payrollRecords: records });
+  },
+
+  updatePayrollEntry: (id, updates) => {
+    const updated = db.updatePayrollRecord(id, updates);
+    if (updated) {
+      set(state => ({
+        payrollRecords: state.payrollRecords.map(r => r.id === id ? { ...updated } : r)
+      }));
+    }
+  },
+
+  deletePayrollEntry: (id) => {
+    db.deletePayrollRecord(id);
+    set(state => ({ payrollRecords: state.payrollRecords.filter(r => r.id !== id) }));
   },
 }));

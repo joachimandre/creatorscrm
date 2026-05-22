@@ -13,9 +13,9 @@ const Team = () => {
 
   const [selectedAgency, setSelectedAgency] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newChatter, setNewChatter] = useState({ name: '', role: '' });
+  const [newChatter, setNewChatter] = useState({ name: '', role: '', commissionRate: '', hourlyRate: '' });
   const [editingId, setEditingId] = useState(null);
-  const [editValues, setEditValues] = useState({ name: '', role: '' });
+  const [editValues, setEditValues] = useState({ name: '', role: '', commissionRate: '', hourlyRate: '' });
   const [confirmDelete, setConfirmDelete] = useState(null);
 
   const activeAgency = selectedAgency ?? agencies[0]?.id ?? null;
@@ -24,19 +24,38 @@ const Team = () => {
 
   const handleAdd = () => {
     if (!newChatter.name.trim() || !activeAgency) return;
-    addChatter(activeAgency, newChatter.name.trim(), newChatter.role.trim());
-    setNewChatter({ name: '', role: '' });
+    addChatter(
+      activeAgency,
+      newChatter.name.trim(),
+      newChatter.role.trim(),
+      '',
+      parseFloat(newChatter.commissionRate) || 0,
+      parseFloat(newChatter.hourlyRate) || 0
+    );
+    setNewChatter({ name: '', role: '', commissionRate: '', hourlyRate: '' });
     setShowAddForm(false);
   };
 
   const startEdit = (chatter) => {
     setEditingId(chatter.id);
-    setEditValues({ name: chatter.name, role: chatter.role || '' });
+    setEditValues({
+      name: chatter.name,
+      role: chatter.role || '',
+      commissionRate: String(chatter.commission_rate || ''),
+      hourlyRate: String(chatter.hourly_rate || ''),
+    });
   };
 
   const commitEdit = () => {
     if (!editValues.name.trim()) { setEditingId(null); return; }
-    updateChatterData(editingId, editValues.name.trim(), editValues.role.trim(), '');
+    updateChatterData(
+      editingId,
+      editValues.name.trim(),
+      editValues.role.trim(),
+      '',
+      parseFloat(editValues.commissionRate) || 0,
+      parseFloat(editValues.hourlyRate) || 0
+    );
     setEditingId(null);
   };
 
@@ -126,6 +145,31 @@ const Team = () => {
                     className="w-full bg-bg-primary/50 border border-white/10 rounded-lg px-md py-sm text-text-primary text-sm focus:outline-none focus:border-accent-orange/60 transition-all"
                   />
                 </div>
+                <div className="w-32">
+                  <label className="block text-xs text-text-tertiary mb-xs">Hourly Rate ($)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={newChatter.hourlyRate}
+                    onChange={e => setNewChatter(n => ({ ...n, hourlyRate: e.target.value }))}
+                    placeholder="e.g. 15"
+                    className="w-full bg-bg-primary/50 border border-white/10 rounded-lg px-md py-sm text-text-primary text-sm focus:outline-none focus:border-accent-orange/60 transition-all"
+                  />
+                </div>
+                <div className="w-32">
+                  <label className="block text-xs text-text-tertiary mb-xs">Commission %</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    value={newChatter.commissionRate}
+                    onChange={e => setNewChatter(n => ({ ...n, commissionRate: e.target.value }))}
+                    placeholder="e.g. 5"
+                    className="w-full bg-bg-primary/50 border border-white/10 rounded-lg px-md py-sm text-text-primary text-sm focus:outline-none focus:border-accent-orange/60 transition-all"
+                  />
+                </div>
                 <div className="flex gap-sm">
                   <button
                     onClick={handleAdd}
@@ -188,6 +232,27 @@ const Team = () => {
                               className="w-full bg-bg-primary border border-white/10 rounded px-sm py-xs text-text-secondary text-xs focus:outline-none"
                             />
                             <div className="flex gap-xs">
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={editValues.hourlyRate}
+                                onChange={e => setEditValues(v => ({ ...v, hourlyRate: e.target.value }))}
+                                placeholder="$/hr"
+                                className="w-full bg-bg-primary border border-white/10 rounded px-sm py-xs text-accent-orange text-xs focus:outline-none font-mono"
+                              />
+                              <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                step="0.01"
+                                value={editValues.commissionRate}
+                                onChange={e => setEditValues(v => ({ ...v, commissionRate: e.target.value }))}
+                                placeholder="comm%"
+                                className="w-full bg-bg-primary border border-white/10 rounded px-sm py-xs text-accent-lime text-xs focus:outline-none font-mono"
+                              />
+                            </div>
+                            <div className="flex gap-xs">
                               <button onClick={commitEdit} className="flex items-center gap-xs px-sm py-xs bg-accent-lime/20 text-accent-lime rounded text-xs hover:bg-accent-lime/30 transition-colors">
                                 <Check size={10} /> Save
                               </button>
@@ -200,6 +265,18 @@ const Team = () => {
                           <>
                             <p className="font-semibold text-text-primary text-sm truncate">{chatter.name}</p>
                             <p className="text-xs text-text-tertiary mt-xs">{chatter.role || 'Chatter'}</p>
+                            <div className="flex flex-wrap gap-xs mt-sm">
+                              {(chatter.hourly_rate > 0) && (
+                                <span className="text-xs font-mono text-accent-orange bg-accent-orange/10 border border-accent-orange/20 px-xs py-0.5 rounded-full">
+                                  ${chatter.hourly_rate}/hr
+                                </span>
+                              )}
+                              {(chatter.commission_rate > 0) && (
+                                <span className="text-xs font-mono text-accent-lime bg-accent-lime/10 border border-accent-lime/20 px-xs py-0.5 rounded-full">
+                                  {chatter.commission_rate}% comm
+                                </span>
+                              )}
+                            </div>
                           </>
                         )}
                       </div>

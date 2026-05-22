@@ -10,6 +10,24 @@ export async function initDB() {
     db = JSON.parse(savedDb);
     // Migrations
     if (!db.chatters) { db.chatters = []; db._nextIds.chatters = 1; }
+    // Payroll migrations
+    let payrollDirty = false;
+    db.creators.forEach(c => { if (c.commission_rate === undefined) { c.commission_rate = 0; payrollDirty = true; } });
+    db.chatters.forEach(c => {
+      if (c.commission_rate === undefined) { c.commission_rate = 0; payrollDirty = true; }
+      if (c.hourly_rate === undefined) { c.hourly_rate = 0; payrollDirty = true; }
+    });
+    if (!db.payroll_records) { db.payroll_records = []; db._nextIds.payroll_records = 1; payrollDirty = true; }
+    // Migrate period_year/month → period_start/period_end
+    db.payroll_records.forEach(r => {
+      if (!r.period_start) {
+        const lastDay = new Date(r.period_year, r.period_month, 0).getDate();
+        r.period_start = `${r.period_year}-${String(r.period_month).padStart(2, '0')}-01`;
+        r.period_end   = `${r.period_year}-${String(r.period_month).padStart(2, '0')}-${lastDay}`;
+        payrollDirty = true;
+      }
+    });
+    if (payrollDirty) saveDB();
     // Add agency_id + priority to existing tasks
     let dirty = false;
     db.tasks.forEach(t => {
@@ -29,6 +47,7 @@ export async function initDB() {
       tasks: [],
       brain_dump: [],
       chatters: [],
+      payroll_records: [],
       _nextIds: {
         agencies: 1,
         creators: 1,
@@ -36,6 +55,7 @@ export async function initDB() {
         tasks: 1,
         brain_dump: 1,
         chatters: 1,
+        payroll_records: 1,
       }
     };
     saveDB();
@@ -112,7 +132,7 @@ export function getCreator(id) {
   return db.creators.find(c => c.id === id);
 }
 
-export function createCreator(agencyId, stageName, dailyGoal = 0, weeklyGoal = 0, monthlyGoal = 0, notes = '') {
+export function createCreator(agencyId, stageName, dailyGoal = 0, weeklyGoal = 0, monthlyGoal = 0, notes = '', commissionRate = 0) {
   const id = getNextId('creators');
   const creator = {
     id,
@@ -123,6 +143,7 @@ export function createCreator(agencyId, stageName, dailyGoal = 0, weeklyGoal = 0
     monthly_goal: monthlyGoal,
     is_active: 1,
     notes,
+    commission_rate: commissionRate,
     created_at: now(),
     updated_at: now(),
   };
@@ -131,7 +152,7 @@ export function createCreator(agencyId, stageName, dailyGoal = 0, weeklyGoal = 0
   return id;
 }
 
-export function updateCreator(id, stageName, dailyGoal, weeklyGoal, monthlyGoal, notes, isActive) {
+export function updateCreator(id, stageName, dailyGoal, weeklyGoal, monthlyGoal, notes, isActive, commissionRate) {
   const creator = db.creators.find(c => c.id === id);
   if (creator) {
     creator.stage_name = stageName;
@@ -140,6 +161,7 @@ export function updateCreator(id, stageName, dailyGoal, weeklyGoal, monthlyGoal,
     creator.monthly_goal = monthlyGoal;
     creator.notes = notes;
     creator.is_active = isActive ? 1 : 0;
+    if (commissionRate !== undefined) creator.commission_rate = commissionRate;
     creator.updated_at = now();
     saveDB();
   }
@@ -376,17 +398,28 @@ export function getAllChatters() {
   return db.chatters;
 }
 
-export function createChatter(agencyId, name, role = '', notes = '') {
+export function createChatter(agencyId, name, role = '', notes = '', commissionRate = 0, hourlyRate = 0) {
   const id = getNextId('chatters');
-  const chatter = { id, agency_id: agencyId, name, role, notes, created_at: now(), updated_at: now() };
+  const chatter = {
+    id, agency_id: agencyId, name, role, notes,
+    commission_rate: commissionRate,
+    hourly_rate: hourlyRate,
+    created_at: now(), updated_at: now()
+  };
   db.chatters.push(chatter);
   saveDB();
   return id;
 }
 
-export function updateChatter(id, name, role, notes) {
+export function updateChatter(id, name, role, notes, commissionRate, hourlyRate) {
   const c = db.chatters.find(c => c.id === id);
-  if (c) { c.name = name; c.role = role; c.notes = notes; c.updated_at = now(); saveDB(); }
+  if (c) {
+    c.name = name; c.role = role; c.notes = notes;
+    if (commissionRate !== undefined) c.commission_rate = commissionRate;
+    if (hourlyRate !== undefined) c.hourly_rate = hourlyRate;
+    c.updated_at = now();
+    saveDB();
+  }
 }
 
 export function deleteChatter(id) {
@@ -415,4 +448,124 @@ export function addGeneralNote(content) {
   db.brain_dump.push(note);
   saveDB();
   return id;
+}
+
+// Payroll — date-range earnings helpers
+export function getAgencyRevenueForDateRange(agencyId, startDate, endDate) {
+  const creatorIds = new Set(db.creators.filter(c => c.agency_id === agencyId).map(c => c.id));
+  return db.daily_earnings
+    .filter(e => creatorIds.has(e.creator_id) && e.date >= startDate && e.date <= endDate)
+    .reduce((sum, e) => sum + e.amount, 0);
+}
+
+export function getEarningsForCreatorDateRange(creatorId, startDate, endDate) {
+  return db.daily_earnings.filter(e => e.creator_id === creatorId && e.date >= startDate && e.date <= endDate);
+}
+
+// Keep month version for backward compat
+export function getAgencyRevenueForMonth(agencyId, year, month) {
+  const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+  const endDate = `${year}-${String(month).padStart(2, '0')}-31`;
+  return getAgencyRevenueForDateRange(agencyId, startDate, endDate);
+}
+
+export function upsertPayrollRecord(periodStart, periodEnd, personType, personId, agencyId, baseRevenue, commissionRate, commissionAmount, hourlyRate) {
+  const [yearStr, monthStr] = periodStart.split('-');
+  const periodYear = parseInt(yearStr);
+  const periodMonth = parseInt(monthStr);
+
+  const existing = db.payroll_records.find(
+    r => r.period_start === periodStart && r.period_end === periodEnd &&
+         r.person_type === personType && r.person_id === personId
+  );
+  if (existing) {
+    existing.base_revenue = baseRevenue;
+    existing.commission_rate = commissionRate;
+    existing.hourly_rate = hourlyRate;
+    // Preserve user-edited fields if approved/paid
+    const preserve = existing.status === 'approved' || existing.status === 'paid';
+    existing.commission_amount = existing.base_revenue * (existing.commission_rate / 100);
+    existing.hourly_amount = existing.hourly_rate * existing.hours_worked;
+    existing.gross_pay = existing.commission_amount + existing.hourly_amount;
+    if (!preserve) {
+      existing.net_pay = existing.gross_pay - existing.deductions + existing.bonuses;
+    } else {
+      existing.net_pay = existing.gross_pay - existing.deductions + existing.bonuses;
+    }
+    existing.updated_at = now();
+    saveDB();
+    return existing;
+  } else {
+    const record = {
+      id: getNextId('payroll_records'),
+      period_start: periodStart,
+      period_end: periodEnd,
+      period_year: periodYear,
+      period_month: periodMonth,
+      person_type: personType,
+      person_id: personId,
+      agency_id: agencyId,
+      base_revenue: baseRevenue,
+      commission_rate: commissionRate,
+      commission_amount: commissionAmount,
+      hourly_rate: hourlyRate,
+      hours_worked: 0,
+      hourly_amount: 0,
+      deductions: 0,
+      bonuses: 0,
+      gross_pay: commissionAmount,
+      net_pay: commissionAmount,
+      status: 'pending',
+      notes: '',
+      created_at: now(),
+      updated_at: now(),
+    };
+    db.payroll_records.push(record);
+    saveDB();
+    return record;
+  }
+}
+
+export function updatePayrollRecord(id, updates) {
+  const record = db.payroll_records.find(r => r.id === id);
+  if (!record) return;
+  // All editable fields
+  const fields = ['status', 'base_revenue', 'commission_rate', 'hourly_rate', 'hours_worked', 'deductions', 'bonuses', 'notes'];
+  fields.forEach(f => { if (updates[f] !== undefined) record[f] = updates[f]; });
+  // Recalculate derived fields
+  record.commission_amount = record.base_revenue * (record.commission_rate / 100);
+  record.hourly_amount = record.hourly_rate * record.hours_worked;
+  record.gross_pay = record.commission_amount + record.hourly_amount;
+  record.net_pay = record.gross_pay - record.deductions + record.bonuses;
+  record.updated_at = now();
+  saveDB();
+  return record;
+}
+
+export function deletePayrollRecord(id) {
+  db.payroll_records = db.payroll_records.filter(r => r.id !== id);
+  saveDB();
+}
+
+export function getPayrollRecordsForPeriod(periodStart, periodEnd) {
+  return db.payroll_records.filter(r => r.period_start === periodStart && r.period_end === periodEnd);
+}
+
+export function getPayrollHistory(limit = 12) {
+  const seen = new Set();
+  const periods = [];
+  db.payroll_records.forEach(r => {
+    const key = `${r.period_start}_${r.period_end}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      periods.push({
+        period_start: r.period_start,
+        period_end: r.period_end,
+        period_year: r.period_year,
+        period_month: r.period_month,
+        key,
+      });
+    }
+  });
+  return periods.sort((a, b) => b.key.localeCompare(a.key)).slice(0, limit);
 }

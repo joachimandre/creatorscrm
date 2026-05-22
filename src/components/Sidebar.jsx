@@ -1,5 +1,5 @@
 import { useStore } from '../store.js';
-import { LayoutDashboard, BarChart3, Users, Brain, CheckSquare, FileText } from 'lucide-react';
+import { LayoutDashboard, BarChart3, Users, Brain, CheckSquare, FileText, DollarSign } from 'lucide-react';
 
 const Sidebar = () => {
   const currentView = useStore(state => state.currentView);
@@ -16,6 +16,7 @@ const Sidebar = () => {
     { id: 'team',           label: 'Team',            icon: Users,           color: 'from-accent-orange to-accent-pink' },
     { id: 'brain-dump',     label: 'Brain Dump',      icon: Brain,           color: 'from-accent-purple to-accent-pink' },
     { id: 'reports',        label: 'Reports',          icon: FileText,        color: 'from-accent-pink to-accent-orange' },
+    { id: 'payroll',        label: 'Payroll',          icon: DollarSign,      color: 'from-accent-lime to-accent-cyan' },
   ];
 
   return (

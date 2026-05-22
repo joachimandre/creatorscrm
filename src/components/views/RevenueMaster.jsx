@@ -56,7 +56,7 @@ const RevenueMaster = () => {
   const [editing, setEditing] = useState(null);
   const [pendingValue, setPendingValue] = useState('');
   const [showAddCreator, setShowAddCreator] = useState(false);
-  const [newCreator, setNewCreator] = useState({ name: '', agencyId: '', dailyGoal: '', weeklyGoal: '', monthlyGoal: '' });
+  const [newCreator, setNewCreator] = useState({ name: '', agencyId: '', dailyGoal: '', weeklyGoal: '', monthlyGoal: '', commissionRate: '' });
   const [confirmDelete, setConfirmDelete] = useState(null); // creator object pending delete
 
   const currentDate = new Date();
@@ -124,12 +124,15 @@ const RevenueMaster = () => {
       loadEarnings();
     } else if (type === 'name') {
       const name = pendingValue.trim();
-      if (name) updateCreatorData(creatorId, name, creator.daily_goal, creator.weekly_goal, creator.monthly_goal, creator.notes || '', creator.is_active);
+      if (name) updateCreatorData(creatorId, name, creator.daily_goal, creator.weekly_goal, creator.monthly_goal, creator.notes || '', creator.is_active, creator.commission_rate || 0);
+    } else if (type === 'commission_rate') {
+      const rate = Math.min(100, Math.max(0, parseFloat(pendingValue) || 0));
+      updateCreatorData(creatorId, creator.stage_name, creator.daily_goal, creator.weekly_goal, creator.monthly_goal, creator.notes || '', creator.is_active, rate);
     } else {
       const amount = parseFloat(pendingValue) || 0;
       const g = { daily_goal: creator.daily_goal, weekly_goal: creator.weekly_goal, monthly_goal: creator.monthly_goal };
       g[type] = amount;
-      updateCreatorData(creatorId, creator.stage_name, g.daily_goal, g.weekly_goal, g.monthly_goal, creator.notes || '', creator.is_active);
+      updateCreatorData(creatorId, creator.stage_name, g.daily_goal, g.weekly_goal, g.monthly_goal, creator.notes || '', creator.is_active, creator.commission_rate || 0);
     }
     cancelEdit();
   };
@@ -150,8 +153,10 @@ const RevenueMaster = () => {
     addCreator(parseInt(newCreator.agencyId), newCreator.name.trim(),
       parseFloat(newCreator.dailyGoal) || 0,
       parseFloat(newCreator.weeklyGoal) || 0,
-      parseFloat(newCreator.monthlyGoal) || 0);
-    setNewCreator({ name: '', agencyId: agencyFilter ? String(agencyFilter) : '', dailyGoal: '', weeklyGoal: '', monthlyGoal: '' });
+      parseFloat(newCreator.monthlyGoal) || 0,
+      '',
+      parseFloat(newCreator.commissionRate) || 0);
+    setNewCreator({ name: '', agencyId: agencyFilter ? String(agencyFilter) : '', dailyGoal: '', weeklyGoal: '', monthlyGoal: '', commissionRate: '' });
     setShowAddCreator(false);
   };
 
@@ -264,8 +269,29 @@ const RevenueMaster = () => {
         </td>
 
         {/* Daily Goal */}
-        <td className="text-right px-4 py-3 border-r border-white/5">
+        <td className="text-right px-4 py-3">
           {renderGoalCell(creator, 'daily_goal', inactive)}
+        </td>
+
+        {/* Commission Rate % */}
+        <td className="text-right px-4 py-3 border-r border-white/5">
+          {isEditing(creator.id, 'commission_rate') ? (
+            <input type="number" autoFocus value={pendingValue}
+              onChange={e => setPendingValue(e.target.value)}
+              onBlur={commitEdit}
+              onKeyDown={e => { if (e.key === 'Enter') commitEdit(); if (e.key === 'Escape') cancelEdit(); }}
+              step="0.01" min="0" max="100"
+              className={`${inputClass} w-16`}
+            />
+          ) : (
+            <div
+              onClick={() => !inactive && startEdit(creator.id, 'commission_rate', null, creator.commission_rate || 0)}
+              className={`group/rate flex items-center justify-end gap-1 ${!inactive ? 'cursor-text' : ''}`}
+            >
+              <span className="font-mono text-accent-lime text-xs">{(creator.commission_rate || 0).toFixed(1)}%</span>
+              {!inactive && <Pencil size={9} className="opacity-0 group-hover/rate:opacity-40 text-accent-lime transition-opacity" />}
+            </div>
+          )}
         </td>
 
         {/* Day columns */}
@@ -324,7 +350,8 @@ const RevenueMaster = () => {
       <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-widest text-accent-cyan/60 bg-white/[0.02]">Wk Goal</th>
       <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-widest text-text-tertiary bg-white/[0.02]">Mo Earned</th>
       <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-widest text-accent-cyan/60 bg-white/[0.02]">Mo Goal</th>
-      <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-widest text-accent-cyan/60 bg-white/[0.02] border-r border-white/5">Day Goal</th>
+      <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-widest text-accent-cyan/60 bg-white/[0.02]">Day Goal</th>
+      <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-widest text-accent-lime/60 bg-white/[0.02] border-r border-white/5">Rate %</th>
       {Array.from({ length: daysInMonth }, (_, i) => {
         const day = i + 1;
         const isToday = day === today;
@@ -389,6 +416,10 @@ const RevenueMaster = () => {
                 <input type="number" value={newCreator[key]} onChange={e => setNewCreator(n => ({ ...n, [key]: e.target.value }))} placeholder="0" min="0" className="w-full bg-bg-primary/50 border border-white/10 rounded-lg px-md py-sm text-text-primary text-sm font-mono focus:outline-none focus:border-accent-cyan transition-all" />
               </div>
             ))}
+            <div>
+              <label className="block text-xs text-accent-lime/80 mb-xs">Commission %</label>
+              <input type="number" value={newCreator.commissionRate} onChange={e => setNewCreator(n => ({ ...n, commissionRate: e.target.value }))} placeholder="0" min="0" max="100" step="0.01" className="w-full bg-bg-primary/50 border border-accent-lime/20 rounded-lg px-md py-sm text-accent-lime text-sm font-mono focus:outline-none focus:border-accent-lime/60 transition-all" />
+            </div>
             <div className="flex items-end gap-sm">
               <button onClick={handleAddCreator} disabled={!newCreator.name.trim() || !newCreator.agencyId}
                 className="flex-1 px-md py-sm bg-gradient-to-r from-accent-cyan to-accent-purple text-bg-primary font-semibold rounded-lg text-sm hover:opacity-90 transition-all disabled:opacity-30 disabled:cursor-not-allowed">
