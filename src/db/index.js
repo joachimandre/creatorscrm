@@ -558,14 +558,24 @@ export function getPayrollHistory(limit = 12) {
     const key = `${r.period_start}_${r.period_end}`;
     if (!seen.has(key)) {
       seen.add(key);
+      const recs = db.payroll_records.filter(x => x.period_start === r.period_start && x.period_end === r.period_end);
       periods.push({
         period_start: r.period_start,
         period_end: r.period_end,
         period_year: r.period_year,
         period_month: r.period_month,
         key,
+        record_count: recs.length,
+        total_net_pay: recs.reduce((s, x) => s + x.net_pay, 0),
       });
     }
   });
   return periods.sort((a, b) => b.key.localeCompare(a.key)).slice(0, limit);
+}
+
+export function deletePayrollRecordsForPeriod(periodStart, periodEnd) {
+  db.payroll_records = db.payroll_records.filter(
+    r => !(r.period_start === periodStart && r.period_end === periodEnd)
+  );
+  saveDB();
 }

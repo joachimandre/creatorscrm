@@ -18,7 +18,10 @@ export const useStore = create((set, get) => ({
   brainDump: [],
   chatters: [],
   payrollRecords: [],
-  payrollPeriod: { year: new Date().getFullYear(), month: new Date().getMonth() + 1, half: 'first' },
+  payrollPeriod: {
+    periodStart: `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-01`,
+    periodEnd:   `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-15`,
+  },
 
   // UI Actions
   setSelectedCreator: (creatorId) => set({ selectedCreatorId: creatorId }),
@@ -260,7 +263,7 @@ export const useStore = create((set, get) => ({
   },
 
   // Payroll actions
-  setPayrollPeriod: (year, month, half) => set({ payrollPeriod: { year, month, half } }),
+  setPayrollPeriod: (periodStart, periodEnd) => set({ payrollPeriod: { periodStart, periodEnd } }),
 
   loadPayrollRecords: (periodStart, periodEnd) => {
     const records = db.getPayrollRecordsForPeriod(periodStart, periodEnd);
@@ -305,5 +308,12 @@ export const useStore = create((set, get) => ({
   deletePayrollEntry: (id) => {
     db.deletePayrollRecord(id);
     set(state => ({ payrollRecords: state.payrollRecords.filter(r => r.id !== id) }));
+  },
+
+  deletePayrollPeriod: (periodStart, periodEnd) => {
+    db.deletePayrollRecordsForPeriod(periodStart, periodEnd);
+    const state = get();
+    const isCurrent = state.payrollPeriod.periodStart === periodStart && state.payrollPeriod.periodEnd === periodEnd;
+    set({ payrollRecords: isCurrent ? [] : state.payrollRecords });
   },
 }));
