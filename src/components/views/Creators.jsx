@@ -3,7 +3,7 @@ import { useStore } from '../../store.js';
 import * as db from '../../db/index.js';
 import {
   Star, ExternalLink, Pencil, X, Check, Plus, Trash2,
-  Search, ChevronDown, ChevronUp, Target, Link2,
+  Search, ChevronDown, ChevronUp, Target, Link2, Users,
 } from 'lucide-react';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -79,6 +79,11 @@ const Creators = () => {
   const [newCreator,     setNewCreator]     = useState({ name: '', dailyGoal: '', weeklyGoal: '', monthlyGoal: '', commissionRate: '', driveUrl: '' });
   const [confirmDelete,  setConfirmDelete]  = useState(null);
 
+  // Subscriber tracker state
+  const [subscriberCounts, setSubscriberCounts] = useState({});
+  const [subLogOpen,       setSubLogOpen]        = useState(null);
+  const [subLogForm,       setSubLogForm]        = useState({ date: '', count: '', notes: '' });
+
   // ── Earnings state ────────────────────────────────────────────────────────────
   const [earnings,     setEarnings]     = useState({}); // creatorId → [{date,amount}]
   const [todayEarnings, setTodayEarnings] = useState({}); // creatorId → number
@@ -113,6 +118,21 @@ const Creators = () => {
   };
 
   useEffect(() => { loadEarnings(); }, [creators]);
+
+  // ── Load subscriber counts ────────────────────────────────────────────────
+  const loadSubscriberCounts = () => {
+    const counts = {};
+    creators.forEach(c => {
+      const history = db.getSubscriberHistory(c.id);
+      counts[c.id] = {
+        latest: history.length > 0 ? history[history.length - 1] : null,
+        prev:   history.length >= 2 ? history[history.length - 2] : null,
+      };
+    });
+    setSubscriberCounts(counts);
+  };
+
+  useEffect(() => { loadSubscriberCounts(); }, [creators]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Keyboard shortcut: Escape closes edit panel & add modal ───────────────────
   useEffect(() => {
@@ -194,6 +214,17 @@ const Creators = () => {
     setEditingId(null);
   };
 
+  // ── Subscriber log handler ────────────────────────────────────────────────────
+  const handleLogSub = (creatorId) => {
+    const count = parseInt(subLogForm.count);
+    if (isNaN(count) || count < 0) return;
+    const date = subLogForm.date || todayIso;
+    db.addSubscriberCount(creatorId, date, count, subLogForm.notes || '');
+    loadSubscriberCounts();
+    setSubLogOpen(null);
+    setSubLogForm({ date: '', count: '', notes: '' });
+  };
+
   // ── Add creator handler ───────────────────────────────────────────────────────
   const handleAddCreator = () => {
     if (!newCreator.name.trim() || !activeAgency) return;
@@ -227,6 +258,7 @@ const Creators = () => {
     const todayColor  = todayAmt === 0 ? 'text-text-tertiary/60'
       : todayPct >= 1 ? 'text-accent-lime' : 'text-accent-orange';
     const isInactive  = !creator.is_active;
+    const subData     = subscriberCounts[creator.id] || null;
 
     return (
       <div key={creator.id}
@@ -350,6 +382,89 @@ const Creators = () => {
           {agencyMonthlyTotal > 0 && monthEarned > 0 && (
             <div className="text-[10px] text-text-tertiary/40 text-right -mt-xs">
               {getAgencyPct(creator.id)}% of agency
+            </div>
+          )}
+
+          {/* ── Subscriber tracker ─────────────────────────────────────────── */}
+          {!isInactive && (
+            <div className="border-t border-white/5 pt-xs" onClick={e => e.stopPropagation()}>
+              {subData?.latest ? (
+                <div className="flex items-center justify-between gap-sm">
+                  <div className="flex items-center gap-xs text-[11px] min-w-0">
+                    <Users size={10} className="text-text-tertiary/40 shrink-0" />
+                    <span className="text-text-tertiary/60 shrink-0">Subs:</span>
+                    <span className="font-mono font-bold text-text-primary">
+                      {subData.latest.count.toLocaleString()}
+                    </span>
+                    {subData.prev && (
+                      <span className={`text-[10px] font-bold shrink-0 ${
+                        subData.latest.count > subData.prev.count ? 'text-accent-lime'
+                        : subData.latest.count < subData.prev.count ? 'text-accent-pink'
+                        : 'text-text-tertiary/40'
+                      }`}>
+                        {subData.latest.count > subData.prev.count
+                          ? `↑ +${(subData.latest.count - subData.prev.count).toLocaleString()}`
+                          : subData.latest.count < subData.prev.count
+                          ? `↓ ${(subData.prev.count - subData.latest.count).toLocaleString()}`
+                          : '= 0'}
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => { setSubLogOpen(creator.id); setSubLogForm({ date: todayIso, count: '', notes: '' }); }}
+                    className="shrink-0 text-[10px] px-sm py-[2px] border border-white/10 rounded-lg text-text-tertiary/60 hover:text-text-primary hover:bg-white/5 transition-all">
+                    + Log
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between gap-sm">
+                  <span className="text-[11px] text-text-tertiary/30 italic flex items-center gap-xs">
+                    <Users size={10} className="text-text-tertiary/25" /> No subscriber data
+                  </span>
+                  <button
+                    onClick={() => { setSubLogOpen(creator.id); setSubLogForm({ date: todayIso, count: '', notes: '' }); }}
+                    className="shrink-0 text-[10px] px-sm py-[2px] border border-accent-cyan/20 rounded-lg text-accent-cyan/60 hover:text-accent-cyan hover:bg-accent-cyan/5 transition-all">
+                    + Log
+                  </button>
+                </div>
+              )}
+
+              {/* Inline log form */}
+              {subLogOpen === creator.id && (
+                <div className="mt-xs space-y-xs animate-fade-in border-t border-white/5 pt-xs">
+                  <div className="grid grid-cols-2 gap-xs">
+                    <div>
+                      <label className="text-[9px] text-text-tertiary/50 mb-[2px] block">Date</label>
+                      <input type="date" value={subLogForm.date}
+                        onChange={e => setSubLogForm(f => ({ ...f, date: e.target.value }))}
+                        className="w-full bg-bg-primary/60 border border-white/10 rounded-lg px-xs py-[3px] text-text-primary text-[10px] focus:outline-none focus:border-accent-cyan/50 transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[9px] text-text-tertiary/50 mb-[2px] block">Count *</label>
+                      <input type="number" value={subLogForm.count} min="0"
+                        autoFocus
+                        onChange={e => setSubLogForm(f => ({ ...f, count: e.target.value }))}
+                        onKeyDown={e => { if (e.key === 'Enter') handleLogSub(creator.id); if (e.key === 'Escape') setSubLogOpen(null); }}
+                        placeholder="e.g. 4820"
+                        className="w-full bg-bg-primary/60 border border-white/10 rounded-lg px-xs py-[3px] text-text-primary text-[10px] focus:outline-none focus:border-accent-cyan/50 placeholder-text-tertiary/25 transition-all"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-xs">
+                    <button
+                      onClick={() => handleLogSub(creator.id)}
+                      disabled={!subLogForm.count || isNaN(parseInt(subLogForm.count))}
+                      className="flex-1 py-[3px] bg-accent-cyan/70 hover:bg-accent-cyan/90 text-bg-primary text-[10px] font-bold rounded-lg disabled:opacity-30 transition-all">
+                      Save
+                    </button>
+                    <button onClick={() => setSubLogOpen(null)}
+                      className="px-sm py-[3px] border border-white/10 text-text-tertiary text-[10px] rounded-lg hover:bg-white/5 transition-all">
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

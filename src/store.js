@@ -17,6 +17,7 @@ export const useStore = create((set, get) => ({
   dailyEarnings: {},
   brainDump: [],
   chatters: [],
+  subscriberCounts: {}, // creatorId → { latest, prev }
   payrollRecords: [],
   payrollPeriod: {
     periodStart: `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-01`,
@@ -197,23 +198,33 @@ export const useStore = create((set, get) => ({
   },
 
   // Chatter operations
-  addChatter: (agencyId, name, role = '', notes = '', commissionRate = 0, hourlyRate = 0) => {
-    const id = db.createChatter(agencyId, name, role, notes, commissionRate, hourlyRate);
-    const chatter = { id, agency_id: agencyId, name, role, notes, commission_rate: commissionRate, hourly_rate: hourlyRate, created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+  addChatter: (agencyId, name, role = '', notes = '', commissionRate = 0, hourlyRate = 0, driveUrl = '') => {
+    const id = db.createChatter(agencyId, name, role, notes, commissionRate, hourlyRate, driveUrl);
+    const chatter = { id, agency_id: agencyId, name, role, notes, commission_rate: commissionRate, hourly_rate: hourlyRate, drive_url: driveUrl, created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
     set(state => ({ chatters: [...state.chatters, chatter] }));
     return id;
   },
 
-  updateChatterData: (id, name, role, notes, commissionRate, hourlyRate) => {
-    db.updateChatter(id, name, role, notes, commissionRate, hourlyRate);
+  updateChatterData: (id, name, role, notes, commissionRate, hourlyRate, driveUrl) => {
+    db.updateChatter(id, name, role, notes, commissionRate, hourlyRate, driveUrl);
     set(state => ({
-      chatters: state.chatters.map(c => c.id === id ? { ...c, name, role, notes, commission_rate: commissionRate !== undefined ? commissionRate : (c.commission_rate || 0), hourly_rate: hourlyRate !== undefined ? hourlyRate : (c.hourly_rate || 0), updated_at: new Date().toISOString() } : c)
+      chatters: state.chatters.map(c => c.id === id ? { ...c, name, role, notes, commission_rate: commissionRate !== undefined ? commissionRate : (c.commission_rate || 0), hourly_rate: hourlyRate !== undefined ? hourlyRate : (c.hourly_rate || 0), drive_url: driveUrl !== undefined ? driveUrl : (c.drive_url || ''), updated_at: new Date().toISOString() } : c)
     }));
   },
 
   deleteChatterData: (id) => {
     db.deleteChatter(id);
     set(state => ({ chatters: state.chatters.filter(c => c.id !== id) }));
+  },
+
+  logSubscriberCount: (creatorId, date, count, notes) => {
+    db.addSubscriberCount(creatorId, date, count, notes);
+    const history = db.getSubscriberHistory(creatorId);
+    const latest = history.length > 0 ? history[history.length - 1] : null;
+    const prev   = history.length >= 2 ? history[history.length - 2] : null;
+    set(state => ({
+      subscriberCounts: { ...state.subscriberCounts, [creatorId]: { latest, prev } }
+    }));
   },
 
   // Brain dump operations

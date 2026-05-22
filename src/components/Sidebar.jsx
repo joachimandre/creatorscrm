@@ -1,5 +1,5 @@
 import { useStore } from '../store.js';
-import { LayoutDashboard, BarChart3, Users, Brain, CheckSquare, FileText, DollarSign, Star } from 'lucide-react';
+import { LayoutDashboard, BarChart3, Users, Brain, CheckSquare, FileText, DollarSign, Star, TrendingUp, MessageSquare } from 'lucide-react';
 
 const Sidebar = () => {
   const currentView = useStore(state => state.currentView);
@@ -11,10 +11,12 @@ const Sidebar = () => {
 
   const navItems = [
     { id: 'dashboard',      label: 'Dashboard',      icon: LayoutDashboard, color: 'from-accent-cyan to-accent-blue' },
+    { id: 'analytics',      label: 'Analytics',      icon: TrendingUp,      color: 'from-accent-cyan to-accent-blue' },
     { id: 'revenue-master', label: 'Revenue Master', icon: BarChart3,       color: 'from-accent-lime to-accent-cyan' },
     { id: 'creators',       label: 'Creators',        icon: Star,            color: 'from-accent-purple to-accent-pink' },
     { id: 'tasks',          label: 'Tasks',           icon: CheckSquare,     color: 'from-accent-purple to-accent-blue' },
     { id: 'team',           label: 'Team',            icon: Users,           color: 'from-accent-orange to-accent-pink' },
+    { id: 'chatters',       label: 'Chatters',        icon: MessageSquare,   color: 'from-accent-lime to-accent-cyan' },
     { id: 'brain-dump',     label: 'Brain Dump',      icon: Brain,           color: 'from-accent-purple to-accent-pink' },
     { id: 'reports',        label: 'Reports',          icon: FileText,        color: 'from-accent-pink to-accent-orange' },
     { id: 'payroll',        label: 'Payroll',          icon: DollarSign,      color: 'from-accent-lime to-accent-cyan' },

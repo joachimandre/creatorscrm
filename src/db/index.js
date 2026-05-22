@@ -58,6 +58,18 @@ export async function initDB() {
       if (c.drive_url === undefined) { c.drive_url = ''; driveDirty = true; }
     });
     if (driveDirty) saveDB();
+    // Chatter drive_url migration
+    let chatterDriveDirty = false;
+    db.chatters.forEach(c => {
+      if (c.drive_url === undefined) { c.drive_url = ''; chatterDriveDirty = true; }
+    });
+    if (chatterDriveDirty) saveDB();
+    // Subscriber tracker table
+    if (!db.creator_subscribers) {
+      db.creator_subscribers = [];
+      db._nextIds.creator_subscribers = 1;
+      saveDB();
+    }
   } else {
     db = {
       agencies: [],
@@ -72,6 +84,7 @@ export async function initDB() {
       team_chatters: [],
       team_schedules: [],
       team_day_notes: [],
+      creator_subscribers: [],
       _nextIds: {
         agencies: 1,
         creators: 1,
@@ -85,6 +98,7 @@ export async function initDB() {
         team_chatter: 1,
         team_schedule: 1,
         team_day_note: 1,
+        creator_subscribers: 1,
       }
     };
     saveDB();
@@ -429,12 +443,13 @@ export function getAllChatters() {
   return db.chatters;
 }
 
-export function createChatter(agencyId, name, role = '', notes = '', commissionRate = 0, hourlyRate = 0) {
+export function createChatter(agencyId, name, role = '', notes = '', commissionRate = 0, hourlyRate = 0, driveUrl = '') {
   const id = getNextId('chatters');
   const chatter = {
     id, agency_id: agencyId, name, role, notes,
     commission_rate: commissionRate,
     hourly_rate: hourlyRate,
+    drive_url: driveUrl,
     created_at: now(), updated_at: now()
   };
   db.chatters.push(chatter);
@@ -442,12 +457,13 @@ export function createChatter(agencyId, name, role = '', notes = '', commissionR
   return id;
 }
 
-export function updateChatter(id, name, role, notes, commissionRate, hourlyRate) {
+export function updateChatter(id, name, role, notes, commissionRate, hourlyRate, driveUrl) {
   const c = db.chatters.find(c => c.id === id);
   if (c) {
     c.name = name; c.role = role; c.notes = notes;
     if (commissionRate !== undefined) c.commission_rate = commissionRate;
     if (hourlyRate !== undefined) c.hourly_rate = hourlyRate;
+    if (driveUrl !== undefined) c.drive_url = driveUrl;
     c.updated_at = now();
     saveDB();
   }
@@ -737,4 +753,37 @@ export function upsertDayNote(teamId, date, notes) {
     });
   }
   saveDB();
+}
+
+// ─── Subscriber Tracker ───────────────────────────────────────────────────────
+
+export function addSubscriberCount(creatorId, date, count, notes = '') {
+  const existing = db.creator_subscribers.find(s => s.creator_id === creatorId && s.date === date);
+  if (existing) {
+    existing.count = count;
+    existing.notes = notes;
+    existing.updated_at = now();
+  } else {
+    db.creator_subscribers.push({
+      id: getNextId('creator_subscribers'),
+      creator_id: creatorId,
+      date,
+      count,
+      notes,
+      created_at: now(),
+      updated_at: now(),
+    });
+  }
+  saveDB();
+}
+
+export function getSubscriberHistory(creatorId) {
+  return db.creator_subscribers
+    .filter(s => s.creator_id === creatorId)
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+export function getLatestSubscriberCount(creatorId) {
+  const history = getSubscriberHistory(creatorId);
+  return history.length > 0 ? history[history.length - 1] : null;
 }

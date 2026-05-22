@@ -9,8 +9,11 @@ import Tasks from './components/views/Tasks';
 import BrainDumpSpace from './components/views/BrainDumpSpace';
 import Reports from './components/views/Reports';
 import QuickCaptureButton from './components/QuickCaptureButton';
+import QuickRevenueButton from './components/QuickRevenueButton';
 import Payroll from './components/views/Payroll';
 import Creators from './components/views/Creators';
+import Chatters from './components/views/Chatters';
+import Analytics from './components/views/Analytics';
 
 function App() {
   const [dbInitialized, setDbInitialized] = useState(false);
@@ -54,8 +57,11 @@ function App() {
         {currentView === 'reports' && <Reports />}
         {currentView === 'payroll' && <Payroll />}
         {currentView === 'creators' && <Creators />}
+        {currentView === 'chatters' && <Chatters />}
+        {currentView === 'analytics' && <Analytics />}
       </main>
       <QuickCaptureButton />
+      <QuickRevenueButton />
     </div>
   );
 }
