@@ -308,6 +308,9 @@ const Payroll = () => {
   const creators          = useStore(state => state.creators);
   const chatters          = useStore(state => state.chatters);
   const payrollRecords    = useStore(state => state.payrollRecords);
+  const teams             = useStore(state => state.teams);
+  const teamMembers       = useStore(state => state.teamMembers);
+  const teamChatters      = useStore(state => state.teamChatters);
   const payrollPeriod     = useStore(state => state.payrollPeriod);
   const setPayrollPeriod  = useStore(state => state.setPayrollPeriod);
   const loadPayrollRecords = useStore(state => state.loadPayrollRecords);
@@ -320,6 +323,7 @@ const Payroll = () => {
 
   // ── UI state ───────────────────────────────────────────────────────────────
   const [selectedAgency,  setSelectedAgency]  = useState(null);
+  const [selectedTeam,    setSelectedTeam]    = useState(null);
   const [generating,      setGenerating]      = useState(false);
   const [generated,       setGenerated]       = useState(false);
   const [showConfirmGen,  setShowConfirmGen]  = useState(false);
@@ -397,11 +401,30 @@ const Payroll = () => {
     setTimeout(() => setGenerated(false), 2500);
   };
 
+  // Reset team filter when agency changes
+  const handleSetAgency = (id) => { setSelectedAgency(id); setSelectedTeam(null); };
+
   // ── Derived data ───────────────────────────────────────────────────────────
-  const visibleRecords  = useMemo(() =>
-    selectedAgency === null ? payrollRecords : payrollRecords.filter(r => r.agency_id === selectedAgency),
-    [payrollRecords, selectedAgency]
+  const agencyTeams = useMemo(() =>
+    teams.filter(t => selectedAgency === null ? true : t.agency_id === selectedAgency),
+    [teams, selectedAgency]
   );
+
+  const selectedTeamObj = agencyTeams.find(t => t.id === selectedTeam) ?? null;
+
+  const visibleRecords = useMemo(() => {
+    let records = selectedAgency === null
+      ? payrollRecords
+      : payrollRecords.filter(r => r.agency_id === selectedAgency);
+    if (selectedTeam !== null) {
+      const tcIds = new Set(teamMembers.filter(m => m.team_id === selectedTeam).map(m => m.creator_id));
+      const ttIds = new Set(teamChatters.filter(c => c.team_id === selectedTeam).map(c => c.chatter_id));
+      records = records.filter(r =>
+        r.person_type === 'creator' ? tcIds.has(r.person_id) : ttIds.has(r.person_id)
+      );
+    }
+    return records;
+  }, [payrollRecords, selectedAgency, selectedTeam, teamMembers, teamChatters]);
   const creatorRecords  = visibleRecords.filter(r => r.person_type === 'creator');
   const chatterRecords  = visibleRecords.filter(r => r.person_type === 'chatter');
   const totalNet        = visibleRecords.reduce((s, r) => s + r.net_pay, 0);
@@ -844,7 +867,7 @@ const Payroll = () => {
       {/* ── Agency tabs ── */}
       {agencies.length > 1 && (
         <div className="flex items-center gap-sm flex-wrap">
-          <button onClick={() => setSelectedAgency(null)}
+          <button onClick={() => handleSetAgency(null)}
             className={`px-lg py-sm rounded-xl text-sm font-semibold border transition-all ${
               selectedAgency === null
                 ? 'bg-white/10 border-white/20 text-text-primary'
@@ -854,10 +877,36 @@ const Payroll = () => {
             const color    = AGENCY_COLORS[idx % AGENCY_COLORS.length];
             const isActive = selectedAgency === agency.id;
             return (
-              <button key={agency.id} onClick={() => setSelectedAgency(agency.id)}
+              <button key={agency.id} onClick={() => handleSetAgency(agency.id)}
                 className={`px-lg py-sm rounded-xl text-sm font-semibold border transition-all ${isActive ? 'text-bg-primary' : 'bg-white/5 border-white/10 text-text-secondary hover:text-text-primary'}`}
                 style={isActive ? { background: color, borderColor: color } : {}}>
                 {agency.name}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ── Team filter row ── */}
+      {agencyTeams.length > 0 && (
+        <div className="flex items-center gap-sm flex-wrap">
+          <span className="text-xs text-text-tertiary/60 font-semibold uppercase tracking-widest mr-xs">Team</span>
+          <button onClick={() => setSelectedTeam(null)}
+            className={`px-md py-xs rounded-lg text-xs font-semibold border transition-all ${
+              selectedTeam === null
+                ? 'bg-white/10 border-white/20 text-text-primary'
+                : 'bg-white/5 border-white/10 text-text-tertiary hover:text-text-primary'
+            }`}>All Teams</button>
+          {agencyTeams.map(t => {
+            const TEAM_HEX = { 'accent-cyan': '#00d9ff', 'accent-lime': '#00ff88', 'accent-purple': '#9d4edd', 'accent-pink': '#ff006e', 'accent-orange': '#ff6b35', 'accent-blue': '#3b82f6' };
+            const hex = TEAM_HEX[t.color] || '#00d9ff';
+            const isActive = selectedTeam === t.id;
+            return (
+              <button key={t.id} onClick={() => setSelectedTeam(isActive ? null : t.id)}
+                className={`flex items-center gap-xs px-md py-xs rounded-lg text-xs font-semibold border transition-all ${isActive ? 'text-bg-primary' : 'bg-white/5 border-white/10 text-text-tertiary hover:text-text-primary'}`}
+                style={isActive ? { background: hex, borderColor: hex } : {}}>
+                <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: isActive ? 'rgba(255,255,255,0.6)' : hex }} />
+                {t.name}
               </button>
             );
           })}
@@ -892,7 +941,9 @@ const Payroll = () => {
             <div className="rounded-xl overflow-hidden border border-white/5 shadow-xl">
               <div className="px-lg py-sm border-b border-white/8 bg-white/[0.02] flex items-center gap-sm">
                 <TrendingUp size={14} className="text-accent-cyan" />
-                <span className="text-xs font-bold uppercase tracking-widest text-accent-cyan/70">Creators ({creatorRecords.length})</span>
+                <span className="text-xs font-bold uppercase tracking-widest text-accent-cyan/70">
+                  {selectedTeamObj ? `${selectedTeamObj.name} — ` : ''}Creators ({creatorRecords.length})
+                </span>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm" style={{ background: 'rgba(10,12,30,0.7)' }}>
@@ -927,7 +978,9 @@ const Payroll = () => {
             <div className="rounded-xl overflow-hidden border border-white/5 shadow-xl">
               <div className="px-lg py-sm border-b border-white/8 bg-white/[0.02] flex items-center gap-sm">
                 <Users size={14} className="text-accent-purple" />
-                <span className="text-xs font-bold uppercase tracking-widest text-accent-purple/70">Chatters &amp; Managers ({chatterRecords.length})</span>
+                <span className="text-xs font-bold uppercase tracking-widest text-accent-purple/70">
+                  {selectedTeamObj ? `${selectedTeamObj.name} — ` : ''}Chatters &amp; Managers ({chatterRecords.length})
+                </span>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm" style={{ background: 'rgba(10,12,30,0.7)' }}>
