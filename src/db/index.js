@@ -39,6 +39,19 @@ export async function initDB() {
       if (t.priority === undefined) { t.priority = 'none'; dirty = true; }
     });
     if (dirty) saveDB();
+    // Team migrations
+    let teamDirty = false;
+    if (!db.teams)          { db.teams           = []; teamDirty = true; }
+    if (!db.team_members)   { db.team_members    = []; teamDirty = true; }
+    if (!db.team_chatters)  { db.team_chatters   = []; teamDirty = true; }
+    if (!db.team_schedules) { db.team_schedules  = []; teamDirty = true; }
+    if (!db.team_day_notes) { db.team_day_notes  = []; teamDirty = true; }
+    if (!db._nextIds.team)          { db._nextIds.team          = 1; teamDirty = true; }
+    if (!db._nextIds.team_member)   { db._nextIds.team_member   = 1; teamDirty = true; }
+    if (!db._nextIds.team_chatter)  { db._nextIds.team_chatter  = 1; teamDirty = true; }
+    if (!db._nextIds.team_schedule) { db._nextIds.team_schedule = 1; teamDirty = true; }
+    if (!db._nextIds.team_day_note) { db._nextIds.team_day_note = 1; teamDirty = true; }
+    if (teamDirty) saveDB();
   } else {
     db = {
       agencies: [],
@@ -48,6 +61,11 @@ export async function initDB() {
       brain_dump: [],
       chatters: [],
       payroll_records: [],
+      teams: [],
+      team_members: [],
+      team_chatters: [],
+      team_schedules: [],
+      team_day_notes: [],
       _nextIds: {
         agencies: 1,
         creators: 1,
@@ -56,6 +74,11 @@ export async function initDB() {
         brain_dump: 1,
         chatters: 1,
         payroll_records: 1,
+        team: 1,
+        team_member: 1,
+        team_chatter: 1,
+        team_schedule: 1,
+        team_day_note: 1,
       }
     };
     saveDB();
@@ -577,5 +600,133 @@ export function deletePayrollRecordsForPeriod(periodStart, periodEnd) {
   db.payroll_records = db.payroll_records.filter(
     r => !(r.period_start === periodStart && r.period_end === periodEnd)
   );
+  saveDB();
+}
+
+// ─── Teams ────────────────────────────────────────────────────────────────────
+
+export function getAllTeams() {
+  return [...db.teams];
+}
+
+export function getTeamsByAgency(agencyId) {
+  return db.teams.filter(t => t.agency_id === agencyId).sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export function createTeam(agencyId, name, color, notes, shifts) {
+  const id = db._nextIds.team++;
+  const team = {
+    id, agency_id: agencyId, name, color: color || 'accent-cyan',
+    notes: notes || '', shifts: shifts || [
+      { label: '00:00 - 08:00', color: 'accent-orange' },
+      { label: '08:00 - 16:00', color: 'accent-cyan' },
+      { label: '16:00 - 00:00', color: 'accent-purple' },
+    ],
+    created_at: now(), updated_at: now(),
+  };
+  db.teams.push(team);
+  saveDB();
+  return id;
+}
+
+export function updateTeam(id, name, color, notes, shifts) {
+  const t = db.teams.find(t => t.id === id);
+  if (t) {
+    Object.assign(t, { name, color: color || t.color, notes: notes || '', shifts: shifts || t.shifts, updated_at: now() });
+    saveDB();
+  }
+}
+
+export function deleteTeam(id) {
+  db.teams          = db.teams.filter(t => t.id !== id);
+  db.team_members   = db.team_members.filter(m => m.team_id !== id);
+  db.team_chatters  = db.team_chatters.filter(c => c.team_id !== id);
+  db.team_schedules = db.team_schedules.filter(s => s.team_id !== id);
+  db.team_day_notes = db.team_day_notes.filter(n => n.team_id !== id);
+  saveDB();
+}
+
+// ─── Team ↔ Creator ───────────────────────────────────────────────────────────
+
+export function getAllTeamMembers() {
+  return [...db.team_members];
+}
+
+export function addCreatorToTeam(teamId, creatorId) {
+  if (db.team_members.find(m => m.team_id === teamId && m.creator_id === creatorId)) return;
+  db.team_members.push({ id: db._nextIds.team_member++, team_id: teamId, creator_id: creatorId });
+  saveDB();
+}
+
+export function removeCreatorFromTeam(teamId, creatorId) {
+  db.team_members = db.team_members.filter(m => !(m.team_id === teamId && m.creator_id === creatorId));
+  saveDB();
+}
+
+// ─── Team ↔ Chatter ───────────────────────────────────────────────────────────
+
+export function getAllTeamChatters() {
+  return [...db.team_chatters];
+}
+
+export function addChatterToTeam(teamId, chatterId) {
+  if (db.team_chatters.find(c => c.team_id === teamId && c.chatter_id === chatterId)) return;
+  db.team_chatters.push({ id: db._nextIds.team_chatter++, team_id: teamId, chatter_id: chatterId });
+  saveDB();
+}
+
+export function removeChatterFromTeam(teamId, chatterId) {
+  db.team_chatters = db.team_chatters.filter(c => !(c.team_id === teamId && c.chatter_id === chatterId));
+  saveDB();
+}
+
+// ─── Team Schedule ────────────────────────────────────────────────────────────
+
+export function getScheduleForTeam(teamId, dateFrom, dateTo) {
+  return db.team_schedules.filter(s => s.team_id === teamId && s.date >= dateFrom && s.date <= dateTo);
+}
+
+export function upsertScheduleEntry(teamId, date, shiftIndex, chatterId, isCover) {
+  const existing = db.team_schedules.find(
+    s => s.team_id === teamId && s.date === date && s.shift_index === shiftIndex
+  );
+  if (existing) {
+    existing.chatter_id = chatterId;
+    existing.is_cover = isCover ? 1 : 0;
+    existing.updated_at = now();
+  } else {
+    db.team_schedules.push({
+      id: db._nextIds.team_schedule++, team_id: teamId, date,
+      shift_index: shiftIndex, chatter_id: chatterId, is_cover: isCover ? 1 : 0,
+      created_at: now(), updated_at: now(),
+    });
+  }
+  saveDB();
+}
+
+export function deleteScheduleEntry(teamId, date, shiftIndex) {
+  db.team_schedules = db.team_schedules.filter(
+    s => !(s.team_id === teamId && s.date === date && s.shift_index === shiftIndex)
+  );
+  saveDB();
+}
+
+// ─── Team Day Notes ───────────────────────────────────────────────────────────
+
+export function getDayNotesForTeam(teamId, dateFrom, dateTo) {
+  return db.team_day_notes.filter(n => n.team_id === teamId && n.date >= dateFrom && n.date <= dateTo);
+}
+
+export function upsertDayNote(teamId, date, notes) {
+  const existing = db.team_day_notes.find(n => n.team_id === teamId && n.date === date);
+  if (existing) {
+    existing.notes = notes;
+    existing.updated_at = now();
+  } else {
+    db.team_day_notes.push({
+      id: db._nextIds.team_day_note++, team_id: teamId, date, notes,
+      created_at: now(), updated_at: now(),
+    });
+  }
   saveDB();
 }

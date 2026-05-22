@@ -23,6 +23,13 @@ export const useStore = create((set, get) => ({
     periodEnd:   `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-15`,
   },
 
+  // Teams
+  teams: [],
+  teamMembers: [],
+  teamChatters: [],
+  teamSchedule: [],
+  teamDayNotes: [],
+
   // UI Actions
   setSelectedCreator: (creatorId) => set({ selectedCreatorId: creatorId }),
   setSelectedAgency: (agencyId) => set({ selectedAgencyId: agencyId }),
@@ -46,12 +53,19 @@ export const useStore = create((set, get) => ({
       const chatters = db.getAllChatters();
       const tasks = db.getAllTasksEnriched();
 
+      const teams        = db.getAllTeams();
+      const teamMembers  = db.getAllTeamMembers();
+      const teamChatters = db.getAllTeamChatters();
+
       set({
         agencies,
         creators: allCreators,
         bookmarkedTasks,
         chatters,
         tasks,
+        teams,
+        teamMembers,
+        teamChatters,
       });
     } catch (error) {
       console.error('Error loading data:', error);
@@ -315,5 +329,100 @@ export const useStore = create((set, get) => ({
     const state = get();
     const isCurrent = state.payrollPeriod.periodStart === periodStart && state.payrollPeriod.periodEnd === periodEnd;
     set({ payrollRecords: isCurrent ? [] : state.payrollRecords });
+  },
+
+  // ── Team CRUD ──────────────────────────────────────────────────────────────
+  addTeam: (agencyId, name, color, notes, shifts) => {
+    const id = db.createTeam(agencyId, name, color, notes, shifts);
+    const team = {
+      id, agency_id: agencyId, name, color: color || 'accent-cyan', notes: notes || '',
+      shifts: shifts || [
+        { label: '00:00 - 08:00', color: 'accent-orange' },
+        { label: '08:00 - 16:00', color: 'accent-cyan' },
+        { label: '16:00 - 00:00', color: 'accent-purple' },
+      ],
+      created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+    };
+    set(state => ({ teams: [...state.teams, team] }));
+    return id;
+  },
+
+  updateTeamData: (id, name, color, notes, shifts) => {
+    db.updateTeam(id, name, color, notes, shifts);
+    set(state => ({
+      teams: state.teams.map(t => t.id === id
+        ? { ...t, name, color: color || t.color, notes: notes || '', shifts: shifts || t.shifts, updated_at: new Date().toISOString() }
+        : t
+      )
+    }));
+  },
+
+  deleteTeamData: (id) => {
+    db.deleteTeam(id);
+    set(state => ({
+      teams:        state.teams.filter(t => t.id !== id),
+      teamMembers:  state.teamMembers.filter(m => m.team_id !== id),
+      teamChatters: state.teamChatters.filter(c => c.team_id !== id),
+      teamSchedule: state.teamSchedule.filter(s => s.team_id !== id),
+      teamDayNotes: state.teamDayNotes.filter(n => n.team_id !== id),
+    }));
+  },
+
+  // ── Team ↔ Creator ────────────────────────────────────────────────────────
+  addCreatorToTeam: (teamId, creatorId) => {
+    db.addCreatorToTeam(teamId, creatorId);
+    set(state => {
+      if (state.teamMembers.find(m => m.team_id === teamId && m.creator_id === creatorId)) return state;
+      return { teamMembers: [...state.teamMembers, { team_id: teamId, creator_id: creatorId }] };
+    });
+  },
+
+  removeCreatorFromTeam: (teamId, creatorId) => {
+    db.removeCreatorFromTeam(teamId, creatorId);
+    set(state => ({ teamMembers: state.teamMembers.filter(m => !(m.team_id === teamId && m.creator_id === creatorId)) }));
+  },
+
+  // ── Team ↔ Chatter ────────────────────────────────────────────────────────
+  addChatterToTeam: (teamId, chatterId) => {
+    db.addChatterToTeam(teamId, chatterId);
+    set(state => {
+      if (state.teamChatters.find(c => c.team_id === teamId && c.chatter_id === chatterId)) return state;
+      return { teamChatters: [...state.teamChatters, { team_id: teamId, chatter_id: chatterId }] };
+    });
+  },
+
+  removeChatterFromTeam: (teamId, chatterId) => {
+    db.removeChatterFromTeam(teamId, chatterId);
+    set(state => ({ teamChatters: state.teamChatters.filter(c => !(c.team_id === teamId && c.chatter_id === chatterId)) }));
+  },
+
+  // ── Schedule ──────────────────────────────────────────────────────────────
+  loadTeamSchedule: (teamId, dateFrom, dateTo) => {
+    const teamSchedule = db.getScheduleForTeam(teamId, dateFrom, dateTo);
+    const teamDayNotes = db.getDayNotesForTeam(teamId, dateFrom, dateTo);
+    set({ teamSchedule, teamDayNotes });
+  },
+
+  setScheduleEntry: (teamId, date, shiftIndex, chatterId, isCover) => {
+    db.upsertScheduleEntry(teamId, date, shiftIndex, chatterId, isCover);
+    set(state => {
+      const filtered = state.teamSchedule.filter(
+        s => !(s.team_id === teamId && s.date === date && s.shift_index === shiftIndex)
+      );
+      return { teamSchedule: [...filtered, { team_id: teamId, date, shift_index: shiftIndex, chatter_id: chatterId, is_cover: isCover ? 1 : 0 }] };
+    });
+  },
+
+  deleteScheduleEntryAction: (teamId, date, shiftIndex) => {
+    db.deleteScheduleEntry(teamId, date, shiftIndex);
+    set(state => ({ teamSchedule: state.teamSchedule.filter(s => !(s.team_id === teamId && s.date === date && s.shift_index === shiftIndex)) }));
+  },
+
+  setDayNote: (teamId, date, notes) => {
+    db.upsertDayNote(teamId, date, notes);
+    set(state => {
+      const filtered = state.teamDayNotes.filter(n => !(n.team_id === teamId && n.date === date));
+      return { teamDayNotes: [...filtered, { team_id: teamId, date, notes }] };
+    });
   },
 }));
