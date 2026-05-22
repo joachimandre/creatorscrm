@@ -17,10 +17,11 @@ const StatCard = ({ icon: Icon, label, value, sub, color = '#00d9ff', pulse }) =
     <div className="flex items-start justify-between relative">
       <div>
         <p className="text-xs font-semibold uppercase tracking-widest text-text-tertiary mb-sm">{label}</p>
-        <p className="text-2xl font-bold text-text-primary">{value}</p>
+        <p className="text-3xl font-black text-text-primary">{value}</p>
         {sub && <p className="text-xs text-text-tertiary mt-xs">{sub}</p>}
       </div>
-      <div className="p-sm rounded-xl border border-white/8" style={{ background: `${color}15` }}>
+      <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+        style={{ background: `linear-gradient(135deg, ${color}30, ${color}10)` }}>
         <Icon size={20} style={{ color }} className={pulse ? 'animate-pulse' : ''} />
       </div>
     </div>
@@ -200,6 +201,12 @@ const OverviewPanel = ({ agencies, creators, allEarnings, chatters, tasks }) => 
           const agChatters = chatters.filter(c => c.agency_id === agency.id);
           const agTasks = db.getTasksForAgency(agency.id);
           const agOverdue = agTasks.filter(t => !t.is_completed && t.due_date && t.due_date < today).length;
+          const last3 = Array.from({ length: 3 }, (_, i) => {
+            const d = new Date(); d.setDate(d.getDate() - (2 - i));
+            const ds = d.toISOString().split('T')[0];
+            return agCreators.reduce((s, c) => { const e = db.getEarningsForCreator(c.id, ds); return s + (e?.amount || 0); }, 0);
+          });
+          const maxSpark = Math.max(...last3, 1);
           return (
             <div key={agency.id} className="bg-gradient-to-br from-bg-tertiary to-bg-secondary border border-white/8 rounded-xl p-lg hover:border-white/15 transition-all overflow-hidden relative group"
               style={{ borderLeftColor: color, borderLeftWidth: 3 }}>
@@ -224,6 +231,17 @@ const OverviewPanel = ({ agencies, creators, allEarnings, chatters, tasks }) => 
                   <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
                     <div className="h-full rounded-full transition-all duration-700"
                       style={{ width: `${pct}%`, background: pct >= 100 ? '#00ff88' : pct >= 80 ? '#ff6b35' : color }} />
+                  </div>
+                </div>
+              )}
+              {last3.some(v => v > 0) && (
+                <div className="mt-sm relative">
+                  <p className="text-[10px] text-text-tertiary/40 mb-xs">Last 3 days</p>
+                  <div className="flex items-end gap-1 h-5">
+                    {last3.map((v, i) => (
+                      <div key={i} className="flex-1 rounded-sm transition-all"
+                        style={{ height: `${Math.max(15, (v / maxSpark) * 100)}%`, backgroundColor: color, opacity: 0.3 + i * 0.2 }} />
+                    ))}
                   </div>
                 </div>
               )}

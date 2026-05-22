@@ -247,21 +247,25 @@ const TaskItem = ({ task, onToggle, onUpdate, onDelete, accentColor }) => {
 // ─── Task group ────────────────────────────────────────────────────────────────
 const TaskGroup = ({ label, tasks, icon: Icon, color, defaultOpen = true, onToggle, onUpdate, onDelete, accentColor }) => {
   const [open, setOpen] = useState(defaultOpen);
-  if (tasks.length === 0) return null;
   return (
     <div className="space-y-xs">
-      <button onClick={() => setOpen(v => !v)}
-        className="flex items-center gap-sm w-full text-left py-xs px-sm rounded-lg hover:bg-white/5 transition-colors group">
-        <Icon size={14} style={{ color }} />
-        <span className="text-xs font-bold uppercase tracking-widest" style={{ color }}>{label}</span>
-        <span className="text-xs px-1.5 py-0.5 rounded-full bg-white/8 text-text-tertiary font-mono">{tasks.length}</span>
-        <ChevronDown size={12} className={`ml-auto text-text-tertiary transition-transform ${open ? '' : '-rotate-90'}`} />
+      <button onClick={() => setOpen(v => !v)} className="flex items-center gap-sm w-full text-left py-xs group">
+        <Icon size={13} style={{ color }} />
+        <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color }}>{label}</span>
+        <span className="text-xs px-1.5 py-0.5 rounded-full font-bold font-mono"
+          style={{ backgroundColor: color + '20', color }}>{tasks.length}</span>
+        <div className="flex-1 h-px mx-xs" style={{ backgroundColor: color + '18' }} />
+        <ChevronDown size={12} className={`text-text-tertiary transition-transform ${open ? '' : '-rotate-90'}`} />
       </button>
       {open && (
         <div className="space-y-xs pl-1">
-          {tasks.map(t => (
-            <TaskItem key={t.id} task={t} onToggle={onToggle} onUpdate={onUpdate} onDelete={onDelete} accentColor={accentColor} />
-          ))}
+          {tasks.length === 0 ? (
+            <div className="text-xs text-text-tertiary/30 italic py-xs pl-md">No tasks here</div>
+          ) : (
+            tasks.map(t => (
+              <TaskItem key={t.id} task={t} onToggle={onToggle} onUpdate={onUpdate} onDelete={onDelete} accentColor={accentColor} />
+            ))
+          )}
         </div>
       )}
     </div>
@@ -370,6 +374,23 @@ const Tasks = () => {
         })}
         {agencies.length === 0 && <p className="text-text-tertiary text-sm">Add an agency from the Dashboard first.</p>}
       </div>
+
+      {/* Task summary strip */}
+      {activeAgencyId && (
+        <div className="flex items-center gap-sm flex-wrap">
+          {[
+            { label: 'Active',    value: activeTasks.length,    color: 'text-text-secondary', bg: 'bg-white/5 border-white/10'                       },
+            { label: 'Overdue',   value: overdue.length,        color: 'text-accent-pink',    bg: 'bg-accent-pink/10 border-accent-pink/25'            },
+            { label: 'Due Today', value: dueToday.length,       color: 'text-accent-orange',  bg: 'bg-accent-orange/10 border-accent-orange/25'        },
+            { label: 'Done',      value: completedTasks.length, color: 'text-accent-lime/80', bg: 'bg-accent-lime/8 border-accent-lime/20'             },
+          ].map(({ label, value, color, bg }) => value > 0 ? (
+            <div key={label} className={`flex items-center gap-xs px-sm py-xs rounded-full border text-xs ${bg}`}>
+              <span className="text-text-tertiary/60">{label}:</span>
+              <span className={`font-bold ${color}`}>{value}</span>
+            </div>
+          ) : null)}
+        </div>
+      )}
 
       {activeAgencyId && (
         <>

@@ -6,6 +6,8 @@ import AgencyRevenueChart from '../charts/AgencyRevenueChart.jsx';
 import CreatorGoalProgress from '../charts/CreatorGoalProgress.jsx';
 import * as db from '../../db/index.js';
 
+const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
 // Agency accent colors cycling through each one
 const AGENCY_ACCENTS = [
   { border: 'border-l-accent-cyan',   avatar: 'from-cyan-500/40 to-cyan-700/40',   text: '#00d9ff' },
@@ -370,6 +372,19 @@ const RevenueMaster = () => {
   const filteredActive = agencyFilter ? activeCreators.filter(c => c.agency_id === agencyFilter) : activeCreators;
   const filteredInactive = agencyFilter ? inactiveCreators.filter(c => c.agency_id === agencyFilter) : inactiveCreators;
 
+  // Month summary stats (computed from current earnings state)
+  const monthSummary = (() => {
+    const total = filteredActive.reduce((s, c) => s + getMonthlyTotal(c.id), 0);
+    const dayTotals = {};
+    filteredActive.forEach(c => {
+      (earnings[c.id] || []).forEach(e => { dayTotals[e.date] = (dayTotals[e.date] || 0) + e.amount; });
+    });
+    const entries = Object.entries(dayTotals);
+    const best    = entries.reduce((b, cur) => cur[1] > (b?.[1] ?? 0) ? cur : b, null);
+    const logged  = entries.filter(([, v]) => v > 0).length;
+    return { total, best, logged, daysElapsed: Math.min(today, daysInMonth) };
+  })();
+
   return (
     <div className="p-lg bg-gradient-to-br from-bg-primary via-bg-secondary to-bg-tertiary h-full overflow-auto space-y-lg">
       <h1 className="text-3xl font-bold text-text-primary flex items-center gap-md">
@@ -436,6 +451,33 @@ const RevenueMaster = () => {
         Click any value to edit · Enter to save · Escape to cancel · Clear a day entry to remove it
       </p>
 
+      {/* Month Summary Bar */}
+      {filteredActive.length > 0 && monthSummary.total > 0 && (
+        <div className="flex items-center gap-lg flex-wrap px-lg py-md bg-white/[0.025] border border-white/8 rounded-xl">
+          <span className="text-xs font-bold text-text-secondary">{MONTH_NAMES[currentMonth - 1]} {currentYear}</span>
+          <div className="w-px h-3 bg-white/15 shrink-0" />
+          <div className="flex items-center gap-xs">
+            <span className="text-[11px] text-text-tertiary">Total:</span>
+            <span className="text-sm font-black font-mono text-accent-cyan">${monthSummary.total.toLocaleString('en-US', { maximumFractionDigits: 0 })}</span>
+          </div>
+          {monthSummary.best && (
+            <>
+              <div className="w-px h-3 bg-white/15 shrink-0" />
+              <div className="flex items-center gap-xs">
+                <span className="text-[11px] text-text-tertiary">Best day:</span>
+                <span className="text-sm font-bold font-mono text-accent-lime">${monthSummary.best[1].toFixed(0)}</span>
+                <span className="text-[11px] text-text-tertiary">({monthSummary.best[0].slice(5).replace('-', '/')})</span>
+              </div>
+            </>
+          )}
+          <div className="w-px h-3 bg-white/15 shrink-0" />
+          <div className="flex items-center gap-xs">
+            <span className="text-[11px] text-text-tertiary">Days logged:</span>
+            <span className="text-sm font-bold font-mono text-text-secondary">{monthSummary.logged}/{monthSummary.daysElapsed}</span>
+          </div>
+        </div>
+      )}
+
       {/* Main Table */}
       <div className="rounded-xl overflow-hidden border border-white/5 shadow-xl">
         <div className="overflow-x-auto">
@@ -463,9 +505,10 @@ const RevenueMaster = () => {
       {filteredInactive.length > 0 && (
         <div className="mt-xl">
           <button onClick={() => setExpandedInactive(v => !v)}
-            className="flex items-center gap-md text-text-secondary hover:text-text-primary mb-lg transition-colors">
-            <ChevronDown size={20} className={`transition-transform ${expandedInactive ? 'rotate-180' : ''}`} />
-            <span className="font-semibold">Inactive Creators ({filteredInactive.length})</span>
+            className="flex items-center gap-md w-full text-left px-md py-sm bg-white/[0.02] border border-white/8 rounded-xl hover:bg-white/[0.04] hover:border-white/15 transition-all mb-lg">
+            <ChevronDown size={16} className={`text-text-tertiary transition-transform ${expandedInactive ? 'rotate-180' : ''}`} />
+            <span className="text-sm font-semibold text-text-secondary">Inactive Creators</span>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-white/8 border border-white/10 text-text-tertiary font-mono">{filteredInactive.length}</span>
           </button>
           {expandedInactive && (
             <div className="rounded-xl overflow-hidden border border-white/5">

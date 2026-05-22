@@ -145,6 +145,16 @@ const Analytics = () => {
     return result;
   }, [activeCreators, startDate, endDate]);
 
+  // ── KPI Summary ──────────────────────────────────────────────────────────────
+  const kpiStats = useMemo(() => {
+    const total   = dailyData.reduce((s, d) => s + d.revenue, 0);
+    const bestDay = dailyData.reduce((b, d) => d.revenue > (b?.revenue ?? 0) ? d : b, null);
+    const daysOn  = dailyData.filter(d => d.revenue > 0).length;
+    const avg     = daysOn > 0 ? total / daysOn : 0;
+    const bestDowIdx = dayOfWeekData.reduce((bi, d, i) => d.avg > (dayOfWeekData[bi]?.avg ?? 0) ? i : bi, 0);
+    return { total, bestDay, avg, bestWeekday: dayOfWeekData[bestDowIdx]?.avg > 0 ? DAY_NAMES[bestDowIdx] : '—' };
+  }, [dailyData, dayOfWeekData]);
+
   const hasAnyData =
     monthlyTrendData.some(d => d.revenue > 0) ||
     leaderboardData.length > 0;
@@ -203,6 +213,24 @@ const Analytics = () => {
         </div>
       </div>
 
+      {/* KPI Summary Strip */}
+      {hasAnyData && (
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-md">
+          {[
+            { label: 'Total Revenue',   value: fmt$(kpiStats.total),                                        sub: null,                   color: 'text-accent-cyan',   grad: 'from-accent-cyan/10'   },
+            { label: 'Best Single Day', value: kpiStats.bestDay ? fmt$(kpiStats.bestDay.revenue) : '—',     sub: kpiStats.bestDay?.date, color: 'text-accent-purple', grad: 'from-accent-purple/10' },
+            { label: 'Daily Average',   value: fmt$(kpiStats.avg),                                          sub: null,                   color: 'text-accent-pink',   grad: 'from-accent-pink/10'   },
+            { label: 'Best Weekday',    value: kpiStats.bestWeekday,                                        sub: null,                   color: 'text-accent-lime',   grad: 'from-accent-lime/10'   },
+          ].map(({ label, value, sub, color, grad }) => (
+            <div key={label} className={`bg-gradient-to-br ${grad} to-transparent border border-white/8 rounded-2xl p-lg`}>
+              <p className="text-[11px] text-text-tertiary/60 font-medium uppercase tracking-wider mb-xs">{label}</p>
+              <p className={`text-xl font-black font-mono ${color}`}>{value}</p>
+              {sub && <p className="text-[10px] text-text-tertiary/50 mt-xs font-mono">{sub}</p>}
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Empty state */}
       {!hasAnyData ? (
         <div className="text-center py-2xl border border-dashed border-white/10 rounded-xl">
@@ -217,9 +245,12 @@ const Analytics = () => {
 
           {/* Chart 1 — Monthly Trend */}
           <div className="bg-white/[0.03] border border-white/8 rounded-2xl p-lg space-y-md">
-            <div>
-              <h3 className="text-sm font-bold text-text-primary">Monthly Revenue</h3>
-              <p className="text-[11px] text-text-tertiary/60">Total revenue per month</p>
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-text-primary">Monthly Revenue</h3>
+                <p className="text-[11px] text-text-tertiary/60">Total revenue per month</p>
+              </div>
+              <span className="text-sm font-black font-mono text-accent-cyan">{fmtK(monthlyTrendData.reduce((s,d)=>s+d.revenue,0))}</span>
             </div>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={monthlyTrendData} barSize={Math.max(8, Math.min(24, 120 / monthlyTrendData.length))}>
@@ -234,9 +265,14 @@ const Analytics = () => {
 
           {/* Chart 2 — Creator Leaderboard */}
           <div className="bg-white/[0.03] border border-white/8 rounded-2xl p-lg space-y-md">
-            <div>
-              <h3 className="text-sm font-bold text-text-primary">Creator Leaderboard</h3>
-              <p className="text-[11px] text-text-tertiary/60">Current month earnings (top 10)</p>
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-text-primary">Creator Leaderboard</h3>
+                <p className="text-[11px] text-text-tertiary/60">Current month earnings (top 10)</p>
+              </div>
+              {leaderboardData.length > 0 && (
+                <span className="text-sm font-black font-mono text-accent-purple">{fmtK(leaderboardData.reduce((s,d)=>s+d.revenue,0))}</span>
+              )}
             </div>
             {leaderboardData.length === 0 ? (
               <div className="flex items-center justify-center h-[200px] text-text-tertiary/40 text-sm">
@@ -267,9 +303,12 @@ const Analytics = () => {
 
           {/* Chart 3 — Daily Revenue */}
           <div className="bg-white/[0.03] border border-white/8 rounded-2xl p-lg space-y-md">
-            <div>
-              <h3 className="text-sm font-bold text-text-primary">Daily Revenue</h3>
-              <p className="text-[11px] text-text-tertiary/60">Total agency revenue per day (up to 90 days)</p>
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-text-primary">Daily Revenue</h3>
+                <p className="text-[11px] text-text-tertiary/60">Total agency revenue per day (up to 90 days)</p>
+              </div>
+              <span className="text-sm font-black font-mono text-accent-pink">{fmtK(kpiStats.total)}</span>
             </div>
             <ResponsiveContainer width="100%" height={200}>
               <AreaChart data={dailyData}>
@@ -299,9 +338,12 @@ const Analytics = () => {
 
           {/* Chart 4 — Day of Week */}
           <div className="bg-white/[0.03] border border-white/8 rounded-2xl p-lg space-y-md">
-            <div>
-              <h3 className="text-sm font-bold text-text-primary">Best Day of Week</h3>
-              <p className="text-[11px] text-text-tertiary/60">Average revenue by day of week</p>
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-text-primary">Best Day of Week</h3>
+                <p className="text-[11px] text-text-tertiary/60">Average revenue by day of week</p>
+              </div>
+              <span className="text-sm font-black font-mono text-accent-lime">{kpiStats.bestWeekday}</span>
             </div>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={dayOfWeekData} barSize={28}>
