@@ -387,9 +387,9 @@ const RevenueMaster = () => {
 
   return (
     <div className="p-lg bg-gradient-to-br from-bg-primary via-bg-secondary to-bg-tertiary h-full overflow-auto space-y-lg">
-      <h1 className="text-3xl font-bold text-text-primary flex items-center gap-md">
-        <BarChart3 size={32} className="text-accent-cyan" />
-        Revenue Master Sheet
+      <h1 className="text-3xl font-bold flex items-center gap-md">
+        <BarChart3 size={32} className="text-accent-lime" />
+        <span className="bg-gradient-to-r from-accent-lime to-accent-cyan bg-clip-text text-transparent">Revenue Master</span>
       </h1>
 
       {/* Controls */}

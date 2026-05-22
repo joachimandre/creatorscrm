@@ -697,7 +697,7 @@ const Payroll = () => {
         <div className="flex items-center gap-md">
           <DollarSign size={28} className="text-accent-lime" />
           <div>
-            <h1 className="text-2xl font-bold text-text-primary leading-tight">Payroll</h1>
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-accent-lime to-accent-cyan bg-clip-text text-transparent leading-tight">Payroll</h1>
             <p className="text-xs text-accent-lime/70 font-mono">{periodLabel(periodStart, periodEnd)}</p>
           </div>
         </div>

@@ -177,7 +177,7 @@ const Chatters = () => {
 
     return (
       <div key={chatter.id}
-        className="relative group flex flex-col bg-gradient-to-br from-bg-tertiary to-bg-secondary border border-white/8 rounded-xl overflow-hidden transition-all duration-200 hover:border-white/20 hover:shadow-lg hover:-translate-y-[1px]">
+        className="relative group flex flex-col bg-gradient-to-br from-white/[0.06] to-white/[0.02] border border-white/10 rounded-2xl overflow-hidden transition-all duration-200 hover:border-white/20 hover:shadow-lg hover:-translate-y-[1px] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
 
         {/* Colored top strip */}
         <div className="h-[2px]" style={{ backgroundColor: teamHex || av.hex }} />
@@ -219,9 +219,9 @@ const Chatters = () => {
               <p className="text-sm font-bold text-text-primary truncate">{chatter.name}</p>
               <div className="flex items-center gap-sm mt-[2px] flex-wrap">
                 {chatter.role && (
-                  <span className="text-[10px] text-text-tertiary/70 truncate">{chatter.role}</span>
+                  <span className="text-xs text-text-tertiary/70 truncate">{chatter.role}</span>
                 )}
-                <span className="text-[10px] px-1.5 py-[1px] rounded-full font-semibold border bg-accent-lime/10 border-accent-lime/25 text-accent-lime/80">
+                <span className="text-xs px-1.5 py-[1px] rounded-full font-semibold border bg-accent-lime/10 border-accent-lime/25 text-accent-lime/80">
                   ● Active
                 </span>
               </div>
@@ -257,7 +257,7 @@ const Chatters = () => {
                 <span className="text-text-tertiary/60">Last Payroll</span>
                 <div className="text-right">
                   <span className="font-mono font-bold text-text-primary">{fmt$(payroll.total)}</span>
-                  <span className="text-text-tertiary/40 text-[10px] ml-xs">
+                  <span className="text-text-tertiary/40 text-xs ml-xs">
                     {fmtDate(payroll.periodStart)}–{fmtDate(payroll.periodEnd)}
                   </span>
                 </div>
@@ -279,7 +279,7 @@ const Chatters = () => {
           <div className="border-t border-white/10 bg-bg-primary/40 p-lg space-y-md animate-fade-in"
             onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-text-tertiary">Edit Chatter</p>
+              <p className="text-xs font-bold uppercase tracking-widest text-text-tertiary">Edit Chatter</p>
               <button onClick={() => setEditingId(null)} className="text-text-tertiary hover:text-text-primary transition-colors">
                 <X size={14} />
               </button>
@@ -287,14 +287,14 @@ const Chatters = () => {
 
             <div className="grid grid-cols-2 gap-xs">
               <div>
-                <label className="text-[10px] text-text-tertiary mb-xs block">Name</label>
+                <label className="text-xs text-text-tertiary mb-xs block">Name</label>
                 <input type="text" value={editForm.name}
                   onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))}
                   className="w-full bg-bg-primary/60 border border-white/10 rounded-lg px-sm py-xs text-text-primary text-xs focus:outline-none focus:border-accent-lime/50 transition-all"
                 />
               </div>
               <div>
-                <label className="text-[10px] text-text-tertiary mb-xs block">Role</label>
+                <label className="text-xs text-text-tertiary mb-xs block">Role</label>
                 <input type="text" value={editForm.role}
                   onChange={e => setEditForm(f => ({ ...f, role: e.target.value }))}
                   placeholder="e.g. Senior Chatter"
@@ -305,14 +305,14 @@ const Chatters = () => {
 
             <div className="grid grid-cols-2 gap-xs">
               <div>
-                <label className="text-[10px] text-text-tertiary mb-xs block">Hourly Rate $</label>
+                <label className="text-xs text-text-tertiary mb-xs block">Hourly Rate $</label>
                 <input type="number" value={editForm.hourlyRate} min="0"
                   onChange={e => setEditForm(f => ({ ...f, hourlyRate: e.target.value }))}
                   className="w-full bg-bg-primary/60 border border-white/10 rounded-lg px-sm py-xs text-text-primary text-xs focus:outline-none focus:border-accent-lime/50 transition-all"
                 />
               </div>
               <div>
-                <label className="text-[10px] text-text-tertiary mb-xs block">Commission %</label>
+                <label className="text-xs text-text-tertiary mb-xs block">Commission %</label>
                 <input type="number" value={editForm.commissionRate} min="0" max="100"
                   onChange={e => setEditForm(f => ({ ...f, commissionRate: e.target.value }))}
                   className="w-full bg-bg-primary/60 border border-white/10 rounded-lg px-sm py-xs text-text-primary text-xs focus:outline-none focus:border-accent-lime/50 transition-all"
@@ -321,7 +321,7 @@ const Chatters = () => {
             </div>
 
             <div>
-              <label className="text-[10px] text-text-tertiary mb-xs flex items-center gap-xs">
+              <label className="text-xs text-text-tertiary mb-xs flex items-center gap-xs">
                 <Link2 size={10} /> Google Drive URL
               </label>
               <input type="url" value={editForm.driveUrl}
@@ -332,7 +332,7 @@ const Chatters = () => {
             </div>
 
             <div>
-              <label className="text-[10px] text-text-tertiary mb-xs block">Notes</label>
+              <label className="text-xs text-text-tertiary mb-xs block">Notes</label>
               <textarea value={editForm.notes} rows={2}
                 onChange={e => setEditForm(f => ({ ...f, notes: e.target.value }))}
                 placeholder="Any notes…"
@@ -361,7 +361,7 @@ const Chatters = () => {
         {!isEditing && (
           <button
             onClick={e => { e.stopPropagation(); openEdit(chatter); }}
-            className="absolute bottom-md right-md opacity-0 group-hover:opacity-100 transition-all flex items-center gap-xs px-sm py-[4px] bg-bg-secondary/90 border border-white/15 rounded-lg text-[10px] text-text-tertiary hover:text-text-primary hover:border-white/25 shadow-lg">
+            className="absolute bottom-md right-md opacity-0 group-hover:opacity-100 transition-all flex items-center gap-xs px-sm py-[4px] bg-bg-secondary/90 border border-white/15 rounded-lg text-xs text-text-tertiary hover:text-text-primary hover:border-white/25 shadow-lg">
             <Pencil size={10} /> Edit
           </button>
         )}
@@ -377,7 +377,7 @@ const Chatters = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-md">
           <MessageSquare size={32} className="text-accent-lime" />
-          <h1 className="text-3xl font-bold text-text-primary">Chatters</h1>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-accent-lime to-accent-cyan bg-clip-text text-transparent">Chatters</h1>
         </div>
         <button onClick={() => setShowAddModal(true)}
           className="flex items-center gap-sm px-lg py-sm rounded-xl text-sm font-semibold bg-gradient-to-r from-accent-lime to-accent-cyan text-bg-primary border-transparent shadow-glow hover:opacity-90 transition-all">

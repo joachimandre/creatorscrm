@@ -81,7 +81,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 /* Focus ring for accessibility */
 :focus-visible {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid #00d9ff;
   outline-offset: 2px;
 }
 

@@ -262,9 +262,9 @@ const Creators = () => {
 
     return (
       <div key={creator.id}
-        className={`relative group flex flex-col bg-gradient-to-br from-bg-tertiary to-bg-secondary border rounded-xl overflow-hidden transition-all duration-200
+        className={`relative group flex flex-col bg-gradient-to-br from-white/[0.06] to-white/[0.02] border rounded-2xl overflow-hidden transition-all duration-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]
           ${isInactive ? 'opacity-60' : ''}
-          ${hasDrive && !isInactive ? 'cursor-pointer hover:border-white/20 hover:shadow-lg hover:-translate-y-[1px]' : 'border-white/8'}
+          ${hasDrive && !isInactive ? 'cursor-pointer hover:border-white/20 hover:shadow-lg hover:-translate-y-[1px]' : 'border-white/10'}
           ${colors.glow && !isInactive ? 'border-accent-lime/30 shadow-glow-lime' : 'border-white/8'}
         `}
         onClick={() => {
@@ -317,9 +317,9 @@ const Creators = () => {
               <p className="text-sm font-bold text-text-primary truncate">{creator.stage_name}</p>
               <div className="flex items-center gap-sm mt-[2px]">
                 {creator.commission_rate > 0 && (
-                  <span className="text-[10px] text-text-tertiary/60 font-medium">{creator.commission_rate}% comm</span>
+                  <span className="text-xs text-text-tertiary/60 font-medium">{creator.commission_rate}% comm</span>
                 )}
-                <span className={`text-[10px] px-1.5 py-[1px] rounded-full font-semibold border
+                <span className={`text-xs px-1.5 py-[1px] rounded-full font-semibold border
                   ${creator.is_active
                     ? 'bg-accent-lime/10 border-accent-lime/25 text-accent-lime/80'
                     : 'bg-white/5 border-white/10 text-text-tertiary/50'
@@ -333,16 +333,16 @@ const Creators = () => {
           {/* Monthly goal progress */}
           <div className="space-y-xs">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-semibold text-text-tertiary/60 uppercase tracking-wider">Monthly Goal</span>
+              <span className="text-xs font-semibold text-text-tertiary/60 uppercase tracking-wider">Monthly Goal</span>
               {colors.label && (
-                <span className="text-[10px] font-bold text-accent-lime">{colors.label}</span>
+                <span className="text-xs font-bold text-accent-lime">{colors.label}</span>
               )}
             </div>
             <div className="flex items-end justify-between gap-sm">
               <div>
                 <span className={`text-base font-black font-mono ${colors.text}`}>{fmt(monthEarned)}</span>
                 {creator.monthly_goal > 0 && (
-                  <span className="text-[10px] text-text-tertiary/50 ml-xs">of {fmt(creator.monthly_goal)}</span>
+                  <span className="text-xs text-text-tertiary/50 ml-xs">of {fmt(creator.monthly_goal)}</span>
                 )}
               </div>
               {creator.monthly_goal > 0 && (
@@ -380,7 +380,7 @@ const Creators = () => {
 
           {/* Agency % share */}
           {agencyMonthlyTotal > 0 && monthEarned > 0 && (
-            <div className="text-[10px] text-text-tertiary/40 text-right -mt-xs">
+            <div className="text-xs text-text-tertiary/40 text-right -mt-xs">
               {getAgencyPct(creator.id)}% of agency
             </div>
           )}
@@ -397,7 +397,7 @@ const Creators = () => {
                       {subData.latest.count.toLocaleString()}
                     </span>
                     {subData.prev && (
-                      <span className={`text-[10px] font-bold shrink-0 ${
+                      <span className={`text-xs font-bold shrink-0 ${
                         subData.latest.count > subData.prev.count ? 'text-accent-lime'
                         : subData.latest.count < subData.prev.count ? 'text-accent-pink'
                         : 'text-text-tertiary/40'
@@ -412,7 +412,7 @@ const Creators = () => {
                   </div>
                   <button
                     onClick={() => { setSubLogOpen(creator.id); setSubLogForm({ date: todayIso, count: '', notes: '' }); }}
-                    className="shrink-0 text-[10px] px-sm py-[2px] border border-white/10 rounded-lg text-text-tertiary/60 hover:text-text-primary hover:bg-white/5 transition-all">
+                    className="shrink-0 text-xs px-sm py-[2px] border border-white/10 rounded-lg text-text-tertiary/60 hover:text-text-primary hover:bg-white/5 transition-all">
                     + Log
                   </button>
                 </div>
@@ -423,7 +423,7 @@ const Creators = () => {
                   </span>
                   <button
                     onClick={() => { setSubLogOpen(creator.id); setSubLogForm({ date: todayIso, count: '', notes: '' }); }}
-                    className="shrink-0 text-[10px] px-sm py-[2px] border border-accent-cyan/20 rounded-lg text-accent-cyan/60 hover:text-accent-cyan hover:bg-accent-cyan/5 transition-all">
+                    className="shrink-0 text-xs px-sm py-[2px] border border-accent-cyan/20 rounded-lg text-accent-cyan/60 hover:text-accent-cyan hover:bg-accent-cyan/5 transition-all">
                     + Log
                   </button>
                 </div>
@@ -437,7 +437,7 @@ const Creators = () => {
                       <label className="text-[9px] text-text-tertiary/50 mb-[2px] block">Date</label>
                       <input type="date" value={subLogForm.date}
                         onChange={e => setSubLogForm(f => ({ ...f, date: e.target.value }))}
-                        className="w-full bg-bg-primary/60 border border-white/10 rounded-lg px-xs py-[3px] text-text-primary text-[10px] focus:outline-none focus:border-accent-cyan/50 transition-all"
+                        className="w-full bg-bg-primary/60 border border-white/10 rounded-lg px-xs py-[3px] text-text-primary text-xs focus:outline-none focus:border-accent-cyan/50 transition-all"
                       />
                     </div>
                     <div>
@@ -447,7 +447,7 @@ const Creators = () => {
                         onChange={e => setSubLogForm(f => ({ ...f, count: e.target.value }))}
                         onKeyDown={e => { if (e.key === 'Enter') handleLogSub(creator.id); if (e.key === 'Escape') setSubLogOpen(null); }}
                         placeholder="e.g. 4820"
-                        className="w-full bg-bg-primary/60 border border-white/10 rounded-lg px-xs py-[3px] text-text-primary text-[10px] focus:outline-none focus:border-accent-cyan/50 placeholder-text-tertiary/25 transition-all"
+                        className="w-full bg-bg-primary/60 border border-white/10 rounded-lg px-xs py-[3px] text-text-primary text-xs focus:outline-none focus:border-accent-cyan/50 placeholder-text-tertiary/25 transition-all"
                       />
                     </div>
                   </div>
@@ -455,11 +455,11 @@ const Creators = () => {
                     <button
                       onClick={() => handleLogSub(creator.id)}
                       disabled={!subLogForm.count || isNaN(parseInt(subLogForm.count))}
-                      className="flex-1 py-[3px] bg-accent-cyan/70 hover:bg-accent-cyan/90 text-bg-primary text-[10px] font-bold rounded-lg disabled:opacity-30 transition-all">
+                      className="flex-1 py-[3px] bg-accent-cyan/70 hover:bg-accent-cyan/90 text-bg-primary text-xs font-bold rounded-lg disabled:opacity-30 transition-all">
                       Save
                     </button>
                     <button onClick={() => setSubLogOpen(null)}
-                      className="px-sm py-[3px] border border-white/10 text-text-tertiary text-[10px] rounded-lg hover:bg-white/5 transition-all">
+                      className="px-sm py-[3px] border border-white/10 text-text-tertiary text-xs rounded-lg hover:bg-white/5 transition-all">
                       Cancel
                     </button>
                   </div>
@@ -474,7 +474,7 @@ const Creators = () => {
           <div className="border-t border-white/10 bg-bg-primary/40 p-lg space-y-md animate-fade-in"
             onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-text-tertiary">Edit Creator</p>
+              <p className="text-xs font-bold uppercase tracking-widest text-text-tertiary">Edit Creator</p>
               <button onClick={() => setEditingId(null)} className="text-text-tertiary hover:text-text-primary transition-colors">
                 <X size={14} />
               </button>
@@ -482,7 +482,7 @@ const Creators = () => {
 
             {/* Stage name */}
             <div>
-              <label className="text-[10px] text-text-tertiary mb-xs block">Stage Name</label>
+              <label className="text-xs text-text-tertiary mb-xs block">Stage Name</label>
               <input type="text" value={editForm.name}
                 onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))}
                 className="w-full bg-bg-primary/60 border border-white/10 rounded-lg px-sm py-xs text-text-primary text-xs focus:outline-none focus:border-accent-purple/50 transition-all"
@@ -497,7 +497,7 @@ const Creators = () => {
                 { key: 'monthlyGoal', label: 'Monthly $' },
               ].map(({ key, label }) => (
                 <div key={key}>
-                  <label className="text-[10px] text-text-tertiary mb-xs block">{label}</label>
+                  <label className="text-xs text-text-tertiary mb-xs block">{label}</label>
                   <input type="number" value={editForm[key]} min="0"
                     onChange={e => setEditForm(f => ({ ...f, [key]: e.target.value }))}
                     className="w-full bg-bg-primary/60 border border-white/10 rounded-lg px-xs py-xs text-text-primary text-xs focus:outline-none focus:border-accent-purple/50 transition-all"
@@ -509,7 +509,7 @@ const Creators = () => {
             {/* Commission */}
             <div className="grid grid-cols-2 gap-xs">
               <div>
-                <label className="text-[10px] text-text-tertiary mb-xs block">Commission %</label>
+                <label className="text-xs text-text-tertiary mb-xs block">Commission %</label>
                 <input type="number" value={editForm.commissionRate} min="0" max="100"
                   onChange={e => setEditForm(f => ({ ...f, commissionRate: e.target.value }))}
                   className="w-full bg-bg-primary/60 border border-white/10 rounded-lg px-xs py-xs text-text-primary text-xs focus:outline-none focus:border-accent-purple/50 transition-all"
@@ -530,7 +530,7 @@ const Creators = () => {
 
             {/* Drive URL */}
             <div>
-              <label className="text-[10px] text-text-tertiary mb-xs flex items-center gap-xs">
+              <label className="text-xs text-text-tertiary mb-xs flex items-center gap-xs">
                 <Link2 size={10} /> Google Drive URL
               </label>
               <input type="url" value={editForm.driveUrl}
@@ -542,7 +542,7 @@ const Creators = () => {
 
             {/* Notes */}
             <div>
-              <label className="text-[10px] text-text-tertiary mb-xs block">Notes</label>
+              <label className="text-xs text-text-tertiary mb-xs block">Notes</label>
               <textarea value={editForm.notes} rows={2}
                 onChange={e => setEditForm(f => ({ ...f, notes: e.target.value }))}
                 placeholder="Any notes…"
@@ -572,7 +572,7 @@ const Creators = () => {
         {!isEditing && (
           <button
             onClick={e => { e.stopPropagation(); openEdit(creator); }}
-            className="absolute bottom-md right-md opacity-0 group-hover:opacity-100 transition-all flex items-center gap-xs px-sm py-[4px] bg-bg-secondary/90 border border-white/15 rounded-lg text-[10px] text-text-tertiary hover:text-text-primary hover:border-white/25 shadow-lg">
+            className="absolute bottom-md right-md opacity-0 group-hover:opacity-100 transition-all flex items-center gap-xs px-sm py-[4px] bg-bg-secondary/90 border border-white/15 rounded-lg text-xs text-text-tertiary hover:text-text-primary hover:border-white/25 shadow-lg">
             <Pencil size={10} /> Edit
           </button>
         )}
@@ -588,7 +588,7 @@ const Creators = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-md">
           <Star size={32} className="text-accent-purple" />
-          <h1 className="text-3xl font-bold text-text-primary">Creators</h1>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-accent-purple to-accent-pink bg-clip-text text-transparent">Creators</h1>
         </div>
         <button onClick={() => setShowAddModal(true)}
           className="flex items-center gap-sm px-lg py-sm rounded-xl text-sm font-semibold bg-gradient-to-r from-accent-purple to-accent-pink text-white border-transparent shadow-glow-purple hover:opacity-90 transition-all">

@@ -340,7 +340,7 @@ const Tasks = () => {
       <div className="flex items-center justify-between flex-wrap gap-md">
         <div className="flex items-center gap-md">
           <CheckSquare size={30} className="text-accent-purple" />
-          <h1 className="text-3xl font-bold text-text-primary">Tasks</h1>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-accent-purple to-accent-blue bg-clip-text text-transparent">Tasks</h1>
           {totalActive > 0 && (
             <span className={`text-sm px-sm py-xs rounded-full font-semibold ${totalOverdue > 0 ? 'bg-accent-pink/15 text-accent-pink border border-accent-pink/30' : 'bg-white/8 text-text-secondary border border-white/10'}`}>
               {totalActive} active {totalOverdue > 0 ? `· ${totalOverdue} overdue` : ''}

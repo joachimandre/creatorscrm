@@ -458,7 +458,7 @@ const Team = () => {
       {/* Page header */}
       <div className="flex items-center gap-md">
         <Users size={32} className="text-accent-orange" />
-        <h1 className="text-3xl font-bold text-text-primary">Team</h1>
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-accent-orange to-accent-pink bg-clip-text text-transparent">Team</h1>
       </div>
 
       {/* Agency tabs */}

@@ -168,7 +168,7 @@ const Analytics = () => {
       {/* Header */}
       <div className="flex items-center gap-md">
         <TrendingUp size={32} className="text-accent-cyan" />
-        <h1 className="text-3xl font-bold text-text-primary">Analytics</h1>
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-accent-cyan to-accent-blue bg-clip-text text-transparent">Analytics</h1>
       </div>
 
       {/* Controls: agency tabs + date range */}

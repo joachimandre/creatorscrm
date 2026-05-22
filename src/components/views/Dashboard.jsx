@@ -297,7 +297,7 @@ const Dashboard = () => {
       {/* Header */}
       <div className="flex items-center justify-between mb-lg flex-wrap gap-md">
         <div className="flex items-center gap-md">
-          <h1 className="text-3xl font-bold text-text-primary">Dashboard</h1>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-accent-cyan to-accent-blue bg-clip-text text-transparent">Dashboard</h1>
           {selectedAgencyObj && (
             <ChevronRight size={20} className="text-text-tertiary" />
           )}
