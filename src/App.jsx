@@ -8,6 +8,7 @@ import Team from './components/views/Team';
 import Tasks from './components/views/Tasks';
 import BrainDumpSpace from './components/views/BrainDumpSpace';
 import Reports from './components/views/Reports';
+import TopBar from './components/TopBar';
 import QuickCaptureButton from './components/QuickCaptureButton';
 import QuickRevenueButton from './components/QuickRevenueButton';
 import Payroll from './components/views/Payroll';
@@ -36,7 +37,7 @@ function App() {
 
   if (!dbInitialized) {
     return (
-      <div className="flex items-center justify-center h-screen bg-surface-0">
+      <div className="flex items-center justify-center h-screen bg-bg-primary">
         <div className="text-center">
           <div className="w-8 h-8 border-2 border-accent-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-text-secondary">Initializing CRM...</p>
@@ -48,18 +49,21 @@ function App() {
   return (
     <div className="flex h-screen bg-gradient-to-br from-bg-primary via-bg-secondary to-bg-tertiary text-text-primary overflow-hidden">
       <Sidebar />
-      <main className="flex-1 overflow-auto bg-gradient-to-br from-bg-primary via-bg-secondary to-bg-tertiary">
-        {currentView === 'dashboard' && <Dashboard />}
-        {currentView === 'revenue-master' && <RevenueMaster />}
-        {currentView === 'tasks' && <Tasks />}
-        {currentView === 'team' && <Team />}
-        {currentView === 'brain-dump' && <BrainDumpSpace />}
-        {currentView === 'reports' && <Reports />}
-        {currentView === 'payroll' && <Payroll />}
-        {currentView === 'creators' && <Creators />}
-        {currentView === 'chatters' && <Chatters />}
-        {currentView === 'analytics' && <Analytics />}
-      </main>
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <TopBar />
+        <main className="flex-1 overflow-auto bg-gradient-to-br from-bg-primary via-bg-secondary to-bg-tertiary">
+          {currentView === 'dashboard' && <Dashboard />}
+          {currentView === 'revenue-master' && <RevenueMaster />}
+          {currentView === 'tasks' && <Tasks />}
+          {currentView === 'team' && <Team />}
+          {currentView === 'brain-dump' && <BrainDumpSpace />}
+          {currentView === 'reports' && <Reports />}
+          {currentView === 'payroll' && <Payroll />}
+          {currentView === 'creators' && <Creators />}
+          {currentView === 'chatters' && <Chatters />}
+          {currentView === 'analytics' && <Analytics />}
+        </main>
+      </div>
       <QuickCaptureButton />
       <QuickRevenueButton />
     </div>

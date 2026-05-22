@@ -37,12 +37,18 @@ const Sidebar = () => {
 
   return (
     <aside className="w-64 bg-gradient-to-b from-bg-secondary to-bg-tertiary border-r border-white/8 flex flex-col backdrop-blur-md">
-      {/* Header */}
+      {/* Header — icon mark + compact title */}
       <div className="p-lg border-b border-white/8">
-        <h1 className="text-2xl font-bold bg-gradient-to-r from-accent-cyan via-accent-blue to-accent-purple bg-clip-text text-transparent">
-          Creator CRM
-        </h1>
-        <p className="text-xs text-text-tertiary mt-xs">OnlyFans Manager</p>
+        <div className="flex items-center gap-sm">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-accent-cyan to-accent-purple
+            flex items-center justify-center flex-shrink-0 shadow-glow">
+            <span className="text-bg-primary font-black text-base leading-none">C</span>
+          </div>
+          <div>
+            <p className="text-sm font-bold text-text-primary leading-tight">Creator CRM</p>
+            <p className="text-[10px] text-text-tertiary leading-tight">OnlyFans Manager</p>
+          </div>
+        </div>
       </div>
 
       {/* Navigation */}

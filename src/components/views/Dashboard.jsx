@@ -4,6 +4,7 @@ import {
   TrendingUp, Users, CheckCircle2, AlertCircle, Clock, Plus, Trash2,
   DollarSign, Target, BarChart3, Building2, X, ChevronRight
 } from 'lucide-react';
+import { AreaChart, Area, ResponsiveContainer, Tooltip } from 'recharts';
 import AgencyRevenueChart from '../charts/AgencyRevenueChart.jsx';
 import CreatorGoalProgress from '../charts/CreatorGoalProgress.jsx';
 import * as db from '../../db/index.js';
@@ -11,20 +12,27 @@ import * as db from '../../db/index.js';
 const AGENCY_COLORS = ['#00d9ff', '#9d4edd', '#ff6b35', '#ff006e', '#00ff88'];
 
 // ─── Stat card ────────────────────────────────────────────────────────────────
-const StatCard = ({ icon: Icon, label, value, sub, color = '#00d9ff', pulse }) => (
-  <div className="bg-gradient-to-br from-bg-tertiary to-bg-secondary border border-white/8 rounded-xl p-lg relative overflow-hidden group hover:border-white/15 transition-all">
-    <div className="absolute inset-0 opacity-5 group-hover:opacity-10 transition-opacity" style={{ background: `radial-gradient(circle at top right, ${color}, transparent 60%)` }} />
-    <div className="flex items-start justify-between relative">
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-widest text-text-tertiary mb-sm">{label}</p>
-        <p className="text-3xl font-black text-text-primary">{value}</p>
-        {sub && <p className="text-xs text-text-tertiary mt-xs">{sub}</p>}
-      </div>
+const StatCard = ({ icon: Icon, label, value, sub, chip, chipColor, color = '#00d9ff', pulse }) => (
+  <div className="bg-gradient-to-br from-white/[0.06] to-white/[0.02] border border-white/10 rounded-2xl p-lg
+    shadow-[inset_0_1px_0_rgba(255,255,255,0.07)] relative overflow-hidden group hover:border-white/20 transition-all">
+    <div className="absolute inset-0 opacity-5 group-hover:opacity-10 transition-opacity"
+      style={{ background: `radial-gradient(circle at top right, ${color}, transparent 60%)` }} />
+    {/* Top row: icon badge (left) + chip (right) */}
+    <div className="flex items-start justify-between mb-md relative">
       <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-        style={{ background: `linear-gradient(135deg, ${color}30, ${color}10)` }}>
+        style={{ background: `linear-gradient(135deg, ${color}40, ${color}15)` }}>
         <Icon size={20} style={{ color }} className={pulse ? 'animate-pulse' : ''} />
       </div>
+      {chip && (
+        <span className="text-xs px-sm py-[3px] rounded-full font-semibold leading-none"
+          style={{ background: `${chipColor || color}25`, color: chipColor || color }}>
+          {chip}
+        </span>
+      )}
     </div>
+    <p className="text-2xl font-black text-text-primary relative">{value}</p>
+    <p className="text-xs font-semibold uppercase tracking-wider text-text-tertiary mt-xs relative">{label}</p>
+    {sub && <p className="text-xs text-text-tertiary/60 mt-xs relative">{sub}</p>}
   </div>
 );
 
@@ -170,6 +178,14 @@ const AgencyPanel = ({ agency, accentColor, creators, chatters, allEarnings, tas
 };
 
 // ─── Overview (all agencies) panel ────────────────────────────────────────────
+const BAR_COLORS = [
+  'from-accent-cyan to-accent-blue',
+  'from-accent-lime to-accent-cyan',
+  'from-accent-purple to-accent-pink',
+  'from-accent-orange to-accent-pink',
+  'from-accent-pink to-accent-orange',
+];
+
 const OverviewPanel = ({ agencies, creators, allEarnings, chatters, tasks }) => {
   const today = new Date().toISOString().split('T')[0];
   const overdueTasks = tasks.filter(t => !t.is_completed && t.due_date && t.due_date < today);
@@ -180,14 +196,146 @@ const OverviewPanel = ({ agencies, creators, allEarnings, chatters, tasks }) => 
     return sum + (allEarnings[c.id] || []).reduce((s, e) => s + e.amount, 0);
   }, 0);
 
+  // Top 5 creators by monthly revenue
+  const topCreators = useMemo(() => {
+    return activeCreators
+      .map(c => ({
+        id: c.id,
+        name: c.name,
+        agencyName: agencies.find(a => a.id === c.agency_id)?.name || '—',
+        revenue: (allEarnings[c.id] || []).reduce((s, e) => s + e.amount, 0),
+      }))
+      .filter(c => c.revenue > 0)
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 5);
+  }, [activeCreators, allEarnings, agencies]);
+
+  // Daily totals for the Revenue Trend area chart
+  const dailyTotals = useMemo(() => {
+    const byDate = {};
+    activeCreators.forEach(c => {
+      (allEarnings[c.id] || []).forEach(e => {
+        byDate[e.date] = (byDate[e.date] || 0) + e.amount;
+      });
+    });
+    return Object.entries(byDate)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, total]) => ({ date: date.slice(5), total }));
+  }, [activeCreators, allEarnings]);
+
   return (
     <div className="space-y-lg animate-fade-in">
+      {/* KPI row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-md">
-        <StatCard icon={DollarSign} label="Total Revenue (Mo)" value={`$${totalRevenue.toFixed(0)}`} sub={`across ${agencies.length} agencies`} color="#00d9ff" />
-        <StatCard icon={Building2} label="Agencies" value={agencies.length} sub={`${activeCreators.length} active creators`} color="#9d4edd" />
-        <StatCard icon={Users} label="Team Size" value={chatters.length} sub="chatters total" color="#ff6b35" />
-        <StatCard icon={AlertCircle} label="Overdue Tasks" value={overdueTasks.length} sub={`${doneTasks.length} completed`} color={overdueTasks.length > 0 ? '#ff006e' : '#00ff88'} pulse={overdueTasks.length > 0} />
+        <StatCard
+          icon={DollarSign} label="Total Revenue" value={`$${totalRevenue.toFixed(0)}`}
+          sub="this month" chip={`${agencies.length} ${agencies.length === 1 ? 'agency' : 'agencies'}`}
+          chipColor="#00d9ff" color="#00d9ff"
+        />
+        <StatCard
+          icon={Building2} label="Agencies" value={agencies.length}
+          sub={`${activeCreators.length} active creators`}
+          chip={activeCreators.length > 0 ? `${activeCreators.length} active` : null}
+          chipColor="#9d4edd" color="#9d4edd"
+        />
+        <StatCard
+          icon={Users} label="Team Size" value={chatters.length}
+          sub="chatters total"
+          chip={chatters.length > 0 ? 'Online' : null}
+          chipColor="#ff6b35" color="#ff6b35"
+        />
+        <StatCard
+          icon={AlertCircle} label="Overdue Tasks" value={overdueTasks.length}
+          sub={`${doneTasks.length} completed`}
+          chip={overdueTasks.length > 0 ? `${overdueTasks.length} overdue` : '✓ On track'}
+          chipColor={overdueTasks.length > 0 ? '#ff006e' : '#00ff88'}
+          color={overdueTasks.length > 0 ? '#ff006e' : '#00ff88'}
+          pulse={overdueTasks.length > 0}
+        />
       </div>
+
+      {/* 2-column: Top Creators table + Revenue Trend chart */}
+      {(topCreators.length > 0 || dailyTotals.length > 0) && (
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-lg">
+          {/* Top Creators table — takes 2 cols */}
+          {topCreators.length > 0 && (
+            <div className="xl:col-span-2 bg-gradient-to-br from-white/[0.06] to-white/[0.02] border border-white/10
+              rounded-2xl p-lg shadow-[inset_0_1px_0_rgba(255,255,255,0.07)]">
+              <div className="mb-md">
+                <h3 className="text-sm font-semibold text-text-primary">Top Creators</h3>
+                <p className="text-xs text-text-tertiary mt-xs">By revenue this month</p>
+              </div>
+              {/* Column headers */}
+              <div className="grid grid-cols-[28px_1fr_120px_56px] gap-md text-xs text-text-tertiary
+                uppercase tracking-wider pb-sm border-b border-white/8 mb-sm">
+                <span>#</span><span>Creator</span><span>Popularity</span>
+                <span className="text-right">Rev %</span>
+              </div>
+              {/* Rows */}
+              <div className="space-y-xs">
+                {topCreators.map((c, i) => {
+                  const pct = Math.round((c.revenue / topCreators[0].revenue) * 100);
+                  return (
+                    <div key={c.id} className="grid grid-cols-[28px_1fr_120px_56px] gap-md items-center
+                      py-sm border-b border-white/5 last:border-0">
+                      <span className="text-xs text-text-tertiary font-mono">{String(i + 1).padStart(2, '0')}</span>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-text-primary truncate">{c.name}</p>
+                        <p className="text-xs text-text-tertiary truncate">{c.agencyName}</p>
+                      </div>
+                      <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                        <div className={`h-full rounded-full bg-gradient-to-r ${BAR_COLORS[i]}`}
+                          style={{ width: `${pct}%` }} />
+                      </div>
+                      <span className="text-xs px-sm py-[3px] rounded-full bg-accent-cyan/10
+                        text-accent-cyan font-semibold justify-self-end">{pct}%</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Revenue Trend chart — 1 col */}
+          {dailyTotals.length > 0 && (
+            <div className={`${topCreators.length === 0 ? 'xl:col-span-3' : ''} bg-gradient-to-br from-white/[0.06] to-white/[0.02]
+              border border-white/10 rounded-2xl p-lg shadow-[inset_0_1px_0_rgba(255,255,255,0.07)]`}>
+              <h3 className="text-sm font-semibold text-text-primary mb-xs">Revenue Trend</h3>
+              <p className="text-xs text-text-tertiary mb-md">This month, daily</p>
+              <ResponsiveContainer width="100%" height={160}>
+                <AreaChart data={dailyTotals} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
+                  <defs>
+                    <linearGradient id="cyanAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#00d9ff" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#00d9ff" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <Area type="monotone" dataKey="total" stroke="#00d9ff" strokeWidth={2}
+                    fill="url(#cyanAreaGrad)" dot={false} />
+                  <Tooltip
+                    contentStyle={{ background: '#141829', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 11 }}
+                    itemStyle={{ color: '#00d9ff' }}
+                    labelStyle={{ color: '#6b7494' }}
+                    formatter={(v) => [`$${Number(v).toFixed(2)}`, 'Revenue']}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Earnings Summary */}
+      {totalRevenue > 0 && (
+        <div className="bg-gradient-to-br from-white/[0.06] to-white/[0.02] border border-white/10
+          rounded-2xl p-lg shadow-[inset_0_1px_0_rgba(255,255,255,0.07)]">
+          <p className="text-xs text-text-tertiary uppercase tracking-wider mb-xs">Total Earnings</p>
+          <p className="text-xs text-text-tertiary/60 mb-md">Across all agencies this month</p>
+          <p className="text-4xl font-black bg-gradient-to-r from-accent-lime to-accent-cyan bg-clip-text text-transparent">
+            ${totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </p>
+        </div>
+      )}
 
       {/* Per-agency mini cards */}
       <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wider">Agency Breakdown</h3>
@@ -208,9 +356,12 @@ const OverviewPanel = ({ agencies, creators, allEarnings, chatters, tasks }) => 
           });
           const maxSpark = Math.max(...last3, 1);
           return (
-            <div key={agency.id} className="bg-gradient-to-br from-bg-tertiary to-bg-secondary border border-white/8 rounded-xl p-lg hover:border-white/15 transition-all overflow-hidden relative group"
+            <div key={agency.id} className="bg-gradient-to-br from-white/[0.06] to-white/[0.02] border border-white/10
+              rounded-2xl p-lg hover:border-white/20 transition-all overflow-hidden relative group
+              shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
               style={{ borderLeftColor: color, borderLeftWidth: 3 }}>
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-5 transition-opacity" style={{ background: `radial-gradient(circle at top right, ${color}, transparent 60%)` }} />
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-5 transition-opacity"
+                style={{ background: `radial-gradient(circle at top right, ${color}, transparent 60%)` }} />
               <div className="flex items-start justify-between mb-md relative">
                 <div>
                   <h4 className="font-bold text-text-primary">{agency.name}</h4>
@@ -236,7 +387,7 @@ const OverviewPanel = ({ agencies, creators, allEarnings, chatters, tasks }) => 
               )}
               {last3.some(v => v > 0) && (
                 <div className="mt-sm relative">
-                  <p className="text-[10px] text-text-tertiary/40 mb-xs">Last 3 days</p>
+                  <p className="text-xs text-text-tertiary/40 mb-xs">Last 3 days</p>
                   <div className="flex items-end gap-1 h-5">
                     {last3.map((v, i) => (
                       <div key={i} className="flex-1 rounded-sm transition-all"
