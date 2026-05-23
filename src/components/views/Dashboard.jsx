@@ -30,7 +30,7 @@ const StatCard = ({ icon: Icon, label, value, sub, chip, chipColor, color = '#00
       )}
     </div>
     <p className="text-2xl font-black text-text-primary relative">{value}</p>
-    <p className="text-xs font-semibold uppercase tracking-wider text-text-tertiary mt-xs relative">{label}</p>
+    <p className="text-xs font-semibold text-text-tertiary mt-xs relative">{label}</p>
     {sub && <p className="text-xs text-text-tertiary/60 mt-xs relative">{sub}</p>}
   </div>
 );
@@ -158,7 +158,7 @@ const AgencyPanel = ({ agency, accentColor, creators, chatters, allEarnings, tas
             {tabTasks.length === 0 ? (
               <div className="text-center py-lg text-text-tertiary text-sm">
                 {taskTab === 'done' ? 'No completed tasks yet' :
-                 taskTab === 'overdue' ? '✓ No overdue tasks' :
+                 taskTab === 'overdue' ? 'No overdue tasks 🎉' :
                  taskTab === 'pending' ? 'Nothing due today' : 'All clear!'}
               </div>
             ) : (
@@ -246,7 +246,7 @@ const OverviewPanel = ({ agencies, creators, allEarnings, chatters, tasks }) => 
         <StatCard
           icon={AlertCircle} label="Overdue Tasks" value={overdueTasks.length}
           sub={`${doneTasks.length} completed`}
-          chip={overdueTasks.length > 0 ? `${overdueTasks.length} overdue` : '✓ On track'}
+          chip={overdueTasks.length > 0 ? `${overdueTasks.length} overdue` : 'On track'}
           chipColor={overdueTasks.length > 0 ? '#ff006e' : '#00ff88'}
           color={overdueTasks.length > 0 ? '#ff006e' : '#00ff88'}
           pulse={overdueTasks.length > 0}
@@ -497,7 +497,7 @@ const Dashboard = () => {
 
         <button
           onClick={() => setShowAddAgency(true)}
-          className="flex items-center gap-xs px-md py-sm rounded-xl text-sm border border-dashed border-white/20 text-text-tertiary hover:text-accent-cyan hover:border-accent-cyan/40 transition-all"
+          className="flex items-center gap-xs px-md py-sm rounded-xl text-sm neu-btn text-text-tertiary hover:text-accent-cyan transition-all"
         >
           <Plus size={14} /> Add Agency
         </button>

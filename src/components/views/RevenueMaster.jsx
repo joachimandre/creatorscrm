@@ -561,8 +561,9 @@ const RevenueMaster = () => {
       )}
 
       {/* Hint */}
-      <p className="text-xs text-text-tertiary/60">
-        Click any value to edit · Enter to save · Escape to cancel · Clear a day entry to remove it
+      <p className="text-xs text-text-tertiary/80 flex items-center gap-xs">
+        <span className="inline-block w-1 h-1 rounded-full bg-accent-cyan/60 flex-shrink-0" />
+        Click any cell to edit · Enter to save · Esc to cancel · Clear value to remove entry
       </p>
 
       {/* Month Summary Bar */}

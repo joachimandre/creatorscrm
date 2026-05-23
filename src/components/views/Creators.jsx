@@ -472,8 +472,8 @@ const Creators = () => {
                 </div>
               ) : (
                 <div className="flex items-center justify-between gap-sm">
-                  <span className="text-[11px] text-text-tertiary/30 italic flex items-center gap-xs">
-                    <Users size={10} className="text-text-tertiary/25" /> No subscriber data
+                  <span className="text-[11px] text-text-tertiary/60 flex items-center gap-xs">
+                    <Users size={10} className="text-text-tertiary/50" /> No subscriber data
                   </span>
                   <button
                     onClick={() => { setSubLogOpen(creator.id); setSubLogForm({ date: todayIso, count: '', notes: '' }); }}

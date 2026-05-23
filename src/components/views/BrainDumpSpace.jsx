@@ -59,13 +59,15 @@ const BrainDumpSpace = () => {
             rows={4}
             className="w-full rounded-xl px-lg py-md text-text-primary placeholder-text-tertiary/50 focus:outline-none focus:border-accent-purple/50 resize-none transition-all"
           />
-          <button
-            onClick={handleAddNote}
-            disabled={!newNote.trim()}
-            className="w-full py-sm bg-gradient-to-r from-accent-purple to-accent-pink text-white font-semibold rounded-xl hover:opacity-90 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-          >
-            Save Note
-          </button>
+          <div className="flex justify-end">
+            <button
+              onClick={handleAddNote}
+              disabled={!newNote.trim()}
+              className="flex items-center gap-xs px-lg py-sm bg-gradient-to-r from-accent-purple to-accent-pink text-white text-sm font-semibold rounded-xl hover:opacity-90 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              Save
+            </button>
+          </div>
         </div>
 
         {/* Empty state */}

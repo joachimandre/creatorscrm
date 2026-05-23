@@ -129,6 +129,15 @@ button, a {
   transform: scale(0.92);
 }
 
+/* ── Kanban scroll — hide scrollbar, keep functionality ──────────────────── */
+.kanban-scroll {
+  scrollbar-width: none;        /* Firefox */
+  -ms-overflow-style: none;     /* IE/Edge */
+}
+.kanban-scroll::-webkit-scrollbar {
+  display: none;                /* Chrome/Safari */
+}
+
 button {
   border: none;
   padding: 0;

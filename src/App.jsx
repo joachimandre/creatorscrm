@@ -10,8 +10,7 @@ import Team from './components/views/Team';
 import Tasks from './components/views/Tasks';
 import BrainDumpSpace from './components/views/BrainDumpSpace';
 import Reports from './components/views/Reports';
-import QuickCaptureButton from './components/QuickCaptureButton';
-import QuickRevenueButton from './components/QuickRevenueButton';
+import QuickActionFAB from './components/QuickActionFAB';
 import Payroll from './components/views/Payroll';
 import Creators from './components/views/Creators';
 import Chatters from './components/views/Chatters';
@@ -91,8 +90,7 @@ function App() {
 
       {/* Global overlays */}
       <CommandPalette />
-      <QuickCaptureButton />
-      <QuickRevenueButton />
+      <QuickActionFAB />
     </div>
   );
 }

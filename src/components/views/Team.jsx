@@ -539,7 +539,7 @@ const Team = () => {
               </div>
             ) : (
               <button onClick={() => setShowNewTeam(true)}
-                className="flex items-center gap-xs px-md py-sm rounded-xl text-sm text-text-tertiary hover:text-accent-lime border border-dashed border-white/10 hover:border-accent-lime/40 hover:bg-accent-lime/5 transition-all">
+                className="flex items-center gap-xs px-md py-sm rounded-xl text-sm neu-btn text-text-tertiary hover:text-accent-lime transition-all">
                 <Plus size={13} /> New Team
               </button>
             )}

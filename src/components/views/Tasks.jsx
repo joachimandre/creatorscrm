@@ -507,7 +507,11 @@ const Tasks = () => {
           </div>
 
           {/* ── Kanban board ─────────────────────────────────────────────────── */}
-          <div className="flex gap-md overflow-x-auto flex-1 min-h-0 pb-sm">
+          <div className="relative flex-1 min-h-0">
+          {/* Right-edge fade affordance */}
+          <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-16 z-10"
+            style={{ background: 'linear-gradient(to right, transparent, #1d2027)' }} />
+          <div className="flex gap-md overflow-x-auto h-full pb-sm kanban-scroll">
             {COLUMNS.map(col => (
               <KanbanColumn
                 key={col.id}
@@ -527,6 +531,7 @@ const Tasks = () => {
                 onDragEnd={() => { setDraggedId(null); setDragOverCol(null); }}
               />
             ))}
+          </div>
           </div>
         </>
       )}
