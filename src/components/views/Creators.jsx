@@ -742,15 +742,18 @@ const Creators = () => {
               {activeCreators.map(renderCard)}
             </div>
           ) : (
-            <div className="text-center py-2xl border border-dashed border-white/10 rounded-xl">
-              <Star size={40} className="mx-auto text-text-tertiary/25 mb-md" />
-              <p className="text-text-tertiary">
-                {searchQuery ? `No creators match "${searchQuery}"` : 'No active creators for this agency'}
+            <div className="flex flex-col items-center justify-center py-2xl neu-card-inset rounded-2xl text-center">
+              <Star size={36} className="text-text-tertiary/20 mb-md" />
+              <p className="text-text-secondary font-semibold text-sm">
+                {searchQuery ? `No creators match "${searchQuery}"` : 'No active creators yet'}
+              </p>
+              <p className="text-text-tertiary/60 text-xs mt-xs">
+                {searchQuery ? 'Try a different search' : 'Add your first creator to get started'}
               </p>
               {!searchQuery && (
                 <button onClick={() => setShowAddModal(true)}
-                  className="mt-md text-accent-purple hover:underline text-sm">
-                  Add your first creator
+                  className="mt-md neu-btn px-lg py-sm rounded-xl text-xs text-text-tertiary hover:text-text-primary transition-colors">
+                  Add creator
                 </button>
               )}
             </div>

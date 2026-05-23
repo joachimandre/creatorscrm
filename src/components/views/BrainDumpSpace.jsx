@@ -72,10 +72,10 @@ const BrainDumpSpace = () => {
 
         {/* Empty state */}
         {notes.length === 0 && (
-          <div className="text-center py-2xl border border-dashed border-white/10 rounded-2xl">
-            <Brain size={40} className="mx-auto text-text-tertiary/20 mb-md" />
-            <p className="text-text-secondary font-semibold">Nothing captured yet</p>
-            <p className="text-text-tertiary text-sm mt-xs">Type above and press Ctrl+Enter to save</p>
+          <div className="flex flex-col items-center justify-center py-2xl neu-card-inset rounded-2xl text-center">
+            <Brain size={36} className="text-text-tertiary/20 mb-md" />
+            <p className="text-text-secondary font-semibold text-sm">Nothing captured yet</p>
+            <p className="text-text-tertiary/60 text-xs mt-xs">Type above and press Ctrl+Enter to save</p>
           </div>
         )}
 

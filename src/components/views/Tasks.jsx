@@ -96,14 +96,14 @@ const KanbanCard = ({ task, onToggle, onUpdate, onDelete, isDragging, onDragStar
         <div className="flex items-center justify-between gap-xs min-h-[18px]">
           <div>
             {task.priority !== 'none' && PIcon && (
-              <span className={`inline-flex items-center gap-[3px] px-xs py-[2px] rounded-md text-[10px] font-bold border ${p.bg} ${p.border}`}
+              <span className={`inline-flex items-center gap-[3px] px-xs py-[2px] rounded-full text-[10px] font-bold border ${p.bg} ${p.border}`}
                 style={{ color: p.color }}>
                 <PIcon size={9} /> {p.label}
               </span>
             )}
           </div>
           {dateInfo && (
-            <span className={`text-[10px] font-semibold px-xs py-[2px] rounded-md border shrink-0 ${dateInfo.chip}`}>
+            <span className={`text-[10px] font-semibold px-xs py-[2px] rounded-full border shrink-0 ${dateInfo.chip}`}>
               {dateInfo.text}
             </span>
           )}
@@ -496,7 +496,7 @@ const Tasks = () => {
                 const isActive = priorityFilter === p;
                 return (
                   <button key={p} onClick={() => setPriorityFilter(p)}
-                    className={`px-sm py-xs rounded-lg text-xs font-semibold border transition-all
+                    className={`px-sm py-xs rounded-xl text-xs font-semibold border transition-all
                       ${isActive && p !== 'all' ? `${pr?.bg} ${pr?.border}` : isActive ? 'neu-card border-transparent text-text-primary' : 'neu-btn border-transparent text-text-tertiary hover:text-text-primary'}`}
                     style={{ color: isActive && p !== 'all' ? pr?.color : undefined }}>
                     {p === 'all' ? 'All' : pr?.label}

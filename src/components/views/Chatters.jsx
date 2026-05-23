@@ -434,15 +434,18 @@ const Chatters = () => {
               {agencyChatters.map(renderCard)}
             </div>
           ) : (
-            <div className="text-center py-2xl border border-dashed border-white/10 rounded-xl">
-              <MessageSquare size={40} className="mx-auto text-text-tertiary/25 mb-md" />
-              <p className="text-text-tertiary">
-                {searchQuery ? `No chatters match "${searchQuery}"` : 'No chatters for this agency'}
+            <div className="flex flex-col items-center justify-center py-2xl neu-card-inset rounded-2xl text-center">
+              <MessageSquare size={36} className="text-text-tertiary/20 mb-md" />
+              <p className="text-text-secondary font-semibold text-sm">
+                {searchQuery ? `No chatters match "${searchQuery}"` : 'No chatters yet'}
+              </p>
+              <p className="text-text-tertiary/60 text-xs mt-xs">
+                {searchQuery ? 'Try a different search' : 'Add your first chatter to get started'}
               </p>
               {!searchQuery && (
                 <button onClick={() => setShowAddModal(true)}
-                  className="mt-md text-accent-lime hover:underline text-sm">
-                  Add your first chatter
+                  className="mt-md neu-btn px-lg py-sm rounded-xl text-xs text-text-tertiary hover:text-text-primary transition-colors">
+                  Add chatter
                 </button>
               )}
             </div>

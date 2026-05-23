@@ -30,7 +30,7 @@ const StatCard = ({ icon: Icon, label, value, sub, chip, chipColor, color = '#00
       )}
     </div>
     <p className="text-2xl font-black text-text-primary relative">{value}</p>
-    <p className="text-xs font-semibold text-text-tertiary mt-xs relative">{label}</p>
+    <p className="text-xs font-medium text-text-tertiary mt-xs relative">{label}</p>
     {sub && <p className="text-xs text-text-tertiary/60 mt-xs relative">{sub}</p>}
   </div>
 );
@@ -334,7 +334,7 @@ const OverviewPanel = ({ agencies, creators, allEarnings, chatters, tasks }) => 
       )}
 
       {/* Per-agency mini cards */}
-      <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wider">Agency Breakdown</h3>
+      <h3 className="text-xs font-semibold text-text-tertiary/70 uppercase tracking-wider">Agency Breakdown</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-lg">
         {agencies.map((agency, idx) => {
           const color = AGENCY_COLORS[idx % AGENCY_COLORS.length];
@@ -505,13 +505,13 @@ const Dashboard = () => {
 
       {/* Main content */}
       {agencies.length === 0 ? (
-        <div className="text-center py-2xl border border-dashed border-white/10 rounded-2xl">
-          <Building2 size={48} className="mx-auto text-text-tertiary/30 mb-lg" />
-          <h2 className="text-xl font-semibold text-text-primary mb-sm">No agencies yet</h2>
-          <p className="text-text-secondary mb-lg">Create your first agency to get started</p>
+        <div className="flex flex-col items-center justify-center py-2xl neu-card-inset rounded-2xl text-center">
+          <Building2 size={36} className="text-text-tertiary/20 mb-md" />
+          <p className="text-text-secondary font-semibold text-sm">No agencies yet</p>
+          <p className="text-text-tertiary/60 text-xs mt-xs">Create your first agency to get started</p>
           <button onClick={() => setShowAddAgency(true)}
-            className="inline-flex items-center gap-sm px-xl py-md bg-gradient-to-r from-accent-cyan to-accent-blue text-bg-primary font-semibold rounded-xl hover:opacity-90 transition-all">
-            <Plus size={18} /> Create Agency
+            className="mt-md inline-flex items-center gap-sm px-xl py-md bg-gradient-to-r from-accent-cyan to-accent-blue text-bg-primary font-semibold rounded-xl hover:opacity-90 transition-all text-sm">
+            <Plus size={16} /> Create Agency
           </button>
         </div>
       ) : selectedAgency ? (

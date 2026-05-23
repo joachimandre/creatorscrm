@@ -159,7 +159,7 @@ const Analytics = () => {
     monthlyTrendData.some(d => d.revenue > 0) ||
     leaderboardData.length > 0;
 
-  const tickStyle = { fill: '#8888aa', fontSize: 10 };
+  const tickStyle = { fill: '#8f98b8', fontSize: 10 };
   const gridProps = { strokeDasharray: '3 3', stroke: 'rgba(255,255,255,0.05)' };
 
   return (
@@ -181,7 +181,7 @@ const Analytics = () => {
               <button key={agency.id} onClick={() => setSelectedAgency(agency.id)}
                 className={`px-lg py-sm rounded-xl text-sm font-semibold transition-all ${
                   isActive
-                    ? 'bg-gradient-to-r from-accent-cyan to-accent-blue text-white shadow-glow'
+                    ? 'bg-accent-cyan text-bg-primary shadow-glow'
                     : 'neu-btn text-text-secondary hover:text-text-primary'
                 }`}>
                 {agency.name}
@@ -223,9 +223,9 @@ const Analytics = () => {
             { label: 'Best Weekday',    value: kpiStats.bestWeekday,                                        sub: null,                   color: 'text-accent-lime',   grad: 'from-accent-lime/10'   },
           ].map(({ label, value, sub, color, grad }) => (
             <div key={label} className="neu-card p-lg">
-              <p className="text-[11px] text-text-tertiary/60 font-medium uppercase tracking-wider mb-xs">{label}</p>
-              <p className={`text-xl font-black font-mono ${color}`}>{value}</p>
-              {sub && <p className="text-[10px] text-text-tertiary/50 mt-xs font-mono">{sub}</p>}
+              <p className="text-xs font-medium text-text-tertiary mb-xs">{label}</p>
+              <p className={`text-2xl font-black font-mono ${color}`}>{value}</p>
+              {sub && <p className="text-xs text-text-tertiary/60 mt-xs font-mono">{sub}</p>}
             </div>
           ))}
         </div>
@@ -233,12 +233,10 @@ const Analytics = () => {
 
       {/* Empty state */}
       {!hasAnyData ? (
-        <div className="text-center py-2xl neu-card-inset rounded-xl">
-          <BarChart3 size={40} className="mx-auto text-text-tertiary/25 mb-md" />
-          <p className="text-text-tertiary">No revenue data yet for this agency.</p>
-          <p className="text-text-tertiary/50 text-sm mt-xs">
-            Enter daily revenue in Revenue Master to see analytics here.
-          </p>
+        <div className="flex flex-col items-center justify-center py-2xl neu-card-inset rounded-2xl text-center">
+          <BarChart3 size={36} className="text-text-tertiary/20 mb-md" />
+          <p className="text-text-secondary font-semibold text-sm">No revenue data yet</p>
+          <p className="text-text-tertiary/60 text-xs mt-xs">Enter daily revenue in Revenue Master to see analytics here.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-lg">
@@ -248,7 +246,7 @@ const Analytics = () => {
             <div className="flex items-start justify-between">
               <div>
                 <h3 className="text-sm font-bold text-text-primary">Monthly Revenue</h3>
-                <p className="text-[11px] text-text-tertiary/60">Total revenue per month</p>
+                <p className="text-xs text-text-tertiary/60">Total revenue per month</p>
               </div>
               <span className="text-sm font-black font-mono text-accent-cyan">{fmtK(monthlyTrendData.reduce((s,d)=>s+d.revenue,0))}</span>
             </div>
@@ -268,7 +266,7 @@ const Analytics = () => {
             <div className="flex items-start justify-between">
               <div>
                 <h3 className="text-sm font-bold text-text-primary">Creator Leaderboard</h3>
-                <p className="text-[11px] text-text-tertiary/60">Current month earnings (top 10)</p>
+                <p className="text-xs text-text-tertiary/60">Current month earnings (top 10)</p>
               </div>
               {leaderboardData.length > 0 && (
                 <span className="text-sm font-black font-mono text-accent-purple">{fmtK(leaderboardData.reduce((s,d)=>s+d.revenue,0))}</span>
@@ -289,7 +287,7 @@ const Analytics = () => {
                   <XAxis type="number" tickFormatter={fmtK} tick={tickStyle} axisLine={false} tickLine={false} />
                   <YAxis
                     type="category" dataKey="name"
-                    tick={{ fill: '#ccccdd', fontSize: 10 }}
+                    tick={{ fill: '#a8b2d1', fontSize: 10 }}
                     axisLine={false} tickLine={false}
                     width={76}
                     tickFormatter={v => v.length > 10 ? v.slice(0, 10) + '…' : v}
@@ -306,7 +304,7 @@ const Analytics = () => {
             <div className="flex items-start justify-between">
               <div>
                 <h3 className="text-sm font-bold text-text-primary">Daily Revenue</h3>
-                <p className="text-[11px] text-text-tertiary/60">Total agency revenue per day (up to 90 days)</p>
+                <p className="text-xs text-text-tertiary/60">Total agency revenue per day (up to 90 days)</p>
               </div>
               <span className="text-sm font-black font-mono text-accent-pink">{fmtK(kpiStats.total)}</span>
             </div>
@@ -341,7 +339,7 @@ const Analytics = () => {
             <div className="flex items-start justify-between">
               <div>
                 <h3 className="text-sm font-bold text-text-primary">Best Day of Week</h3>
-                <p className="text-[11px] text-text-tertiary/60">Average revenue by day of week</p>
+                <p className="text-xs text-text-tertiary/60">Average revenue by day of week</p>
               </div>
               <span className="text-sm font-black font-mono text-accent-lime">{kpiStats.bestWeekday}</span>
             </div>

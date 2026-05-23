@@ -29,6 +29,7 @@ export default {
         mono: ['JetBrains Mono', 'monospace'],
       },
       spacing: {
+        '2xs': '2px',
         xs:  '4px',
         sm:  '8px',
         md:  '12px',

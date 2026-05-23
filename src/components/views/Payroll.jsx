@@ -63,17 +63,17 @@ const StatusBadge = ({ status, onClick }) => {
 };
 
 const StatCard = ({ label, value, sub, color, icon: Icon }) => (
-  <div className="neu-card p-lg relative overflow-hidden group hover:border-white/15 transition-all">
-    <div className="absolute inset-0 opacity-5 group-hover:opacity-10 transition-opacity rounded-xl"
+  <div className="neu-card p-lg relative overflow-hidden group transition-all">
+    <div className="absolute inset-0 opacity-5 group-hover:opacity-10 transition-opacity rounded-2xl"
       style={{ background: `radial-gradient(circle at top right, ${color}, transparent 60%)` }} />
     <div className="flex items-start justify-between mb-sm relative">
-      <p className="text-xs font-semibold uppercase tracking-widest text-text-tertiary">{label}</p>
+      <p className="text-xs font-medium text-text-tertiary">{label}</p>
       <div className="p-sm rounded-xl border border-white/8" style={{ background: `${color}15` }}>
         <Icon size={14} style={{ color }} />
       </div>
     </div>
-    <p className="text-2xl font-bold text-text-primary relative font-mono">{value}</p>
-    {sub && <p className="text-xs text-text-tertiary mt-xs relative">{sub}</p>}
+    <p className="text-2xl font-black text-text-primary relative font-mono">{value}</p>
+    {sub && <p className="text-xs text-text-tertiary/60 mt-xs relative">{sub}</p>}
   </div>
 );
 
@@ -925,12 +925,10 @@ const Payroll = () => {
 
       {/* ── Tables ── */}
       {visibleRecords.length === 0 ? (
-        <div className="text-center py-2xl border border-dashed border-white/10 rounded-xl">
-          <DollarSign size={40} className="mx-auto text-text-tertiary/30 mb-md" />
-          <p className="text-text-tertiary font-semibold">No payroll for this period</p>
-          <p className="text-text-tertiary/50 text-sm mt-xs">
-            Pick a period above then click <span className="text-accent-lime">Generate Payroll</span>
-          </p>
+        <div className="flex flex-col items-center justify-center py-2xl neu-card-inset rounded-2xl text-center">
+          <DollarSign size={36} className="text-text-tertiary/20 mb-md" />
+          <p className="text-text-secondary font-semibold text-sm">No payroll for this period</p>
+          <p className="text-text-tertiary/60 text-xs mt-xs">Pick a period above then click Generate Payroll</p>
           {agencies.length === 0 && <p className="text-accent-pink text-xs mt-md">Add agencies and creators first</p>}
         </div>
       ) : (
