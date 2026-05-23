@@ -64,10 +64,10 @@ const AddAgencyModal = ({ onClose, onAdd }) => {
           onKeyDown={e => { if (e.key === 'Enter') handle(); if (e.key === 'Escape') onClose(); }}
           placeholder="Agency name..."
           autoFocus
-          className="w-full bg-bg-primary/50 border border-white/15 rounded-xl px-lg py-md text-text-primary text-sm focus:outline-none focus:border-accent-cyan/60 transition-all mb-lg"
+          className="w-full rounded-xl px-lg py-md text-text-primary text-sm focus:outline-none focus:border-accent-cyan/60 transition-all mb-lg"
         />
         <div className="flex gap-md justify-end">
-          <button onClick={onClose} className="px-lg py-sm border border-white/10 rounded-xl text-sm text-text-secondary hover:text-text-primary transition-colors">Cancel</button>
+          <button onClick={onClose} className="px-lg py-sm neu-btn rounded-xl text-sm text-text-secondary hover:text-text-primary transition-colors">Cancel</button>
           <button onClick={handle} disabled={!name.trim()} className="px-lg py-sm bg-gradient-to-r from-accent-cyan to-accent-blue text-bg-primary font-semibold rounded-xl text-sm hover:opacity-90 transition-all disabled:opacity-30">Create</button>
         </div>
       </div>
@@ -139,7 +139,7 @@ const AgencyPanel = ({ agency, accentColor, creators, chatters, allEarnings, tas
                 key={tab.key}
                 onClick={() => setTaskTab(tab.key)}
                 className={`flex items-center gap-xs px-sm py-xs rounded-lg text-xs font-semibold transition-all border ${
-                  taskTab === tab.key ? 'text-bg-primary border-transparent' : 'bg-white/5 border-white/8 text-text-tertiary hover:text-text-primary'
+                  taskTab === tab.key ? 'text-bg-primary border-transparent' : 'neu-btn border-transparent text-text-tertiary hover:text-text-primary'
                 }`}
                 style={taskTab === tab.key ? { background: tab.color, borderColor: tab.color } : {}}
               >
@@ -281,7 +281,7 @@ const OverviewPanel = ({ agencies, creators, allEarnings, chatters, tasks }) => 
                         <p className="text-sm font-medium text-text-primary truncate">{c.name}</p>
                         <p className="text-xs text-text-tertiary truncate">{c.agencyName}</p>
                       </div>
-                      <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                      <div className="h-1.5 bg-bg-primary rounded-full overflow-hidden" style={{ boxShadow: 'inset 2px 2px 4px rgba(0,0,0,0.3)' }}>
                         <div className={`h-full rounded-full bg-gradient-to-r ${BAR_COLORS[i]}`}
                           style={{ width: `${pct}%` }} />
                       </div>
@@ -373,7 +373,7 @@ const OverviewPanel = ({ agencies, creators, allEarnings, chatters, tasks }) => 
                   <div className="flex items-center justify-between text-xs text-text-tertiary mb-xs">
                     <span>Monthly goal</span><span>{pct.toFixed(0)}%</span>
                   </div>
-                  <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                  <div className="h-1.5 bg-bg-primary rounded-full overflow-hidden" style={{ boxShadow: 'inset 2px 2px 4px rgba(0,0,0,0.3)' }}>
                     <div className="h-full rounded-full transition-all duration-700"
                       style={{ width: `${pct}%`, background: pct >= 100 ? '#00ff88' : pct >= 80 ? '#ff6b35' : color }} />
                   </div>
@@ -457,7 +457,7 @@ const Dashboard = () => {
         {selectedAgencyObj && (
           <button
             onClick={() => setConfirmDeleteAgency(selectedAgencyObj)}
-            className="flex items-center gap-xs px-md py-xs text-xs text-text-tertiary hover:text-accent-pink border border-white/10 hover:border-accent-pink/30 rounded-lg transition-all"
+            className="flex items-center gap-xs px-md py-xs text-xs text-text-tertiary hover:text-accent-pink neu-btn rounded-lg transition-all"
           >
             <Trash2 size={12} /> Remove Agency
           </button>
@@ -551,7 +551,7 @@ const Dashboard = () => {
               This will also remove all its creators and their earnings.
             </p>
             <div className="flex gap-md justify-end">
-              <button onClick={() => setConfirmDeleteAgency(null)} className="px-lg py-sm border border-white/10 rounded-xl text-sm text-text-secondary hover:text-text-primary transition-colors">Cancel</button>
+              <button onClick={() => setConfirmDeleteAgency(null)} className="px-lg py-sm neu-btn rounded-xl text-sm text-text-secondary hover:text-text-primary transition-colors">Cancel</button>
               <button onClick={() => {
                 deleteAgencyData(confirmDeleteAgency.id);
                 setSelectedAgency(null);

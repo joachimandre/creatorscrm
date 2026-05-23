@@ -83,7 +83,7 @@ const AgencyTodoSection = ({ agencies }) => {
           return (
             <div
               key={agency.id}
-              className="border border-accent-orange/30 rounded-xl overflow-hidden bg-gradient-to-br from-bg-tertiary to-bg-secondary transition-all duration-300"
+              className="neu-card overflow-hidden transition-all duration-300"
             >
               {/* Header */}
               <button

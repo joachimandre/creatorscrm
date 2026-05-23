@@ -12,7 +12,7 @@ const PRIORITY = {
   high:   { label: 'High',   color: '#ff006e', bg: 'bg-accent-pink/15',   border: 'border-accent-pink/40',   icon: Flame },
   medium: { label: 'Medium', color: '#ff6b35', bg: 'bg-accent-orange/15', border: 'border-accent-orange/40', icon: ArrowUp },
   low:    { label: 'Low',    color: '#00d9ff', bg: 'bg-accent-cyan/15',   border: 'border-accent-cyan/40',   icon: Minus },
-  none:   { label: 'None',   color: '#64748b', bg: 'bg-white/5',          border: 'border-white/10',         icon: null },
+  none:   { label: 'None',   color: '#64748b', bg: 'bg-bg-primary',       border: 'border-transparent',      icon: null },
 };
 
 const AGENCY_COLORS = ['#00d9ff', '#9d4edd', '#ff6b35', '#ff006e', '#00ff88'];
@@ -23,7 +23,7 @@ const dueDateLabel = (date) => {
   if (date === TODAY) return { text: 'Today', color: 'text-accent-orange', bg: 'bg-accent-orange/10 border-accent-orange/30' };
   const days = Math.ceil((new Date(date) - new Date(TODAY)) / 86400000);
   if (days <= 3) return { text: `In ${days}d`, color: 'text-accent-orange/70', bg: 'bg-accent-orange/5 border-accent-orange/20' };
-  return { text: date.slice(5).replace('-', '/'), color: 'text-text-tertiary', bg: 'bg-white/5 border-white/10' };
+  return { text: date.slice(5).replace('-', '/'), color: 'text-text-tertiary', bg: 'bg-bg-primary border-transparent' };
 };
 
 // ─── Checkbox component ────────────────────────────────────────────────────────
@@ -84,7 +84,7 @@ const QuickAdd = ({ agencyId, creators, onAdd }) => {
           <div className="flex items-center gap-xs">
             {Object.entries(PRIORITY).filter(([k]) => k !== 'none').map(([key, p]) => (
               <button key={key} onClick={() => setPriority(priority === key ? 'none' : key)}
-                className={`px-sm py-xs rounded-md text-xs font-semibold border transition-all ${priority === key ? `${p.bg} ${p.border}` : 'bg-white/5 border-white/10 text-text-tertiary hover:text-text-primary'}`}
+                className={`px-sm py-xs rounded-md text-xs font-semibold border transition-all ${priority === key ? `${p.bg} ${p.border}` : 'neu-btn border-transparent text-text-tertiary hover:text-text-primary'}`}
                 style={{ color: priority === key ? p.color : undefined }}>
                 {p.label}
               </button>
@@ -92,11 +92,11 @@ const QuickAdd = ({ agencyId, creators, onAdd }) => {
           </div>
           {/* Due date */}
           <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)}
-            className="bg-white/5 border border-white/10 rounded-lg px-sm py-xs text-text-secondary text-xs focus:outline-none focus:border-accent-purple/40 transition-all" />
+            className="rounded-lg px-sm py-xs text-text-secondary text-xs focus:outline-none focus:border-accent-purple/40 transition-all" />
           {/* Creator */}
           {creators.length > 0 && (
             <select value={creatorId} onChange={e => setCreatorId(e.target.value)}
-              className="bg-white/5 border border-white/10 rounded-lg px-sm py-xs text-text-secondary text-xs focus:outline-none focus:border-accent-purple/40 transition-all">
+              className="rounded-lg px-sm py-xs text-text-secondary text-xs focus:outline-none focus:border-accent-purple/40 transition-all">
               <option value="">No creator</option>
               {creators.map(c => <option key={c.id} value={c.id}>{c.stage_name}</option>)}
             </select>
@@ -160,7 +160,7 @@ const TaskItem = ({ task, onToggle, onUpdate, onDelete, accentColor }) => {
         {/* Meta badges */}
         <div className="flex items-center gap-xs flex-shrink-0">
           {task.creator_name && (
-            <span className="hidden sm:flex text-xs px-sm py-xs rounded-full bg-white/5 border border-white/10 text-text-tertiary">
+            <span className="hidden sm:flex text-xs px-sm py-xs rounded-full bg-bg-primary text-text-tertiary">
               {task.creator_name}
             </span>
           )}
@@ -199,13 +199,13 @@ const TaskItem = ({ task, onToggle, onUpdate, onDelete, accentColor }) => {
               <textarea value={editData.description} onChange={e => setEditData(d => ({ ...d, description: e.target.value }))}
                 placeholder="Add a description..."
                 rows={2}
-                className="w-full bg-bg-primary/50 border border-white/10 rounded-lg px-md py-sm text-text-secondary text-sm focus:outline-none focus:border-accent-purple/40 resize-none transition-all" />
+                className="w-full rounded-lg px-md py-sm text-text-secondary text-sm focus:outline-none focus:border-accent-purple/40 resize-none transition-all" />
               <div className="flex items-center gap-md flex-wrap">
                 {/* Priority */}
                 <div className="flex gap-xs">
                   {Object.entries(PRIORITY).filter(([k]) => k !== 'none').map(([key, pr]) => (
                     <button key={key} onClick={() => setEditData(d => ({ ...d, priority: d.priority === key ? 'none' : key }))}
-                      className={`px-sm py-xs rounded-md text-xs font-semibold border transition-all ${editData.priority === key ? `${pr.bg} ${pr.border}` : 'bg-white/5 border-white/10 text-text-tertiary'}`}
+                      className={`px-sm py-xs rounded-md text-xs font-semibold border transition-all ${editData.priority === key ? `${pr.bg} ${pr.border}` : 'neu-btn border-transparent text-text-tertiary'}`}
                       style={{ color: editData.priority === key ? pr.color : undefined }}>
                       {pr.label}
                     </button>
@@ -213,14 +213,14 @@ const TaskItem = ({ task, onToggle, onUpdate, onDelete, accentColor }) => {
                 </div>
                 {/* Date */}
                 <input type="date" value={editData.due_date} onChange={e => setEditData(d => ({ ...d, due_date: e.target.value }))}
-                  className="bg-white/5 border border-white/10 rounded-lg px-sm py-xs text-text-secondary text-xs focus:outline-none focus:border-accent-purple/40 transition-all" />
+                  className="rounded-lg px-sm py-xs text-text-secondary text-xs focus:outline-none focus:border-accent-purple/40 transition-all" />
                 {/* Link */}
                 <input type="url" value={editData.link} onChange={e => setEditData(d => ({ ...d, link: e.target.value }))}
                   placeholder="https://..."
-                  className="flex-1 min-w-32 bg-white/5 border border-white/10 rounded-lg px-sm py-xs text-text-secondary text-xs focus:outline-none focus:border-accent-purple/40 transition-all" />
+                  className="flex-1 min-w-32 rounded-lg px-sm py-xs text-text-secondary text-xs focus:outline-none focus:border-accent-purple/40 transition-all" />
               </div>
               <div className="flex gap-sm justify-end">
-                <button onClick={() => setEditing(false)} className="px-md py-xs border border-white/10 rounded-lg text-xs text-text-tertiary hover:text-text-primary transition-colors">Cancel</button>
+                <button onClick={() => setEditing(false)} className="px-md py-xs neu-btn rounded-lg text-xs text-text-tertiary hover:text-text-primary transition-colors">Cancel</button>
                 <button onClick={saveEdit} className="px-md py-xs bg-accent-purple/80 hover:bg-accent-purple text-white text-xs font-semibold rounded-lg transition-colors">Save</button>
               </div>
             </>
@@ -342,14 +342,14 @@ const Tasks = () => {
           <CheckSquare size={30} className="text-accent-purple" />
           <h1 className="text-3xl font-bold bg-gradient-to-r from-accent-purple to-accent-blue bg-clip-text text-transparent">Tasks</h1>
           {totalActive > 0 && (
-            <span className={`text-sm px-sm py-xs rounded-full font-semibold ${totalOverdue > 0 ? 'bg-accent-pink/15 text-accent-pink border border-accent-pink/30' : 'bg-white/8 text-text-secondary border border-white/10'}`}>
+            <span className={`text-sm px-sm py-xs rounded-full font-semibold ${totalOverdue > 0 ? 'bg-accent-pink/15 text-accent-pink border border-accent-pink/30' : 'bg-bg-primary text-text-secondary'}`}>
               {totalActive} active {totalOverdue > 0 ? `· ${totalOverdue} overdue` : ''}
             </span>
           )}
         </div>
         {totalDoneCount > 0 && (
           <button onClick={() => setConfirmClear(true)}
-            className="text-xs text-text-tertiary hover:text-accent-pink border border-white/10 hover:border-accent-pink/30 rounded-lg px-md py-xs transition-all">
+            className="text-xs text-text-tertiary hover:text-accent-pink neu-btn rounded-lg px-md py-xs transition-all">
             Clear {totalDoneCount} completed
           </button>
         )}
@@ -363,7 +363,7 @@ const Tasks = () => {
           const count = tasks.filter(t => !t.is_completed && t.agency_id === agency.id).length;
           return (
             <button key={agency.id} onClick={() => setSelectedAgency(agency.id)}
-              className={`flex items-center gap-sm px-lg py-sm rounded-xl text-sm font-semibold transition-all border ${isActive ? 'text-bg-primary border-transparent shadow-lg' : 'bg-white/5 border-white/10 text-text-secondary hover:text-text-primary hover:bg-white/8'}`}
+              className={`flex items-center gap-sm px-lg py-sm rounded-xl text-sm font-semibold transition-all ${isActive ? 'border border-transparent text-bg-primary shadow-lg' : 'neu-btn text-text-secondary hover:text-text-primary'}`}
               style={isActive ? { background: color, borderColor: color } : {}}>
               {agency.name}
               {count > 0 && (
@@ -379,7 +379,7 @@ const Tasks = () => {
       {activeAgencyId && (
         <div className="flex items-center gap-sm flex-wrap">
           {[
-            { label: 'Active',    value: activeTasks.length,    color: 'text-text-secondary', bg: 'bg-white/5 border-white/10'                       },
+            { label: 'Active',    value: activeTasks.length,    color: 'text-text-secondary', bg: 'bg-bg-primary border-transparent'                  },
             { label: 'Overdue',   value: overdue.length,        color: 'text-accent-pink',    bg: 'bg-accent-pink/10 border-accent-pink/25'            },
             { label: 'Due Today', value: dueToday.length,       color: 'text-accent-orange',  bg: 'bg-accent-orange/10 border-accent-orange/25'        },
             { label: 'Done',      value: completedTasks.length, color: 'text-accent-lime/80', bg: 'bg-accent-lime/8 border-accent-lime/20'             },
@@ -396,7 +396,7 @@ const Tasks = () => {
         <>
           {/* Search + filter bar */}
           <div className="flex items-center gap-md flex-wrap">
-            <div className="flex items-center gap-sm flex-1 min-w-48 bg-white/5 border border-white/10 rounded-xl px-md py-sm hover:border-white/20 transition-all">
+            <div className="flex items-center gap-sm flex-1 min-w-48 neu-card-inset rounded-xl px-md py-sm transition-all">
               <Search size={14} className="text-text-tertiary flex-shrink-0" />
               <input type="text" value={search} onChange={e => setSearch(e.target.value)}
                 placeholder="Search tasks..."
@@ -413,7 +413,7 @@ const Tasks = () => {
                 return (
                   <button key={p} onClick={() => setPriorityFilter(p)}
                     className={`px-sm py-xs rounded-lg text-xs font-semibold border transition-all ${
-                      isActive && p !== 'all' ? `${pr?.bg} ${pr?.border}` : isActive ? 'bg-white/10 border-white/20 text-text-primary' : 'bg-white/5 border-white/8 text-text-tertiary hover:text-text-primary'
+                      isActive && p !== 'all' ? `${pr?.bg} ${pr?.border}` : isActive ? 'neu-card border-transparent text-text-primary' : 'neu-btn border-transparent text-text-tertiary hover:text-text-primary'
                     }`}
                     style={{ color: isActive && p !== 'all' ? pr?.color : undefined }}>
                     {p === 'all' ? 'All' : pr?.label}
@@ -473,11 +473,11 @@ const Tasks = () => {
       {/* Clear completed confirmation */}
       {confirmClear && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50" onClick={() => setConfirmClear(false)}>
-          <div className="bg-bg-secondary border border-white/10 rounded-2xl p-xl shadow-2xl max-w-sm w-full mx-lg animate-scale-in" onClick={e => e.stopPropagation()}>
+          <div className="neu-card rounded-2xl p-xl shadow-2xl max-w-sm w-full mx-lg animate-scale-in" onClick={e => e.stopPropagation()}>
             <h3 className="text-lg font-bold text-text-primary mb-sm">Clear completed tasks?</h3>
             <p className="text-text-secondary text-sm mb-lg">This will permanently delete all {totalDoneCount} completed tasks for this agency.</p>
             <div className="flex gap-md justify-end">
-              <button onClick={() => setConfirmClear(false)} className="px-lg py-sm border border-white/10 rounded-xl text-sm text-text-secondary hover:text-text-primary transition-colors">Cancel</button>
+              <button onClick={() => setConfirmClear(false)} className="px-lg py-sm neu-btn rounded-xl text-sm text-text-secondary hover:text-text-primary transition-colors">Cancel</button>
               <button onClick={() => { clearCompletedTasks(activeAgencyId); setConfirmClear(false); }} className="px-lg py-sm bg-accent-pink/80 hover:bg-accent-pink text-white font-semibold rounded-xl text-sm transition-colors">Clear All</button>
             </div>
           </div>

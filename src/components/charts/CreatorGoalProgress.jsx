@@ -43,7 +43,7 @@ const CreatorGoalProgress = ({ agencyId, agencyName }) => {
   };
 
   return (
-    <div className="bg-gradient-to-br from-bg-tertiary to-bg-secondary border border-accent-orange/30 rounded-xl p-lg">
+    <div className="neu-card p-lg">
       <h3 className="text-lg font-semibold text-text-primary mb-lg">
         {agencyName} - Creator Goal Progress (This Month)
       </h3>
@@ -71,7 +71,7 @@ const CreatorGoalProgress = ({ agencyId, agencyName }) => {
                 {creator.percentage}%
               </span>
             </div>
-            <div className="w-full bg-bg-secondary/50 rounded-full h-2 border border-accent-orange/20">
+            <div className="w-full bg-bg-primary rounded-full h-2" style={{ boxShadow: 'inset 2px 2px 4px rgba(0,0,0,0.3)' }}>
               <div
                 className="h-full rounded-full transition-all duration-300"
                 style={{

@@ -9,7 +9,7 @@
 }
 
 html {
-  background: linear-gradient(135deg, #1d2027 0%, #252b36 100%);
+  background: linear-gradient(135deg, #1c1c1e 0%, #252523 100%);
   color: #ffffff;
 }
 
@@ -18,7 +18,7 @@ body {
   font-family: 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: linear-gradient(135deg, #1d2027 0%, #252b36 100%);
+  background: linear-gradient(135deg, #1c1c1e 0%, #252523 100%);
   min-height: 100dvh;
 }
 
@@ -30,7 +30,7 @@ body {
 
 /* ── Neumorphism utility classes ────────────────────────────────────────── */
 .neu-card {
-  background: #252b36;
+  background: #252523;
   border-radius: 16px;
   box-shadow: 6px 6px 12px rgba(0,0,0,0.4), -6px -6px 12px rgba(255,255,255,0.04);
   transition: box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1);
@@ -40,13 +40,13 @@ body {
 }
 
 .neu-card-inset {
-  background: #1d2027;
+  background: #1c1c1e;
   border-radius: 12px;
   box-shadow: inset 4px 4px 8px rgba(0,0,0,0.38), inset -4px -4px 8px rgba(255,255,255,0.035);
 }
 
 .neu-btn {
-  background: #252b36;
+  background: #252523;
   border-radius: 12px;
   box-shadow: 4px 4px 8px rgba(0,0,0,0.35), -4px -4px 8px rgba(255,255,255,0.03);
   transition: box-shadow 0.2s ease, transform 0.15s ease;
@@ -62,7 +62,7 @@ body {
 /* ── Form elements — neu inset ─────────────────────────────────────────── */
 input, textarea, select {
   font-family: 'Inter', system-ui, sans-serif;
-  background: #1d2027;
+  background: #1c1c1e;
   color: #ffffff;
   border: none;
   box-shadow: inset 3px 3px 6px rgba(0,0,0,0.35), inset -3px -3px 6px rgba(255,255,255,0.025);
@@ -85,19 +85,19 @@ input[type="number"] {
 }
 
 select {
-  background: #1d2027 !important;
+  background: #1c1c1e !important;
   color: #ffffff !important;
   padding: 8px 12px;
   cursor: pointer;
 }
 
 select option {
-  background: #252b36;
+  background: #252523;
   color: #ffffff;
 }
 
 input[type="date"] {
-  background: #1d2027 !important;
+  background: #1c1c1e !important;
   color: #ffffff !important;
 }
 

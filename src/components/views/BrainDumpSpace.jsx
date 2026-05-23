@@ -57,7 +57,7 @@ const BrainDumpSpace = () => {
             }}
             placeholder="Type your thought... (Ctrl+Enter to save)"
             rows={4}
-            className="w-full bg-bg-primary/60 border border-white/10 rounded-xl px-lg py-md text-text-primary placeholder-text-tertiary/50 focus:outline-none focus:border-accent-purple/50 resize-none transition-all"
+            className="w-full rounded-xl px-lg py-md text-text-primary placeholder-text-tertiary/50 focus:outline-none focus:border-accent-purple/50 resize-none transition-all"
           />
           <button
             onClick={handleAddNote}

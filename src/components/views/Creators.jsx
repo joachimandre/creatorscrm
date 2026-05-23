@@ -322,7 +322,7 @@ const Creators = () => {
                 <span className={`text-xs px-1.5 py-[1px] rounded-full font-semibold border
                   ${creator.is_active
                     ? 'bg-accent-lime/10 border-accent-lime/25 text-accent-lime/80'
-                    : 'bg-white/5 border-white/10 text-text-tertiary/50'
+                    : 'bg-bg-primary text-text-tertiary/50'
                   }`}>
                   {creator.is_active ? '● Active' : '○ Inactive'}
                 </span>
@@ -350,12 +350,12 @@ const Creators = () => {
               )}
             </div>
             {creator.monthly_goal > 0 ? (
-              <div className="w-full h-1.5 bg-white/8 rounded-full overflow-hidden">
+              <div className="w-full h-1.5 bg-bg-primary rounded-full overflow-hidden" style={{ boxShadow: 'inset 2px 2px 4px rgba(0,0,0,0.3)' }}>
                 <div className={`h-full ${colors.bar} rounded-full transition-all duration-700`}
                   style={{ width: `${Math.min(pct, 100)}%` }} />
               </div>
             ) : (
-              <div className="w-full h-1.5 bg-white/5 rounded-full">
+              <div className="w-full h-1.5 bg-bg-primary rounded-full" style={{ boxShadow: 'inset 2px 2px 4px rgba(0,0,0,0.3)' }}>
                 <div className="text-[9px] text-text-tertiary/30 text-center leading-none mt-px">no goal set</div>
               </div>
             )}
@@ -412,7 +412,7 @@ const Creators = () => {
                   </div>
                   <button
                     onClick={() => { setSubLogOpen(creator.id); setSubLogForm({ date: todayIso, count: '', notes: '' }); }}
-                    className="shrink-0 text-xs px-sm py-[2px] border border-white/10 rounded-lg text-text-tertiary/60 hover:text-text-primary hover:bg-white/5 transition-all">
+                    className="shrink-0 text-xs px-sm py-[2px] neu-btn rounded-lg text-text-tertiary/60 hover:text-text-primary transition-all">
                     + Log
                   </button>
                 </div>
@@ -437,7 +437,7 @@ const Creators = () => {
                       <label className="text-[9px] text-text-tertiary/50 mb-[2px] block">Date</label>
                       <input type="date" value={subLogForm.date}
                         onChange={e => setSubLogForm(f => ({ ...f, date: e.target.value }))}
-                        className="w-full bg-bg-primary/60 border border-white/10 rounded-lg px-xs py-[3px] text-text-primary text-xs focus:outline-none focus:border-accent-cyan/50 transition-all"
+                        className="w-full rounded-lg px-xs py-[3px] text-text-primary text-xs focus:outline-none focus:border-accent-cyan/50 transition-all"
                       />
                     </div>
                     <div>
@@ -447,7 +447,7 @@ const Creators = () => {
                         onChange={e => setSubLogForm(f => ({ ...f, count: e.target.value }))}
                         onKeyDown={e => { if (e.key === 'Enter') handleLogSub(creator.id); if (e.key === 'Escape') setSubLogOpen(null); }}
                         placeholder="e.g. 4820"
-                        className="w-full bg-bg-primary/60 border border-white/10 rounded-lg px-xs py-[3px] text-text-primary text-xs focus:outline-none focus:border-accent-cyan/50 placeholder-text-tertiary/25 transition-all"
+                        className="w-full rounded-lg px-xs py-[3px] text-text-primary text-xs focus:outline-none focus:border-accent-cyan/50 placeholder-text-tertiary/25 transition-all"
                       />
                     </div>
                   </div>
@@ -459,7 +459,7 @@ const Creators = () => {
                       Save
                     </button>
                     <button onClick={() => setSubLogOpen(null)}
-                      className="px-sm py-[3px] border border-white/10 text-text-tertiary text-xs rounded-lg hover:bg-white/5 transition-all">
+                      className="px-sm py-[3px] neu-btn text-text-tertiary text-xs rounded-lg hover:text-text-primary transition-all">
                       Cancel
                     </button>
                   </div>
@@ -471,7 +471,7 @@ const Creators = () => {
 
         {/* Edit panel (inline slide-down) */}
         {isEditing && (
-          <div className="border-t border-white/10 bg-bg-primary/40 p-lg space-y-md animate-fade-in"
+          <div className="border-t border-white/10 bg-bg-primary p-lg space-y-md animate-fade-in"
             onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <p className="text-xs font-bold uppercase tracking-widest text-text-tertiary">Edit Creator</p>
@@ -485,7 +485,7 @@ const Creators = () => {
               <label className="text-xs text-text-tertiary mb-xs block">Stage Name</label>
               <input type="text" value={editForm.name}
                 onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))}
-                className="w-full bg-bg-primary/60 border border-white/10 rounded-lg px-sm py-xs text-text-primary text-xs focus:outline-none focus:border-accent-purple/50 transition-all"
+                className="w-full rounded-lg px-sm py-xs text-text-primary text-xs focus:outline-none focus:border-accent-purple/50 transition-all"
               />
             </div>
 
@@ -500,7 +500,7 @@ const Creators = () => {
                   <label className="text-xs text-text-tertiary mb-xs block">{label}</label>
                   <input type="number" value={editForm[key]} min="0"
                     onChange={e => setEditForm(f => ({ ...f, [key]: e.target.value }))}
-                    className="w-full bg-bg-primary/60 border border-white/10 rounded-lg px-xs py-xs text-text-primary text-xs focus:outline-none focus:border-accent-purple/50 transition-all"
+                    className="w-full rounded-lg px-xs py-xs text-text-primary text-xs focus:outline-none focus:border-accent-purple/50 transition-all"
                   />
                 </div>
               ))}
@@ -512,16 +512,16 @@ const Creators = () => {
                 <label className="text-xs text-text-tertiary mb-xs block">Commission %</label>
                 <input type="number" value={editForm.commissionRate} min="0" max="100"
                   onChange={e => setEditForm(f => ({ ...f, commissionRate: e.target.value }))}
-                  className="w-full bg-bg-primary/60 border border-white/10 rounded-lg px-xs py-xs text-text-primary text-xs focus:outline-none focus:border-accent-purple/50 transition-all"
+                  className="w-full rounded-lg px-xs py-xs text-text-primary text-xs focus:outline-none focus:border-accent-purple/50 transition-all"
                 />
               </div>
               <div className="flex items-end">
                 <button
                   onClick={() => setEditForm(f => ({ ...f, isActive: !f.isActive }))}
-                  className={`w-full py-xs rounded-lg text-xs font-semibold border transition-all ${
+                  className={`w-full py-xs rounded-lg text-xs font-semibold transition-all ${
                     editForm.isActive
-                      ? 'bg-accent-lime/10 border-accent-lime/30 text-accent-lime'
-                      : 'bg-white/5 border-white/10 text-text-tertiary'
+                      ? 'bg-accent-lime/10 border border-accent-lime/30 text-accent-lime'
+                      : 'neu-btn text-text-tertiary'
                   }`}>
                   {editForm.isActive ? '● Active' : '○ Inactive'}
                 </button>
@@ -536,7 +536,7 @@ const Creators = () => {
               <input type="url" value={editForm.driveUrl}
                 onChange={e => setEditForm(f => ({ ...f, driveUrl: e.target.value }))}
                 placeholder="https://drive.google.com/drive/folders/..."
-                className="w-full bg-bg-primary/60 border border-white/10 rounded-lg px-sm py-xs text-text-primary text-xs focus:outline-none focus:border-accent-cyan/50 transition-all placeholder-text-tertiary/30"
+                className="w-full rounded-lg px-sm py-xs text-text-primary text-xs focus:outline-none focus:border-accent-cyan/50 transition-all placeholder-text-tertiary/30"
               />
             </div>
 
@@ -546,7 +546,7 @@ const Creators = () => {
               <textarea value={editForm.notes} rows={2}
                 onChange={e => setEditForm(f => ({ ...f, notes: e.target.value }))}
                 placeholder="Any notes…"
-                className="w-full bg-bg-primary/60 border border-white/10 rounded-lg px-sm py-xs text-text-primary text-xs focus:outline-none focus:border-accent-purple/50 transition-all resize-none placeholder-text-tertiary/30"
+                className="w-full rounded-lg px-sm py-xs text-text-primary text-xs focus:outline-none focus:border-accent-purple/50 transition-all resize-none placeholder-text-tertiary/30"
               />
             </div>
 
@@ -561,7 +561,7 @@ const Creators = () => {
                 <Trash2 size={11} />
               </button>
               <button onClick={() => setEditingId(null)}
-                className="px-md py-xs border border-white/10 text-text-tertiary text-xs rounded-lg hover:text-text-primary hover:bg-white/5 transition-colors">
+                className="px-md py-xs neu-btn text-text-tertiary text-xs rounded-lg hover:text-text-primary transition-colors">
                 Cancel
               </button>
             </div>
@@ -606,7 +606,7 @@ const Creators = () => {
               className={`flex items-center gap-sm px-lg py-sm rounded-xl text-sm font-semibold transition-all border ${
                 isActive
                   ? 'bg-gradient-to-r from-accent-purple to-accent-pink text-white border-transparent shadow-glow-purple'
-                  : 'bg-white/5 text-text-secondary border-white/10 hover:text-text-primary hover:bg-white/10'
+                  : 'neu-btn text-text-secondary hover:text-text-primary'
               }`}>
               {agency.name}
               <span className={`text-xs px-1.5 py-0.5 rounded-full ${isActive ? 'bg-black/20 text-white' : 'bg-white/10'}`}>
@@ -631,7 +631,7 @@ const Creators = () => {
                 type="text" value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder="Search creators…"
-                className="w-full bg-bg-tertiary/50 border border-white/8 rounded-xl pl-[34px] pr-md py-sm text-sm text-text-primary placeholder-text-tertiary/40 focus:outline-none focus:border-white/20 transition-all"
+                className="w-full rounded-xl pl-[34px] pr-md py-sm text-sm text-text-primary placeholder-text-tertiary/40 focus:outline-none transition-all"
               />
               {searchQuery && (
                 <button onClick={() => setSearchQuery('')}
@@ -642,7 +642,7 @@ const Creators = () => {
             </div>
 
             {/* Sort pills */}
-            <div className="flex items-center gap-xs bg-bg-tertiary/40 border border-white/8 rounded-xl p-xs">
+            <div className="flex items-center gap-xs neu-card-inset rounded-xl p-xs">
               {[
                 { key: 'name',     label: 'Name' },
                 { key: 'monthly',  label: 'Monthly $' },
@@ -652,7 +652,7 @@ const Creators = () => {
                   className={`px-md py-xs rounded-lg text-xs font-semibold transition-all ${
                     sortBy === s.key
                       ? 'bg-accent-purple/80 text-white shadow-sm'
-                      : 'text-text-tertiary hover:text-text-primary hover:bg-white/5'
+                      : 'text-text-tertiary hover:text-text-primary'
                   }`}>
                   {s.label}
                 </button>
@@ -662,10 +662,10 @@ const Creators = () => {
             {/* Inactive toggle */}
             {inactiveCreators.length > 0 && (
               <button onClick={() => setShowInactive(v => !v)}
-                className={`flex items-center gap-xs px-md py-sm rounded-xl text-xs font-semibold border transition-all ${
+                className={`flex items-center gap-xs px-md py-sm rounded-xl text-xs font-semibold transition-all ${
                   showInactive
-                    ? 'bg-white/8 border-white/20 text-text-primary'
-                    : 'bg-white/3 border-white/8 text-text-tertiary hover:text-text-primary hover:bg-white/5'
+                    ? 'neu-card text-text-primary'
+                    : 'neu-btn text-text-tertiary hover:text-text-primary'
                 }`}>
                 {showInactive ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                 {inactiveCreators.length} inactive
@@ -674,7 +674,7 @@ const Creators = () => {
 
             {/* Agency monthly total */}
             {agencyMonthlyTotal > 0 && (
-              <div className="ml-auto flex items-center gap-xs text-xs text-text-tertiary/60 bg-bg-tertiary/30 border border-white/8 rounded-xl px-md py-sm">
+              <div className="ml-auto flex items-center gap-xs text-xs text-text-tertiary/60 bg-bg-primary rounded-xl px-md py-sm">
                 <Target size={11} className="text-accent-lime/60" />
                 <span>Agency: <span className="text-accent-lime font-mono font-bold">{fmt(agencyMonthlyTotal)}</span> this month</span>
               </div>
@@ -741,7 +741,7 @@ const Creators = () => {
                 onChange={e => setNewCreator(c => ({ ...c, name: e.target.value }))}
                 onKeyDown={e => { if (e.key === 'Enter') handleAddCreator(); }}
                 placeholder="Creator's stage name…"
-                className="w-full bg-bg-primary/60 border border-white/10 rounded-xl px-md py-sm text-text-primary text-sm focus:outline-none focus:border-accent-purple/50 transition-all placeholder-text-tertiary/40"
+                className="w-full rounded-xl px-md py-sm text-text-primary text-sm focus:outline-none focus:border-accent-purple/50 transition-all placeholder-text-tertiary/40"
               />
             </div>
 
@@ -756,7 +756,7 @@ const Creators = () => {
                   <input type="number" value={newCreator[key]} min="0"
                     onChange={e => setNewCreator(c => ({ ...c, [key]: e.target.value }))}
                     placeholder="0"
-                    className="w-full bg-bg-primary/60 border border-white/10 rounded-xl px-sm py-sm text-text-primary text-sm focus:outline-none focus:border-accent-purple/50 transition-all placeholder-text-tertiary/40"
+                    className="w-full rounded-xl px-sm py-sm text-text-primary text-sm focus:outline-none focus:border-accent-purple/50 transition-all placeholder-text-tertiary/40"
                   />
                 </div>
               ))}
@@ -768,7 +768,7 @@ const Creators = () => {
                 <input type="number" value={newCreator.commissionRate} min="0" max="100"
                   onChange={e => setNewCreator(c => ({ ...c, commissionRate: e.target.value }))}
                   placeholder="0"
-                  className="w-full bg-bg-primary/60 border border-white/10 rounded-xl px-sm py-sm text-text-primary text-sm focus:outline-none focus:border-accent-purple/50 transition-all placeholder-text-tertiary/40"
+                  className="w-full rounded-xl px-sm py-sm text-text-primary text-sm focus:outline-none focus:border-accent-purple/50 transition-all placeholder-text-tertiary/40"
                 />
               </div>
               <div>
@@ -778,7 +778,7 @@ const Creators = () => {
                 <input type="url" value={newCreator.driveUrl}
                   onChange={e => setNewCreator(c => ({ ...c, driveUrl: e.target.value }))}
                   placeholder="Optional"
-                  className="w-full bg-bg-primary/60 border border-white/10 rounded-xl px-sm py-sm text-text-primary text-sm focus:outline-none focus:border-accent-cyan/50 transition-all placeholder-text-tertiary/40"
+                  className="w-full rounded-xl px-sm py-sm text-text-primary text-sm focus:outline-none focus:border-accent-cyan/50 transition-all placeholder-text-tertiary/40"
                 />
               </div>
             </div>
@@ -789,7 +789,7 @@ const Creators = () => {
                 <Plus size={14} /> Add Creator
               </button>
               <button onClick={() => setShowAddModal(false)}
-                className="px-xl py-sm border border-white/10 text-text-secondary rounded-xl text-sm hover:text-text-primary hover:border-white/20 transition-all">
+                className="px-xl py-sm neu-btn text-text-secondary rounded-xl text-sm hover:text-text-primary transition-all">
                 Cancel
               </button>
             </div>
@@ -810,7 +810,7 @@ const Creators = () => {
             </p>
             <div className="flex gap-md justify-end">
               <button onClick={() => setConfirmDelete(null)}
-                className="px-lg py-sm border border-white/10 rounded-lg text-sm text-text-secondary hover:text-text-primary transition-colors">
+                className="px-lg py-sm neu-btn rounded-lg text-sm text-text-secondary hover:text-text-primary transition-colors">
                 Cancel
               </button>
               <button onClick={() => { deleteCreatorData(confirmDelete.id); setConfirmDelete(null); setEditingId(null); }}

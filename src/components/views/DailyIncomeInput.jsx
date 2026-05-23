@@ -57,13 +57,13 @@ const DailyIncomeInput = () => {
   }, 0);
 
   return (
-    <div className="p-lg bg-gradient-to-br from-bg-primary via-bg-secondary to-bg-tertiary h-full overflow-auto space-y-lg">
+    <div className="p-lg h-full overflow-auto space-y-lg">
       <h1 className="text-3xl font-bold text-text-primary flex items-center gap-md">
         <DollarSign size={32} className="text-accent-orange" />
         Daily Income Input
       </h1>
 
-      <div className="bg-gradient-to-br from-bg-tertiary to-bg-secondary border border-accent-cyan/30 rounded-xl p-lg space-y-lg max-w-2xl">
+      <div className="neu-card rounded-xl p-lg space-y-lg max-w-2xl">
         {/* Date selector */}
         <div>
           <label className="block text-sm font-medium text-text-secondary mb-sm">Date</label>
@@ -71,7 +71,7 @@ const DailyIncomeInput = () => {
             type="date"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
-            className="w-full max-w-xs bg-bg-tertiary/50 border border-accent-cyan/30 rounded-lg px-lg py-sm text-text-primary focus:outline-none focus:border-accent-cyan transition-all"
+            className="w-full max-w-xs rounded-lg px-lg py-sm text-text-primary focus:outline-none focus:border-accent-cyan transition-all"
           />
         </div>
 
@@ -83,7 +83,7 @@ const DailyIncomeInput = () => {
                 <h3 className="text-sm font-semibold text-accent-orange mb-sm uppercase tracking-wider">
                   {name}
                 </h3>
-                <div className="space-y-md bg-bg-secondary/50 border border-accent-orange/20 rounded-lg p-md">
+                <div className="space-y-md neu-card-inset rounded-lg p-md">
                   {agencyCreators.map(creator => (
                     <div key={creator.id} className="flex items-center gap-lg">
                       <label className="flex-1 text-sm text-text-primary font-medium">
@@ -99,7 +99,7 @@ const DailyIncomeInput = () => {
                           placeholder="0.00"
                           step="0.01"
                           min="0"
-                          className="w-32 bg-bg-tertiary/50 border border-accent-cyan/30 rounded-lg px-md py-sm text-text-primary font-mono text-right focus:outline-none focus:border-accent-cyan transition-all"
+                          className="w-32 rounded-lg px-md py-sm text-text-primary font-mono text-right focus:outline-none focus:border-accent-cyan transition-all"
                         />
                       </div>
                     </div>
@@ -112,7 +112,7 @@ const DailyIncomeInput = () => {
 
         {/* Summary and submit */}
         <div className="border-t border-accent-cyan/20 pt-lg space-y-md">
-          <div className="bg-gradient-to-r from-accent-orange/10 to-accent-pink/10 border border-accent-orange/30 rounded-lg p-md">
+          <div className="neu-card-inset rounded-lg p-md">
             <p className="text-sm text-text-secondary">Total for {selectedDate}</p>
             <p className="text-2xl font-bold text-accent-lime font-mono">
               ${totalEarnings.toFixed(2)}

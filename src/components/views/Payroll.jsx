@@ -257,7 +257,7 @@ const CalendarPicker = ({ currentStart, currentEnd, onApply, onClose }) => {
       </div>
 
       {/* Selection summary */}
-      <div className="mx-lg mb-md bg-white/[0.03] border border-white/8 rounded-xl px-md py-sm">
+      <div className="mx-lg mb-md neu-card-inset rounded-xl px-md py-sm">
         <div className="flex items-center justify-between text-xs">
           <div>
             <p className="text-[10px] text-text-tertiary uppercase tracking-widest mb-[2px]">From</p>
@@ -287,7 +287,7 @@ const CalendarPicker = ({ currentStart, currentEnd, onApply, onClose }) => {
       {/* Footer buttons */}
       <div className="flex items-center gap-sm px-lg pb-lg">
         <button onClick={onClose}
-          className="flex-1 py-sm border border-white/10 rounded-xl text-xs text-text-secondary hover:text-text-primary hover:border-white/20 transition-all">
+          className="flex-1 py-sm neu-btn rounded-xl text-xs text-text-secondary hover:text-text-primary transition-all">
           Cancel
         </button>
         <button
@@ -703,7 +703,7 @@ const Payroll = () => {
         </div>
         <div className="flex items-center gap-md flex-wrap">
           <button onClick={() => setShowExport(v => !v)}
-            className="flex items-center gap-xs px-md py-sm text-xs text-text-tertiary hover:text-text-primary border border-white/10 hover:border-white/20 rounded-lg transition-all">
+            className="flex items-center gap-xs px-md py-sm text-xs text-text-tertiary hover:text-text-primary neu-btn rounded-lg transition-all">
             <Printer size={12} /> Export
           </button>
           {showConfirmGen ? (
@@ -731,7 +731,7 @@ const Payroll = () => {
           className={`flex items-center gap-md px-lg py-md rounded-xl border transition-all group ${
             pickerOpen
               ? 'bg-accent-lime/10 border-accent-lime/40 shadow-glow-lime'
-              : 'neu-card border-white/10 hover:border-accent-lime/30 hover:bg-accent-lime/5'
+              : 'neu-card hover:border-accent-lime/30'
           }`}
         >
           <Calendar size={16} className={pickerOpen ? 'text-accent-lime' : 'text-text-tertiary group-hover:text-accent-lime transition-colors'} />
@@ -765,11 +765,11 @@ const Payroll = () => {
         <div className="neu-card p-lg flex items-center gap-md animate-slide-up flex-wrap">
           <p className="text-sm text-text-secondary flex-1">{periodLabel(periodStart, periodEnd)}</p>
           <button onClick={handleCopy}
-            className="flex items-center gap-xs px-lg py-sm bg-white/5 border border-white/10 rounded-lg text-sm text-text-secondary hover:text-text-primary hover:border-accent-cyan/30 transition-all">
+            className="flex items-center gap-xs px-lg py-sm neu-btn rounded-lg text-sm text-text-secondary hover:text-text-primary hover:border-accent-cyan/30 transition-all">
             <Copy size={14} />{copied ? '✓ Copied!' : 'Copy to clipboard'}
           </button>
           <button onClick={handlePrint}
-            className="flex items-center gap-xs px-lg py-sm bg-white/5 border border-white/10 rounded-lg text-sm text-text-secondary hover:text-text-primary hover:border-accent-cyan/30 transition-all">
+            className="flex items-center gap-xs px-lg py-sm neu-btn rounded-lg text-sm text-text-secondary hover:text-text-primary hover:border-accent-cyan/30 transition-all">
             <Printer size={14} /> Print
           </button>
         </div>
@@ -805,7 +805,7 @@ const Payroll = () => {
                   className={`flex items-center gap-xs px-md py-xs text-xs font-semibold rounded-lg border transition-all ${
                     historyManage
                       ? 'bg-accent-cyan/10 border-accent-cyan/30 text-accent-cyan'
-                      : 'border-white/10 text-text-tertiary hover:text-text-primary hover:border-white/20'
+                      : 'neu-btn text-text-tertiary hover:text-text-primary'
                   }`}>
                   <Settings2 size={11} /> {historyManage ? 'Done' : 'Manage'}
                 </button>
@@ -868,17 +868,17 @@ const Payroll = () => {
       {agencies.length > 1 && (
         <div className="flex items-center gap-sm flex-wrap">
           <button onClick={() => handleSetAgency(null)}
-            className={`px-lg py-sm rounded-xl text-sm font-semibold border transition-all ${
+            className={`px-lg py-sm rounded-xl text-sm font-semibold transition-all ${
               selectedAgency === null
-                ? 'bg-white/10 border-white/20 text-text-primary'
-                : 'bg-white/5 border-white/10 text-text-tertiary hover:text-text-primary'
+                ? 'neu-card text-text-primary'
+                : 'neu-btn text-text-tertiary hover:text-text-primary'
             }`}>All Agencies</button>
           {agencies.map((agency, idx) => {
             const color    = AGENCY_COLORS[idx % AGENCY_COLORS.length];
             const isActive = selectedAgency === agency.id;
             return (
               <button key={agency.id} onClick={() => handleSetAgency(agency.id)}
-                className={`px-lg py-sm rounded-xl text-sm font-semibold border transition-all ${isActive ? 'text-bg-primary' : 'bg-white/5 border-white/10 text-text-secondary hover:text-text-primary'}`}
+                className={`px-lg py-sm rounded-xl text-sm font-semibold transition-all ${isActive ? 'border border-transparent text-bg-primary' : 'neu-btn text-text-secondary hover:text-text-primary'}`}
                 style={isActive ? { background: color, borderColor: color } : {}}>
                 {agency.name}
               </button>
@@ -892,10 +892,10 @@ const Payroll = () => {
         <div className="flex items-center gap-sm flex-wrap">
           <span className="text-xs text-text-tertiary/60 font-semibold uppercase tracking-widest mr-xs">Team</span>
           <button onClick={() => setSelectedTeam(null)}
-            className={`px-md py-xs rounded-lg text-xs font-semibold border transition-all ${
+            className={`px-md py-xs rounded-lg text-xs font-semibold transition-all ${
               selectedTeam === null
-                ? 'bg-white/10 border-white/20 text-text-primary'
-                : 'bg-white/5 border-white/10 text-text-tertiary hover:text-text-primary'
+                ? 'neu-card text-text-primary'
+                : 'neu-btn text-text-tertiary hover:text-text-primary'
             }`}>All Teams</button>
           {agencyTeams.map(t => {
             const TEAM_HEX = { 'accent-cyan': '#00d9ff', 'accent-lime': '#00ff88', 'accent-purple': '#9d4edd', 'accent-pink': '#ff006e', 'accent-orange': '#ff6b35', 'accent-blue': '#3b82f6' };
@@ -903,7 +903,7 @@ const Payroll = () => {
             const isActive = selectedTeam === t.id;
             return (
               <button key={t.id} onClick={() => setSelectedTeam(isActive ? null : t.id)}
-                className={`flex items-center gap-xs px-md py-xs rounded-lg text-xs font-semibold border transition-all ${isActive ? 'text-bg-primary' : 'bg-white/5 border-white/10 text-text-tertiary hover:text-text-primary'}`}
+                className={`flex items-center gap-xs px-md py-xs rounded-lg text-xs font-semibold transition-all ${isActive ? 'border border-transparent text-bg-primary' : 'neu-btn text-text-tertiary hover:text-text-primary'}`}
                 style={isActive ? { background: hex, borderColor: hex } : {}}>
                 <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: isActive ? 'rgba(255,255,255,0.6)' : hex }} />
                 {t.name}
@@ -939,7 +939,7 @@ const Payroll = () => {
           {/* Creators table */}
           {creatorRecords.length > 0 && (
             <div className="rounded-xl overflow-hidden border border-white/5 shadow-xl">
-              <div className="px-lg py-sm border-b border-white/8 bg-white/[0.02] flex items-center gap-sm">
+              <div className="px-lg py-sm border-b border-white/8 bg-bg-primary flex items-center gap-sm">
                 <TrendingUp size={14} className="text-accent-cyan" />
                 <span className="text-xs font-bold uppercase tracking-widest text-accent-cyan/70">
                   {selectedTeamObj ? `${selectedTeamObj.name} — ` : ''}Creators ({creatorRecords.length})
@@ -949,15 +949,15 @@ const Payroll = () => {
                 <table className="w-full text-sm" style={{ background: 'rgba(10,12,30,0.7)' }}>
                   <thead>
                     <tr className="border-b border-white/8">
-                      <th className="text-left px-4 py-2 text-xs font-semibold uppercase tracking-widest text-text-tertiary bg-bg-primary/60 min-w-[150px]">Creator</th>
-                      <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-widest text-text-tertiary bg-bg-primary/60">Total Sales</th>
-                      <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-widest text-accent-lime/60 bg-bg-primary/60">Rate %</th>
-                      <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-widest text-text-tertiary bg-bg-primary/60">Commission</th>
-                      <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-widest text-accent-pink/60 bg-bg-primary/60">Deductions</th>
-                      <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-widest text-accent-lime/60 bg-bg-primary/60">Bonuses</th>
-                      <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-widest text-accent-cyan bg-bg-primary/60">Take Home</th>
-                      <th className="px-3 py-2 text-xs font-semibold uppercase tracking-widest text-text-tertiary bg-bg-primary/60">Status</th>
-                      <th className="w-8 bg-bg-primary/60" />
+                      <th className="text-left px-4 py-2 text-xs font-semibold uppercase tracking-widest text-text-tertiary bg-bg-primary min-w-[150px]">Creator</th>
+                      <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-widest text-text-tertiary bg-bg-primary">Total Sales</th>
+                      <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-widest text-accent-lime/60 bg-bg-primary">Rate %</th>
+                      <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-widest text-text-tertiary bg-bg-primary">Commission</th>
+                      <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-widest text-accent-pink/60 bg-bg-primary">Deductions</th>
+                      <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-widest text-accent-lime/60 bg-bg-primary">Bonuses</th>
+                      <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-widest text-accent-cyan bg-bg-primary">Take Home</th>
+                      <th className="px-3 py-2 text-xs font-semibold uppercase tracking-widest text-text-tertiary bg-bg-primary">Status</th>
+                      <th className="w-8 bg-bg-primary" />
                     </tr>
                   </thead>
                   <tbody>{creatorRecords.map(renderCreatorRow)}</tbody>
@@ -976,7 +976,7 @@ const Payroll = () => {
           {/* Chatters table */}
           {chatterRecords.length > 0 && (
             <div className="rounded-xl overflow-hidden border border-white/5 shadow-xl">
-              <div className="px-lg py-sm border-b border-white/8 bg-white/[0.02] flex items-center gap-sm">
+              <div className="px-lg py-sm border-b border-white/8 bg-bg-primary flex items-center gap-sm">
                 <Users size={14} className="text-accent-purple" />
                 <span className="text-xs font-bold uppercase tracking-widest text-accent-purple/70">
                   {selectedTeamObj ? `${selectedTeamObj.name} — ` : ''}Chatters &amp; Managers ({chatterRecords.length})
@@ -986,18 +986,18 @@ const Payroll = () => {
                 <table className="w-full text-sm" style={{ background: 'rgba(10,12,30,0.7)' }}>
                   <thead>
                     <tr className="border-b border-white/8">
-                      <th className="text-left px-4 py-2 text-xs font-semibold uppercase tracking-widest text-text-tertiary bg-bg-primary/60 min-w-[150px]">Name</th>
-                      <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-widest text-text-tertiary bg-bg-primary/60">Agency Sales</th>
-                      <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-widest text-accent-orange/60 bg-bg-primary/60">$/hr</th>
-                      <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-widest text-accent-orange/60 bg-bg-primary/60">Hours</th>
-                      <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-widest text-accent-orange/60 bg-bg-primary/60">Hourly Pay</th>
-                      <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-widest text-accent-lime/60 bg-bg-primary/60">Rate %</th>
-                      <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-widest text-accent-lime/60 bg-bg-primary/60">Commission</th>
-                      <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-widest text-accent-pink/60 bg-bg-primary/60">Deductions</th>
-                      <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-widest text-accent-lime/60 bg-bg-primary/60">Bonuses</th>
-                      <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-widest text-accent-cyan bg-bg-primary/60">Take Home</th>
-                      <th className="px-3 py-2 text-xs font-semibold uppercase tracking-widest text-text-tertiary bg-bg-primary/60">Status</th>
-                      <th className="w-8 bg-bg-primary/60" />
+                      <th className="text-left px-4 py-2 text-xs font-semibold uppercase tracking-widest text-text-tertiary bg-bg-primary min-w-[150px]">Name</th>
+                      <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-widest text-text-tertiary bg-bg-primary">Agency Sales</th>
+                      <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-widest text-accent-orange/60 bg-bg-primary">$/hr</th>
+                      <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-widest text-accent-orange/60 bg-bg-primary">Hours</th>
+                      <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-widest text-accent-orange/60 bg-bg-primary">Hourly Pay</th>
+                      <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-widest text-accent-lime/60 bg-bg-primary">Rate %</th>
+                      <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-widest text-accent-lime/60 bg-bg-primary">Commission</th>
+                      <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-widest text-accent-pink/60 bg-bg-primary">Deductions</th>
+                      <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-widest text-accent-lime/60 bg-bg-primary">Bonuses</th>
+                      <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-widest text-accent-cyan bg-bg-primary">Take Home</th>
+                      <th className="px-3 py-2 text-xs font-semibold uppercase tracking-widest text-text-tertiary bg-bg-primary">Status</th>
+                      <th className="w-8 bg-bg-primary" />
                     </tr>
                   </thead>
                   <tbody>{chatterRecords.map(renderChatterRow)}</tbody>
@@ -1038,7 +1038,7 @@ const Payroll = () => {
               <p className="text-text-secondary text-sm mb-lg">{content.body}</p>
               <div className="flex gap-md justify-end">
                 <button onClick={() => setConfirmDelete(null)}
-                  className="px-lg py-sm border border-white/10 rounded-lg text-sm text-text-secondary hover:text-text-primary transition-colors">
+                  className="px-lg py-sm neu-btn rounded-lg text-sm text-text-secondary hover:text-text-primary transition-colors">
                   Cancel
                 </button>
                 <button onClick={executeDelete}

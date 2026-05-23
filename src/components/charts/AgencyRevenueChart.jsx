@@ -32,7 +32,7 @@ const AgencyRevenueChart = ({ agencyId, agencyName }) => {
   const data = getLast7DaysData();
 
   return (
-    <div className="bg-gradient-to-br from-bg-tertiary to-bg-secondary border border-accent-cyan/30 rounded-xl p-lg">
+    <div className="neu-card p-lg">
       <h3 className="text-lg font-semibold text-text-primary mb-lg">{agencyName} - Revenue Trend</h3>
       <ResponsiveContainer width="100%" height={300}>
         <LineChart data={data} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
@@ -41,9 +41,10 @@ const AgencyRevenueChart = ({ agencyId, agencyName }) => {
           <YAxis stroke="#a8b2d1" />
           <Tooltip
             contentStyle={{
-              backgroundColor: '#1a1f3a',
-              border: '1px solid #00d9ff',
-              borderRadius: '8px',
+              backgroundColor: '#252523',
+              border: 'none',
+              borderRadius: '10px',
+              boxShadow: '4px 4px 8px rgba(0,0,0,0.4)',
               color: '#ffffff',
             }}
           />

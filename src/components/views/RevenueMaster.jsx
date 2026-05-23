@@ -34,7 +34,7 @@ const EarnedCell = ({ earned, goal }) => {
       <div className={`font-mono font-bold text-sm ${text}`}>${earned.toFixed(2)}</div>
       {goal > 0 && (
         <div className="flex items-center justify-end gap-1 mt-1">
-          <div className="w-14 h-1 bg-white/10 rounded-full overflow-hidden">
+          <div className="w-14 h-1 bg-bg-primary rounded-full overflow-hidden" style={{ boxShadow: 'inset 2px 2px 4px rgba(0,0,0,0.3)' }}>
             <div className={`h-full ${bar} rounded-full transition-all duration-500`} style={{ width: `${pct}%` }} />
           </div>
           <span className="text-text-tertiary font-mono" style={{ fontSize: 9 }}>{Math.round(pct)}%</span>
@@ -245,7 +245,7 @@ const RevenueMaster = () => {
 
         {/* % Revenue — pill badge */}
         <td className="text-right px-4 py-3">
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-mono bg-white/5 border border-white/10 text-text-secondary">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-mono bg-bg-primary text-text-secondary">
             {getPctOfAgency(creator.id, creator.agency_id)}%
           </span>
         </td>
@@ -395,7 +395,7 @@ const RevenueMaster = () => {
       {/* Controls */}
       <div className="flex items-center gap-md flex-wrap">
         <select value={agencyFilter || ''} onChange={e => setAgencyFilter(e.target.value ? parseInt(e.target.value) : null)}
-          className="bg-bg-tertiary/50 border border-accent-cyan/30 rounded-lg px-lg py-sm text-text-primary focus:outline-none focus:border-accent-cyan transition-all">
+          className="rounded-lg px-lg py-sm text-text-primary focus:outline-none focus:border-accent-cyan transition-all">
           <option value="">All Agencies</option>
           {agencies.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
         </select>
@@ -416,11 +416,11 @@ const RevenueMaster = () => {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-md">
             <div>
               <label className="block text-xs text-text-tertiary mb-xs">Stage Name *</label>
-              <input type="text" value={newCreator.name} onChange={e => setNewCreator(n => ({ ...n, name: e.target.value }))} onKeyDown={e => e.key === 'Enter' && handleAddCreator()} placeholder="e.g. Luna" className="w-full bg-bg-primary/50 border border-white/10 rounded-lg px-md py-sm text-text-primary text-sm focus:outline-none focus:border-accent-cyan transition-all" />
+              <input type="text" value={newCreator.name} onChange={e => setNewCreator(n => ({ ...n, name: e.target.value }))} onKeyDown={e => e.key === 'Enter' && handleAddCreator()} placeholder="e.g. Luna" className="w-full rounded-lg px-md py-sm text-text-primary text-sm focus:outline-none focus:border-accent-cyan transition-all" />
             </div>
             <div>
               <label className="block text-xs text-text-tertiary mb-xs">Agency *</label>
-              <select value={newCreator.agencyId} onChange={e => setNewCreator(n => ({ ...n, agencyId: e.target.value }))} className="w-full bg-bg-primary/50 border border-white/10 rounded-lg px-md py-sm text-text-primary text-sm focus:outline-none focus:border-accent-cyan transition-all">
+              <select value={newCreator.agencyId} onChange={e => setNewCreator(n => ({ ...n, agencyId: e.target.value }))} className="w-full rounded-lg px-md py-sm text-text-primary text-sm focus:outline-none focus:border-accent-cyan transition-all">
                 <option value="">Select...</option>
                 {agencies.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
               </select>
@@ -428,19 +428,19 @@ const RevenueMaster = () => {
             {[['dailyGoal', 'Daily Goal'], ['weeklyGoal', 'Weekly Goal'], ['monthlyGoal', 'Monthly Goal']].map(([key, label]) => (
               <div key={key}>
                 <label className="block text-xs text-text-tertiary mb-xs">{label} ($)</label>
-                <input type="number" value={newCreator[key]} onChange={e => setNewCreator(n => ({ ...n, [key]: e.target.value }))} placeholder="0" min="0" className="w-full bg-bg-primary/50 border border-white/10 rounded-lg px-md py-sm text-text-primary text-sm font-mono focus:outline-none focus:border-accent-cyan transition-all" />
+                <input type="number" value={newCreator[key]} onChange={e => setNewCreator(n => ({ ...n, [key]: e.target.value }))} placeholder="0" min="0" className="w-full rounded-lg px-md py-sm text-text-primary text-sm font-mono focus:outline-none focus:border-accent-cyan transition-all" />
               </div>
             ))}
             <div>
               <label className="block text-xs text-accent-lime/80 mb-xs">Commission %</label>
-              <input type="number" value={newCreator.commissionRate} onChange={e => setNewCreator(n => ({ ...n, commissionRate: e.target.value }))} placeholder="0" min="0" max="100" step="0.01" className="w-full bg-bg-primary/50 border border-accent-lime/20 rounded-lg px-md py-sm text-accent-lime text-sm font-mono focus:outline-none focus:border-accent-lime/60 transition-all" />
+              <input type="number" value={newCreator.commissionRate} onChange={e => setNewCreator(n => ({ ...n, commissionRate: e.target.value }))} placeholder="0" min="0" max="100" step="0.01" className="w-full rounded-lg px-md py-sm text-accent-lime text-sm font-mono focus:outline-none focus:border-accent-lime/60 transition-all" />
             </div>
             <div className="flex items-end gap-sm">
               <button onClick={handleAddCreator} disabled={!newCreator.name.trim() || !newCreator.agencyId}
                 className="flex-1 px-md py-sm bg-gradient-to-r from-accent-cyan to-accent-purple text-bg-primary font-semibold rounded-lg text-sm hover:opacity-90 transition-all disabled:opacity-30 disabled:cursor-not-allowed">
                 Add
               </button>
-              <button onClick={() => setShowAddCreator(false)} className="px-md py-sm border border-white/10 rounded-lg text-sm text-text-tertiary hover:text-text-primary transition-colors">✕</button>
+              <button onClick={() => setShowAddCreator(false)} className="px-md py-sm neu-btn rounded-lg text-sm text-text-tertiary hover:text-text-primary transition-colors">✕</button>
             </div>
           </div>
         </div>
@@ -453,7 +453,7 @@ const RevenueMaster = () => {
 
       {/* Month Summary Bar */}
       {filteredActive.length > 0 && monthSummary.total > 0 && (
-        <div className="flex items-center gap-lg flex-wrap px-lg py-md bg-white/[0.025] border border-white/8 rounded-xl">
+        <div className="flex items-center gap-lg flex-wrap px-lg py-md neu-card-inset rounded-xl">
           <span className="text-xs font-bold text-text-secondary">{MONTH_NAMES[currentMonth - 1]} {currentYear}</span>
           <div className="w-px h-3 bg-white/15 shrink-0" />
           <div className="flex items-center gap-xs">
@@ -505,10 +505,10 @@ const RevenueMaster = () => {
       {filteredInactive.length > 0 && (
         <div className="mt-xl">
           <button onClick={() => setExpandedInactive(v => !v)}
-            className="flex items-center gap-md w-full text-left px-md py-sm bg-white/[0.02] border border-white/8 rounded-xl hover:bg-white/[0.04] hover:border-white/15 transition-all mb-lg">
+            className="flex items-center gap-md w-full text-left px-md py-sm neu-btn rounded-xl transition-all mb-lg">
             <ChevronDown size={16} className={`text-text-tertiary transition-transform ${expandedInactive ? 'rotate-180' : ''}`} />
             <span className="text-sm font-semibold text-text-secondary">Inactive Creators</span>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-white/8 border border-white/10 text-text-tertiary font-mono">{filteredInactive.length}</span>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-bg-primary text-text-tertiary font-mono">{filteredInactive.length}</span>
           </button>
           {expandedInactive && (
             <div className="rounded-xl overflow-hidden border border-white/5">
@@ -559,7 +559,7 @@ const RevenueMaster = () => {
               This will permanently delete <span className="text-accent-pink font-semibold">"{confirmDelete.stage_name}"</span> and all their earnings history.
             </p>
             <div className="flex gap-md justify-end">
-              <button onClick={() => setConfirmDelete(null)} className="px-lg py-sm border border-white/10 rounded-lg text-sm text-text-secondary hover:text-text-primary transition-colors">
+              <button onClick={() => setConfirmDelete(null)} className="px-lg py-sm neu-btn rounded-lg text-sm text-text-secondary hover:text-text-primary transition-colors">
                 Cancel
               </button>
               <button onClick={confirmDeleteCreator} className="px-lg py-sm bg-accent-pink/80 hover:bg-accent-pink text-white font-semibold rounded-lg text-sm transition-colors">
@@ -577,7 +577,7 @@ const RevenueMaster = () => {
           <div className="flex flex-wrap gap-md">
             {agencies.map(agency => (
               <button key={agency.id} onClick={() => copyAgencyReport(agency.id)}
-                className="flex items-center gap-sm px-lg py-sm bg-white/5 border border-white/10 rounded-lg text-sm text-text-secondary hover:text-text-primary hover:border-accent-cyan/30 transition-all">
+                className="flex items-center gap-sm px-lg py-sm neu-btn rounded-lg text-sm text-text-secondary hover:text-text-primary transition-all">
                 <Copy size={14} />
                 {copiedAgency === agency.id ? '✓ Copied!' : `${agency.name} Report`}
               </button>

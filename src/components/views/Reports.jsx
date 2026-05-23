@@ -5,9 +5,9 @@ const Reports = () => {
   const [fullscreen, setFullscreen] = useState(false);
 
   return (
-    <div className={`flex flex-col bg-gradient-to-br from-bg-primary via-bg-secondary to-bg-tertiary ${fullscreen ? 'fixed inset-0 z-50' : 'h-full'}`}>
+    <div className={`flex flex-col ${fullscreen ? 'fixed inset-0 z-50' : 'h-full'}`}>
       {/* Header bar */}
-      <div className="flex items-center justify-between px-lg py-sm border-b border-white/8 flex-shrink-0 bg-bg-primary/60 backdrop-blur-md">
+      <div className="flex items-center justify-between px-lg py-sm border-b border-white/8 flex-shrink-0 bg-bg-primary">
         <div className="flex items-center gap-md">
           <FileText size={20} className="text-accent-pink" />
           <h1 className="text-lg font-bold text-text-primary">Report Builder</h1>
@@ -21,7 +21,7 @@ const Reports = () => {
         <div className="flex items-center gap-sm">
           <button
             onClick={() => setFullscreen(v => !v)}
-            className="flex items-center gap-xs px-md py-xs text-xs text-text-tertiary hover:text-text-primary border border-white/10 hover:border-white/20 rounded-lg transition-all"
+            className="flex items-center gap-xs px-md py-xs text-xs text-text-tertiary hover:text-text-primary neu-btn rounded-lg transition-all"
             title={fullscreen ? 'Exit fullscreen' : 'Fullscreen'}
           >
             {fullscreen ? <Minimize2 size={12} /> : <Maximize2 size={12} />}
@@ -31,7 +31,7 @@ const Reports = () => {
             href="/HOTTTR_Report_Builder.html"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-xs px-md py-xs text-xs text-text-tertiary hover:text-accent-cyan border border-white/10 hover:border-accent-cyan/30 rounded-lg transition-all"
+            className="flex items-center gap-xs px-md py-xs text-xs text-text-tertiary hover:text-accent-cyan neu-btn rounded-lg transition-all"
           >
             <ExternalLink size={12} /> Open tab
           </a>

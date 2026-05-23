@@ -179,10 +179,10 @@ const Analytics = () => {
             const isActive = agency.id === activeAgency;
             return (
               <button key={agency.id} onClick={() => setSelectedAgency(agency.id)}
-                className={`px-lg py-sm rounded-xl text-sm font-semibold transition-all border ${
+                className={`px-lg py-sm rounded-xl text-sm font-semibold transition-all ${
                   isActive
-                    ? 'bg-gradient-to-r from-accent-cyan to-accent-blue text-white border-transparent shadow-glow'
-                    : 'bg-white/5 text-text-secondary border-white/10 hover:text-text-primary hover:bg-white/10'
+                    ? 'bg-gradient-to-r from-accent-cyan to-accent-blue text-white shadow-glow'
+                    : 'neu-btn text-text-secondary hover:text-text-primary'
                 }`}>
                 {agency.name}
               </button>
@@ -194,7 +194,7 @@ const Analytics = () => {
         </div>
 
         {/* Date range pills */}
-        <div className="flex items-center gap-xs bg-bg-tertiary/40 border border-white/8 rounded-xl p-xs">
+        <div className="flex items-center gap-xs neu-card-inset rounded-xl p-xs">
           {[
             { key: '30d',  label: 'Last 30d' },
             { key: '3mo',  label: '3 Months' },
@@ -222,7 +222,7 @@ const Analytics = () => {
             { label: 'Daily Average',   value: fmt$(kpiStats.avg),                                          sub: null,                   color: 'text-accent-pink',   grad: 'from-accent-pink/10'   },
             { label: 'Best Weekday',    value: kpiStats.bestWeekday,                                        sub: null,                   color: 'text-accent-lime',   grad: 'from-accent-lime/10'   },
           ].map(({ label, value, sub, color, grad }) => (
-            <div key={label} className={`bg-gradient-to-br ${grad} to-transparent border border-white/8 rounded-2xl p-lg`}>
+            <div key={label} className="neu-card p-lg">
               <p className="text-[11px] text-text-tertiary/60 font-medium uppercase tracking-wider mb-xs">{label}</p>
               <p className={`text-xl font-black font-mono ${color}`}>{value}</p>
               {sub && <p className="text-[10px] text-text-tertiary/50 mt-xs font-mono">{sub}</p>}
@@ -233,7 +233,7 @@ const Analytics = () => {
 
       {/* Empty state */}
       {!hasAnyData ? (
-        <div className="text-center py-2xl border border-dashed border-white/10 rounded-xl">
+        <div className="text-center py-2xl neu-card-inset rounded-xl">
           <BarChart3 size={40} className="mx-auto text-text-tertiary/25 mb-md" />
           <p className="text-text-tertiary">No revenue data yet for this agency.</p>
           <p className="text-text-tertiary/50 text-sm mt-xs">

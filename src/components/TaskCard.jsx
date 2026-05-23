@@ -23,16 +23,11 @@ const TaskCard = ({ task, onToggle, onDelete, onUpdate, isCompleted }) => {
   return (
     <div
       className={`
-        group relative overflow-hidden rounded-xl border transition-all duration-300
-        ${isCompleted
-          ? 'border-accent-lime bg-gradient-to-br from-accent-lime/10 to-bg-tertiary opacity-60'
-          : 'border-accent-cyan/30 bg-gradient-to-br from-bg-tertiary to-bg-secondary hover:border-accent-cyan/60 hover:shadow-glow'
-        }
-        p-lg hover:scale-105 active:scale-95 cursor-pointer animation-scale-in
+        group relative overflow-hidden rounded-xl transition-all duration-300
+        ${isCompleted ? 'opacity-60' : 'hover:shadow-glow'}
+        neu-card p-lg hover:scale-[1.01] active:scale-[0.99] cursor-pointer
       `}
     >
-      {/* Glassmorphism backdrop */}
-      <div className="absolute inset-0 bg-white/5 backdrop-blur-sm rounded-xl pointer-events-none" />
 
       {/* Content */}
       <div className="relative z-10 space-y-md">

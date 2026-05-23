@@ -471,7 +471,7 @@ const Team = () => {
               className={`flex items-center gap-sm px-lg py-sm rounded-xl text-sm font-semibold transition-all border ${
                 isActive
                   ? 'bg-gradient-to-r from-accent-orange to-accent-pink text-bg-primary border-transparent shadow-glow'
-                  : 'bg-white/5 text-text-secondary border-white/10 hover:text-text-primary hover:bg-white/10'
+                  : 'neu-btn text-text-secondary hover:text-text-primary'
               }`}>
               {agency.name}
               <span className={`text-xs px-1.5 py-0.5 rounded-full ${isActive ? 'bg-black/20 text-white' : 'bg-white/10'}`}>
@@ -504,7 +504,7 @@ const Team = () => {
                   className={`flex items-center gap-sm px-lg py-sm rounded-xl text-sm font-semibold transition-all border ${
                     isActive
                       ? `bg-gradient-to-r ${ci.gradient} text-bg-primary border-transparent shadow-glow`
-                      : 'bg-white/5 text-text-secondary border-white/10 hover:text-text-primary hover:bg-white/10'
+                      : 'neu-btn text-text-secondary hover:text-text-primary'
                   }`}>
                   <span className="w-2 h-2 rounded-full" style={{ backgroundColor: isActive ? 'rgba(255,255,255,0.5)' : ci.hex }} />
                   {t.name}
@@ -514,7 +514,7 @@ const Team = () => {
 
             {/* Inline new-team form */}
             {showNewTeam ? (
-              <div className="flex items-center gap-sm bg-bg-tertiary/80 border border-white/15 rounded-xl px-md py-xs animate-scale-in">
+              <div className="flex items-center gap-sm neu-card rounded-xl px-md py-xs animate-scale-in">
                 <input type="text" value={newTeamName} autoFocus
                   onChange={e => setNewTeamName(e.target.value)}
                   onKeyDown={e => {
@@ -549,7 +549,7 @@ const Team = () => {
                 className={`ml-auto flex items-center gap-xs px-md py-sm rounded-xl text-sm border transition-all ${
                   manageMode
                     ? 'bg-accent-purple/15 border-accent-purple/40 text-accent-purple'
-                    : 'bg-white/5 border-white/10 text-text-tertiary hover:text-text-primary hover:bg-white/10'
+                    : 'neu-btn text-text-tertiary hover:text-text-primary'
                 }`}>
                 <Settings size={13} /> {manageMode ? 'Done' : 'Manage'}
               </button>
@@ -602,7 +602,7 @@ const Team = () => {
 
               {/* Week navigator + calendar picker */}
               <div className="relative" ref={weekPickerRef}>
-                <div className="flex items-center justify-between bg-bg-tertiary/40 border border-white/8 rounded-xl px-lg py-sm">
+                <div className="flex items-center justify-between neu-card-inset rounded-xl px-lg py-sm">
                   <button
                     onClick={() => setWeekStart(w => addDays(w, -7))}
                     className="flex items-center gap-xs text-text-secondary hover:text-text-primary transition-colors px-sm py-xs rounded-lg hover:bg-white/5">
@@ -615,7 +615,7 @@ const Team = () => {
                     className={`flex items-center gap-sm px-md py-xs rounded-xl border transition-all ${
                       pickerOpen
                         ? 'border-accent-lime/50 bg-accent-lime/10 text-accent-lime'
-                        : 'border-white/10 bg-white/[0.04] text-text-primary hover:border-white/20 hover:bg-white/8'
+                        : 'neu-btn border-transparent text-text-primary'
                     }`}>
                     <Calendar size={13} className="opacity-60" />
                     <span className="text-sm font-semibold">{fmtWeek(weekStart, weekEnd)}</span>
@@ -648,7 +648,7 @@ const Team = () => {
               </div>
 
               {/* Schedule grid */}
-              <div className="bg-bg-tertiary/30 border border-white/8 rounded-xl overflow-x-auto shadow-lg">
+              <div className="neu-card-inset rounded-xl overflow-x-auto shadow-lg">
                 <div className="min-w-[640px]">
                   {/* Header row */}
                   <div className="grid border-b border-white/10"
@@ -748,7 +748,7 @@ const Team = () => {
                       <label className="block text-xs text-text-tertiary mb-xs">Team Name</label>
                       <input type="text" value={editTeam.name}
                         onChange={e => setEditTeam(t => ({ ...t, name: e.target.value }))}
-                        className="w-full bg-bg-primary/50 border border-white/10 rounded-lg px-md py-sm text-text-primary text-sm focus:outline-none focus:border-accent-purple/50 transition-all"
+                        className="w-full rounded-lg px-md py-sm text-text-primary text-sm focus:outline-none focus:border-accent-purple/50 transition-all"
                       />
                     </div>
                     <div>
@@ -768,7 +768,7 @@ const Team = () => {
                       <textarea value={editTeam.notes} rows={2}
                         onChange={e => setEditTeam(t => ({ ...t, notes: e.target.value }))}
                         placeholder="Any notes about this team…"
-                        className="w-full bg-bg-primary/50 border border-white/10 rounded-lg px-md py-sm text-text-primary text-sm focus:outline-none focus:border-accent-purple/50 transition-all resize-none placeholder-text-tertiary/40"
+                        className="w-full rounded-lg px-md py-sm text-text-primary text-sm focus:outline-none focus:border-accent-purple/50 transition-all resize-none placeholder-text-tertiary/40"
                       />
                     </div>
                     <button onClick={handleSaveTeam}
@@ -924,7 +924,7 @@ const Team = () => {
                           className={`flex items-center gap-xs px-md py-xs rounded-lg text-xs font-semibold border transition-all ${
                             showCreateChatter
                               ? 'bg-accent-lime/15 border-accent-lime/40 text-accent-lime'
-                              : 'bg-white/5 border-white/10 text-text-tertiary hover:text-accent-lime hover:border-accent-lime/30 hover:bg-accent-lime/5'
+                              : 'neu-btn border-transparent text-text-tertiary hover:text-accent-lime'
                           }`}>
                           <Plus size={12} /> New
                         </button>
@@ -945,7 +945,7 @@ const Team = () => {
                                 if (e.key === 'Escape') { setShowCreateChatter(false); setNewChatter({ name: '', role: '', hourlyRate: '', commissionRate: '' }); }
                               }}
                               placeholder="Full name…"
-                              className="w-full bg-bg-primary/60 border border-white/10 rounded-lg px-sm py-xs text-text-primary text-xs focus:outline-none focus:border-accent-lime/50 transition-all placeholder-text-tertiary/40"
+                              className="w-full rounded-lg px-sm py-xs text-text-primary text-xs focus:outline-none focus:border-accent-lime/50 transition-all placeholder-text-tertiary/40"
                             />
                           </div>
                           <div>
@@ -953,7 +953,7 @@ const Team = () => {
                             <input type="text" value={newChatter.role}
                               onChange={e => setNewChatter(c => ({ ...c, role: e.target.value }))}
                               placeholder="e.g. Senior"
-                              className="w-full bg-bg-primary/60 border border-white/10 rounded-lg px-sm py-xs text-text-primary text-xs focus:outline-none focus:border-accent-lime/50 transition-all placeholder-text-tertiary/40"
+                              className="w-full rounded-lg px-sm py-xs text-text-primary text-xs focus:outline-none focus:border-accent-lime/50 transition-all placeholder-text-tertiary/40"
                             />
                           </div>
                           <div>
@@ -961,7 +961,7 @@ const Team = () => {
                             <input type="number" value={newChatter.hourlyRate} min="0"
                               onChange={e => setNewChatter(c => ({ ...c, hourlyRate: e.target.value }))}
                               placeholder="0.00"
-                              className="w-full bg-bg-primary/60 border border-white/10 rounded-lg px-sm py-xs text-text-primary text-xs focus:outline-none focus:border-accent-lime/50 transition-all placeholder-text-tertiary/40"
+                              className="w-full rounded-lg px-sm py-xs text-text-primary text-xs focus:outline-none focus:border-accent-lime/50 transition-all placeholder-text-tertiary/40"
                             />
                           </div>
                           <div>
@@ -969,7 +969,7 @@ const Team = () => {
                             <input type="number" value={newChatter.commissionRate} min="0" max="100"
                               onChange={e => setNewChatter(c => ({ ...c, commissionRate: e.target.value }))}
                               placeholder="0"
-                              className="w-full bg-bg-primary/60 border border-white/10 rounded-lg px-sm py-xs text-text-primary text-xs focus:outline-none focus:border-accent-lime/50 transition-all placeholder-text-tertiary/40"
+                              className="w-full rounded-lg px-sm py-xs text-text-primary text-xs focus:outline-none focus:border-accent-lime/50 transition-all placeholder-text-tertiary/40"
                             />
                           </div>
                           <div className="col-span-2 flex gap-sm pt-xs">
@@ -981,7 +981,7 @@ const Team = () => {
                             </button>
                             <button
                               onClick={() => { setShowCreateChatter(false); setNewChatter({ name: '', role: '', hourlyRate: '', commissionRate: '' }); }}
-                              className="px-md py-xs border border-white/10 text-text-tertiary text-xs rounded-lg hover:text-text-primary hover:bg-white/5 transition-colors">
+                              className="px-md py-xs neu-btn text-text-tertiary text-xs rounded-lg hover:text-text-primary transition-colors">
                               Cancel
                             </button>
                           </div>
@@ -1035,7 +1035,7 @@ const Team = () => {
                 Delete <span className="text-accent-pink font-semibold">"{confirmDelete.payload.name}"</span>? All schedule data and assignments will be removed. Cannot be undone.
               </p>
               <div className="flex gap-md justify-end">
-                <button onClick={() => setConfirmDelete(null)} className="px-lg py-sm border border-white/10 rounded-lg text-sm text-text-secondary hover:text-text-primary transition-colors">Cancel</button>
+                <button onClick={() => setConfirmDelete(null)} className="px-lg py-sm neu-btn rounded-lg text-sm text-text-secondary hover:text-text-primary transition-colors">Cancel</button>
                 <button onClick={executeDeleteTeam} className="px-lg py-sm bg-accent-pink/80 hover:bg-accent-pink text-white font-semibold rounded-lg text-sm transition-colors">Delete Team</button>
               </div>
             </>}
@@ -1046,7 +1046,7 @@ const Team = () => {
                 Remove <span className="text-accent-cyan font-semibold">"{confirmDelete.payload.name}"</span> from this team? Their earnings data is unaffected.
               </p>
               <div className="flex gap-md justify-end">
-                <button onClick={() => setConfirmDelete(null)} className="px-lg py-sm border border-white/10 rounded-lg text-sm text-text-secondary hover:text-text-primary transition-colors">Cancel</button>
+                <button onClick={() => setConfirmDelete(null)} className="px-lg py-sm neu-btn rounded-lg text-sm text-text-secondary hover:text-text-primary transition-colors">Cancel</button>
                 <button onClick={() => { removeCreatorFromTeam(confirmDelete.payload.teamId, confirmDelete.payload.creatorId); setConfirmDelete(null); }}
                   className="px-lg py-sm bg-accent-pink/80 hover:bg-accent-pink text-white font-semibold rounded-lg text-sm transition-colors">Remove</button>
               </div>
@@ -1058,7 +1058,7 @@ const Team = () => {
                 Remove <span className="text-accent-lime font-semibold">"{confirmDelete.payload.name}"</span> from this team?
               </p>
               <div className="flex gap-md justify-end">
-                <button onClick={() => setConfirmDelete(null)} className="px-lg py-sm border border-white/10 rounded-lg text-sm text-text-secondary hover:text-text-primary transition-colors">Cancel</button>
+                <button onClick={() => setConfirmDelete(null)} className="px-lg py-sm neu-btn rounded-lg text-sm text-text-secondary hover:text-text-primary transition-colors">Cancel</button>
                 <button onClick={() => { removeChatterFromTeam(confirmDelete.payload.teamId, confirmDelete.payload.chatterId); setConfirmDelete(null); }}
                   className="px-lg py-sm bg-accent-pink/80 hover:bg-accent-pink text-white font-semibold rounded-lg text-sm transition-colors">Remove</button>
               </div>

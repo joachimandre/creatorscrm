@@ -121,7 +121,7 @@ const QuickRevenueButton = () => {
                     className={`text-xs px-md py-xs rounded-lg font-semibold whitespace-nowrap transition-all ${
                       agency.id === activeAgency
                         ? 'bg-accent-orange/80 text-white'
-                        : 'bg-white/5 text-text-tertiary hover:text-text-primary hover:bg-white/10'
+                        : 'neu-btn text-text-tertiary hover:text-text-primary'
                     }`}>
                     {agency.name}
                   </button>
@@ -152,7 +152,7 @@ const QuickRevenueButton = () => {
                         onKeyDown={e => handleInputKeyDown(e, idx)}
                         placeholder="0"
                         autoFocus={idx === 0}
-                        className="qre-input w-24 bg-bg-primary/60 border border-white/10 rounded-lg px-sm py-xs text-text-primary text-sm font-mono focus:outline-none focus:border-accent-orange/50 placeholder-text-tertiary/30 text-right transition-all"
+                        className="qre-input w-24 rounded-lg px-sm py-xs text-text-primary text-sm font-mono focus:outline-none focus:border-accent-orange/50 placeholder-text-tertiary/30 text-right transition-all"
                       />
                     </div>
                   </div>
@@ -163,7 +163,7 @@ const QuickRevenueButton = () => {
             {/* Footer */}
             <div className="flex gap-sm px-lg pb-lg border-t border-white/8 pt-sm">
               <button onClick={() => setIsOpen(false)}
-                className="flex-1 py-sm border border-white/10 text-text-secondary rounded-xl text-sm hover:text-text-primary hover:bg-white/5 transition-all">
+                className="flex-1 py-sm neu-btn text-text-secondary rounded-xl text-sm hover:text-text-primary transition-all">
                 Cancel
               </button>
               <button onClick={handleSave} disabled={saved || activeCreators.length === 0}

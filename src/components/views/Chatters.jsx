@@ -276,7 +276,7 @@ const Chatters = () => {
 
         {/* Edit panel */}
         {isEditing && (
-          <div className="border-t border-white/10 bg-bg-primary/40 p-lg space-y-md animate-fade-in"
+          <div className="border-t border-white/[0.06] bg-bg-primary p-lg space-y-md animate-fade-in"
             onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <p className="text-xs font-bold uppercase tracking-widest text-text-tertiary">Edit Chatter</p>
@@ -290,7 +290,7 @@ const Chatters = () => {
                 <label className="text-xs text-text-tertiary mb-xs block">Name</label>
                 <input type="text" value={editForm.name}
                   onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))}
-                  className="w-full bg-bg-primary/60 border border-white/10 rounded-lg px-sm py-xs text-text-primary text-xs focus:outline-none focus:border-accent-lime/50 transition-all"
+                  className="w-full rounded-lg px-sm py-xs text-text-primary text-xs focus:outline-none transition-all"
                 />
               </div>
               <div>
@@ -298,7 +298,7 @@ const Chatters = () => {
                 <input type="text" value={editForm.role}
                   onChange={e => setEditForm(f => ({ ...f, role: e.target.value }))}
                   placeholder="e.g. Senior Chatter"
-                  className="w-full bg-bg-primary/60 border border-white/10 rounded-lg px-sm py-xs text-text-primary text-xs focus:outline-none focus:border-accent-lime/50 transition-all placeholder-text-tertiary/30"
+                  className="w-full rounded-lg px-sm py-xs text-text-primary text-xs focus:outline-none transition-all placeholder-text-tertiary/30"
                 />
               </div>
             </div>
@@ -308,14 +308,14 @@ const Chatters = () => {
                 <label className="text-xs text-text-tertiary mb-xs block">Hourly Rate $</label>
                 <input type="number" value={editForm.hourlyRate} min="0"
                   onChange={e => setEditForm(f => ({ ...f, hourlyRate: e.target.value }))}
-                  className="w-full bg-bg-primary/60 border border-white/10 rounded-lg px-sm py-xs text-text-primary text-xs focus:outline-none focus:border-accent-lime/50 transition-all"
+                  className="w-full rounded-lg px-sm py-xs text-text-primary text-xs focus:outline-none transition-all"
                 />
               </div>
               <div>
                 <label className="text-xs text-text-tertiary mb-xs block">Commission %</label>
                 <input type="number" value={editForm.commissionRate} min="0" max="100"
                   onChange={e => setEditForm(f => ({ ...f, commissionRate: e.target.value }))}
-                  className="w-full bg-bg-primary/60 border border-white/10 rounded-lg px-sm py-xs text-text-primary text-xs focus:outline-none focus:border-accent-lime/50 transition-all"
+                  className="w-full rounded-lg px-sm py-xs text-text-primary text-xs focus:outline-none transition-all"
                 />
               </div>
             </div>
@@ -327,7 +327,7 @@ const Chatters = () => {
               <input type="url" value={editForm.driveUrl}
                 onChange={e => setEditForm(f => ({ ...f, driveUrl: e.target.value }))}
                 placeholder="https://drive.google.com/…"
-                className="w-full bg-bg-primary/60 border border-white/10 rounded-lg px-sm py-xs text-text-primary text-xs focus:outline-none focus:border-accent-cyan/50 transition-all placeholder-text-tertiary/30"
+                className="w-full rounded-lg px-sm py-xs text-text-primary text-xs focus:outline-none transition-all placeholder-text-tertiary/30"
               />
             </div>
 
@@ -336,7 +336,7 @@ const Chatters = () => {
               <textarea value={editForm.notes} rows={2}
                 onChange={e => setEditForm(f => ({ ...f, notes: e.target.value }))}
                 placeholder="Any notes…"
-                className="w-full bg-bg-primary/60 border border-white/10 rounded-lg px-sm py-xs text-text-primary text-xs focus:outline-none focus:border-accent-lime/50 transition-all resize-none placeholder-text-tertiary/30"
+                className="w-full rounded-lg px-sm py-xs text-text-primary text-xs focus:outline-none transition-all resize-none placeholder-text-tertiary/30"
               />
             </div>
 
@@ -350,7 +350,7 @@ const Chatters = () => {
                 <Trash2 size={11} />
               </button>
               <button onClick={() => setEditingId(null)}
-                className="px-md py-xs border border-white/10 text-text-tertiary text-xs rounded-lg hover:text-text-primary hover:bg-white/5 transition-colors">
+                className="px-md py-xs neu-btn text-text-tertiary text-xs hover:text-text-primary transition-colors">
                 Cancel
               </button>
             </div>
@@ -395,7 +395,7 @@ const Chatters = () => {
               className={`flex items-center gap-sm px-lg py-sm rounded-xl text-sm font-semibold transition-all border ${
                 isActive
                   ? 'bg-gradient-to-r from-accent-lime to-accent-cyan text-bg-primary border-transparent shadow-glow'
-                  : 'bg-white/5 text-text-secondary border-white/10 hover:text-text-primary hover:bg-white/10'
+                  : 'neu-btn text-text-secondary hover:text-text-primary'
               }`}>
               {agency.name}
               <span className={`text-xs px-1.5 py-0.5 rounded-full ${isActive ? 'bg-black/20 text-bg-primary' : 'bg-white/10'}`}>
@@ -418,7 +418,7 @@ const Chatters = () => {
               type="text" value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search chatters…"
-              className="w-full bg-bg-tertiary/50 border border-white/8 rounded-xl pl-[34px] pr-md py-sm text-sm text-text-primary placeholder-text-tertiary/40 focus:outline-none focus:border-white/20 transition-all"
+              className="w-full rounded-xl pl-[34px] pr-md py-sm text-sm text-text-primary placeholder-text-tertiary/40 focus:outline-none transition-all"
             />
             {searchQuery && (
               <button onClick={() => setSearchQuery('')}
@@ -472,7 +472,7 @@ const Chatters = () => {
                   onChange={e => setNewChatter(c => ({ ...c, name: e.target.value }))}
                   onKeyDown={e => { if (e.key === 'Enter') handleAddChatter(); }}
                   placeholder="Full name…"
-                  className="w-full bg-bg-primary/60 border border-white/10 rounded-xl px-md py-sm text-text-primary text-sm focus:outline-none focus:border-accent-lime/50 placeholder-text-tertiary/40 transition-all"
+                  className="w-full rounded-xl px-md py-sm text-text-primary text-sm focus:outline-none placeholder-text-tertiary/40 transition-all"
                 />
               </div>
               <div>
@@ -480,7 +480,7 @@ const Chatters = () => {
                 <input type="text" value={newChatter.role}
                   onChange={e => setNewChatter(c => ({ ...c, role: e.target.value }))}
                   placeholder="e.g. Senior Chatter"
-                  className="w-full bg-bg-primary/60 border border-white/10 rounded-xl px-md py-sm text-text-primary text-sm focus:outline-none focus:border-accent-lime/50 placeholder-text-tertiary/40 transition-all"
+                  className="w-full rounded-xl px-md py-sm text-text-primary text-sm focus:outline-none placeholder-text-tertiary/40 transition-all"
                 />
               </div>
             </div>
@@ -491,7 +491,7 @@ const Chatters = () => {
                 <input type="number" value={newChatter.hourlyRate} min="0"
                   onChange={e => setNewChatter(c => ({ ...c, hourlyRate: e.target.value }))}
                   placeholder="0"
-                  className="w-full bg-bg-primary/60 border border-white/10 rounded-xl px-sm py-sm text-text-primary text-sm focus:outline-none focus:border-accent-lime/50 placeholder-text-tertiary/40 transition-all"
+                  className="w-full rounded-xl px-sm py-sm text-text-primary text-sm focus:outline-none placeholder-text-tertiary/40 transition-all"
                 />
               </div>
               <div>
@@ -499,7 +499,7 @@ const Chatters = () => {
                 <input type="number" value={newChatter.commissionRate} min="0" max="100"
                   onChange={e => setNewChatter(c => ({ ...c, commissionRate: e.target.value }))}
                   placeholder="0"
-                  className="w-full bg-bg-primary/60 border border-white/10 rounded-xl px-sm py-sm text-text-primary text-sm focus:outline-none focus:border-accent-lime/50 placeholder-text-tertiary/40 transition-all"
+                  className="w-full rounded-xl px-sm py-sm text-text-primary text-sm focus:outline-none placeholder-text-tertiary/40 transition-all"
                 />
               </div>
             </div>
@@ -511,7 +511,7 @@ const Chatters = () => {
               <input type="url" value={newChatter.driveUrl}
                 onChange={e => setNewChatter(c => ({ ...c, driveUrl: e.target.value }))}
                 placeholder="https://drive.google.com/… (optional)"
-                className="w-full bg-bg-primary/60 border border-white/10 rounded-xl px-md py-sm text-text-primary text-sm focus:outline-none focus:border-accent-cyan/50 placeholder-text-tertiary/40 transition-all"
+                className="w-full rounded-xl px-md py-sm text-text-primary text-sm focus:outline-none placeholder-text-tertiary/40 transition-all"
               />
             </div>
 
@@ -521,7 +521,7 @@ const Chatters = () => {
                 <Plus size={14} /> Add Chatter
               </button>
               <button onClick={() => setShowAddModal(false)}
-                className="px-xl py-sm border border-white/10 text-text-secondary rounded-xl text-sm hover:text-text-primary hover:border-white/20 transition-all">
+                className="px-xl py-sm neu-btn text-text-secondary text-sm hover:text-text-primary transition-all">
                 Cancel
               </button>
             </div>
@@ -542,7 +542,7 @@ const Chatters = () => {
             </p>
             <div className="flex gap-md justify-end">
               <button onClick={() => setConfirmDelete(null)}
-                className="px-lg py-sm border border-white/10 rounded-lg text-sm text-text-secondary hover:text-text-primary transition-colors">
+                className="px-lg py-sm neu-btn text-sm text-text-secondary hover:text-text-primary transition-colors">
                 Cancel
               </button>
               <button onClick={() => { deleteChatterData(confirmDelete.id); setConfirmDelete(null); setEditingId(null); }}
