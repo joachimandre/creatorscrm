@@ -782,3 +782,18 @@ export function getLatestSubscriberCount(creatorId) {
   const history = getSubscriberHistory(creatorId);
   return history.length > 0 ? history[history.length - 1] : null;
 }
+
+// ─── Creator display order (UI pref — local only, not synced to cloud) ────────
+export function getCreatorOrder() {
+  try {
+    const s = localStorage.getItem('creator_order');
+    return s ? JSON.parse(s) : {};
+  } catch { return {}; }
+}
+export function saveCreatorOrder(agencyId, orderedIds) {
+  try {
+    const all = getCreatorOrder();
+    all[String(agencyId)] = orderedIds;
+    localStorage.setItem('creator_order', JSON.stringify(all));
+  } catch {}
+}

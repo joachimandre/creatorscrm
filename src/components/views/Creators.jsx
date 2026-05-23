@@ -3,7 +3,7 @@ import { useStore } from '../../store.js';
 import * as db from '../../db/index.js';
 import {
   Star, ExternalLink, Pencil, X, Check, Plus, Trash2,
-  Search, ChevronDown, ChevronUp, Target, Link2, Users,
+  Search, ChevronDown, ChevronUp, Target, Link2, Users, GripVertical,
 } from 'lucide-react';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -71,7 +71,10 @@ const Creators = () => {
   // ── UI state ─────────────────────────────────────────────────────────────────
   const [selectedAgency, setSelectedAgency] = useState(null);
   const [searchQuery,    setSearchQuery]    = useState('');
-  const [sortBy,         setSortBy]         = useState('name'); // 'name' | 'monthly' | 'progress'
+  const [sortBy,         setSortBy]         = useState('name'); // 'name' | 'monthly' | 'progress' | 'custom'
+  const [localOrder,     setLocalOrder]     = useState(() => db.getCreatorOrder());
+  const [draggedId,      setDraggedId]      = useState(null);
+  const [dragOverId,     setDragOverId]     = useState(null);
   const [showInactive,   setShowInactive]   = useState(false);
   const [editingId,      setEditingId]      = useState(null);
   const [editForm,       setEditForm]       = useState({});
@@ -178,8 +181,45 @@ const Creators = () => {
         const pb = b.monthly_goal ? getMonthlyTotal(b.id) / b.monthly_goal : 0;
         return pb - pa;
       }
+      if (sortBy === 'custom') {
+        const order = localOrder[String(activeAgency)] || [];
+        const ai = order.indexOf(a.id);
+        const bi = order.indexOf(b.id);
+        if (ai === -1 && bi === -1) return 0;
+        if (ai === -1) return 1;
+        if (bi === -1) return -1;
+        return ai - bi;
+      }
       return 0;
     });
+
+  // Drag handlers (only active in 'custom' sort mode)
+  const handleDragStart = (e, creatorId) => {
+    setDraggedId(creatorId);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+  const handleDragOver = (e, creatorId) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (creatorId !== draggedId) setDragOverId(creatorId);
+  };
+  const handleCardDrop = (e, targetId) => {
+    e.preventDefault();
+    if (!draggedId || draggedId === targetId) { setDraggedId(null); setDragOverId(null); return; }
+    const currentOrdered = filteredCreators.filter(c => c.is_active);
+    const from = currentOrdered.findIndex(c => c.id === draggedId);
+    const to   = currentOrdered.findIndex(c => c.id === targetId);
+    if (from === -1 || to === -1) return;
+    const next = [...currentOrdered];
+    next.splice(to, 0, next.splice(from, 1)[0]);
+    const newIds = next.map(c => c.id);
+    const newOrder = { ...localOrder, [String(activeAgency)]: newIds };
+    setLocalOrder(newOrder);
+    db.saveCreatorOrder(activeAgency, newIds);
+    setDraggedId(null);
+    setDragOverId(null);
+  };
+  const handleDragEnd = () => { setDraggedId(null); setDragOverId(null); };
 
   const activeCreators   = filteredCreators.filter(c => c.is_active);
   const inactiveCreators = filteredCreators.filter(c => !c.is_active);
@@ -260,15 +300,22 @@ const Creators = () => {
     const isInactive  = !creator.is_active;
     const subData     = subscriberCounts[creator.id] || null;
 
+    const isDragging = sortBy === 'custom' && !isInactive;
     return (
       <div key={creator.id}
+        draggable={isDragging}
+        onDragStart={isDragging ? e => handleDragStart(e, creator.id) : undefined}
+        onDragOver={isDragging ? e => handleDragOver(e, creator.id) : undefined}
+        onDrop={isDragging ? e => handleCardDrop(e, creator.id) : undefined}
+        onDragEnd={isDragging ? handleDragEnd : undefined}
         className={`relative group flex flex-col neu-card overflow-hidden transition-all duration-200
           ${isInactive ? 'opacity-60' : ''}
-          ${hasDrive && !isInactive ? 'cursor-pointer hover:shadow-lg hover:-translate-y-[1px]' : ''}
+          ${isDragging ? 'cursor-grab active:cursor-grabbing' : hasDrive && !isInactive ? 'cursor-pointer hover:shadow-lg hover:-translate-y-[1px]' : ''}
+          ${dragOverId === creator.id && isDragging ? 'ring-2 ring-accent-purple/60 scale-[1.01]' : ''}
           ${colors.glow && !isInactive ? '!border-accent-lime/30 shadow-glow-lime' : ''}
         `}
         onClick={() => {
-          if (!isEditing && hasDrive && !isInactive) {
+          if (!isDragging && !isEditing && hasDrive && !isInactive) {
             window.open(creator.drive_url, '_blank', 'noopener,noreferrer');
           }
         }}>
@@ -278,6 +325,13 @@ const Creators = () => {
 
         {/* Card body */}
         <div className="p-lg flex flex-col gap-md flex-1">
+
+          {/* Drag handle — only visible in reorder mode */}
+          {isDragging && (
+            <div className="absolute top-sm left-1/2 -translate-x-1/2 text-text-tertiary/30 pointer-events-none">
+              <GripVertical size={14} />
+            </div>
+          )}
 
           {/* Top row: team badge + drive icon */}
           <div className="flex items-center justify-between gap-sm">
@@ -647,6 +701,7 @@ const Creators = () => {
                 { key: 'name',     label: 'Name' },
                 { key: 'monthly',  label: 'Monthly $' },
                 { key: 'progress', label: 'Goal %' },
+                { key: 'custom',   label: '⠿ Reorder' },
               ].map(s => (
                 <button key={s.key} onClick={() => setSortBy(s.key)}
                   className={`px-md py-xs rounded-lg text-xs font-semibold transition-all ${

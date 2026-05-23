@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '../../store.js';
-import { BarChart3, Copy, ChevronDown, Plus, Trash2, Pencil } from 'lucide-react';
+import { BarChart3, Copy, ChevronDown, Plus, Trash2, Pencil, GripVertical } from 'lucide-react';
 import Card from '../Card';
 import AgencyRevenueChart from '../charts/AgencyRevenueChart.jsx';
 import CreatorGoalProgress from '../charts/CreatorGoalProgress.jsx';
@@ -60,6 +60,9 @@ const RevenueMaster = () => {
   const [showAddCreator, setShowAddCreator] = useState(false);
   const [newCreator, setNewCreator] = useState({ name: '', agencyId: '', dailyGoal: '', weeklyGoal: '', monthlyGoal: '', commissionRate: '' });
   const [confirmDelete, setConfirmDelete] = useState(null); // creator object pending delete
+  const [draggedId,  setDraggedId]  = useState(null);
+  const [dragOverId, setDragOverId] = useState(null);
+  const [localOrder, setLocalOrder] = useState(() => db.getCreatorOrder());
 
   const currentDate = new Date();
   const currentMonth = currentDate.getMonth() + 1;
@@ -79,7 +82,9 @@ const RevenueMaster = () => {
 
   const getEarningForDay = (creatorId, day) => {
     const date = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    return (earnings[creatorId] || []).find(e => e.date === date)?.amount || 0;
+    const found = (earnings[creatorId] || []).find(e => e.date === date);
+    // Return null for "no entry", or the actual amount (including 0) for a saved entry
+    return found !== undefined ? found.amount : null;
   };
 
   const getWeeklyTotal = (creatorId) => {
@@ -109,7 +114,8 @@ const RevenueMaster = () => {
 
   const startEdit = (creatorId, type, day, currentValue) => {
     setEditing({ creatorId, type, day });
-    setPendingValue(currentValue ? String(currentValue) : '');
+    // currentValue can be 0 (valid $0 entry) — only default to '' when truly null/undefined
+    setPendingValue(currentValue !== null && currentValue !== undefined ? String(currentValue) : '');
   };
 
   const commitEdit = () => {
@@ -140,6 +146,54 @@ const RevenueMaster = () => {
   };
 
   const cancelEdit = () => { setEditing(null); setPendingValue(''); };
+
+  // Show cents only when non-integer (e.g. $10.43 not $10, but $10 not $10.00)
+  const fmtAmount = (v) => v % 1 === 0 ? `$${v}` : `$${v.toFixed(2)}`;
+
+  // ── Drag-to-reorder helpers ──────────────────────────────────────────────────
+  const applyOrder = (creatorsArr, agencyId) => {
+    const order = localOrder[String(agencyId)] || [];
+    if (!order.length) return creatorsArr;
+    return [...creatorsArr].sort((a, b) => {
+      const ai = order.indexOf(a.id);
+      const bi = order.indexOf(b.id);
+      if (ai === -1 && bi === -1) return 0;
+      if (ai === -1) return 1;
+      if (bi === -1) return -1;
+      return ai - bi;
+    });
+  };
+
+  const handleDragStart = (e, creatorId) => {
+    setDraggedId(creatorId);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+  const handleDragOver = (e, creatorId) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (creatorId !== draggedId) setDragOverId(creatorId);
+  };
+  const handleDrop = (e, targetId) => {
+    e.preventDefault();
+    if (!draggedId || draggedId === targetId) { setDraggedId(null); setDragOverId(null); return; }
+    const dragged = creators.find(c => c.id === draggedId);
+    if (!dragged) return;
+    const agencyId = dragged.agency_id;
+    const agencyActive = activeCreators.filter(c => c.agency_id === agencyId);
+    const ordered = applyOrder(agencyActive, agencyId);
+    const from = ordered.findIndex(c => c.id === draggedId);
+    const to   = ordered.findIndex(c => c.id === targetId);
+    if (from === -1 || to === -1) return;
+    const next = [...ordered];
+    next.splice(to, 0, next.splice(from, 1)[0]);
+    const newIds = next.map(c => c.id);
+    const newOrder = { ...localOrder, [String(agencyId)]: newIds };
+    setLocalOrder(newOrder);
+    db.saveCreatorOrder(agencyId, newIds);
+    setDraggedId(null);
+    setDragOverId(null);
+  };
+  const handleDragEnd = () => { setDraggedId(null); setDragOverId(null); };
 
   const handleDeleteCreator = (creator) => setConfirmDelete(creator);
 
@@ -209,8 +263,23 @@ const RevenueMaster = () => {
     return (
       <tr
         key={creator.id}
-        className={`group transition-colors hover:bg-white/[0.03] ${inactive ? 'opacity-50' : ''}`}
+        draggable={!inactive}
+        onDragStart={!inactive ? e => handleDragStart(e, creator.id) : undefined}
+        onDragOver={!inactive ? e => handleDragOver(e, creator.id) : undefined}
+        onDrop={!inactive ? e => handleDrop(e, creator.id) : undefined}
+        onDragEnd={!inactive ? handleDragEnd : undefined}
+        className={`group transition-colors hover:bg-white/[0.03] ${inactive ? 'opacity-50' : ''}
+          ${dragOverId === creator.id && !inactive ? 'border-t-2 border-accent-cyan/60' : ''}`}
       >
+        {/* Drag handle */}
+        <td className="px-1 py-3 w-6">
+          {!inactive && (
+            <div className="flex justify-center cursor-grab active:cursor-grabbing">
+              <GripVertical size={13} className="text-text-tertiary/25 group-hover:text-text-tertiary/60 transition-colors" />
+            </div>
+          )}
+        </td>
+
         {/* Delete */}
         <td className="px-2 py-3 w-8">
           {!inactive && (
@@ -327,9 +396,9 @@ const RevenueMaster = () => {
                 ${isToday ? 'bg-accent-cyan/5' : ''}
               `}
             >
-              {val > 0 ? (
+              {val !== null ? (
                 <div className={`mx-auto inline-flex items-center justify-center px-1.5 py-0.5 rounded-md border text-xs font-mono font-semibold ${chip || 'bg-accent-cyan/15 border-accent-cyan/30 text-accent-cyan'}`}>
-                  ${val.toFixed(0)}
+                  {fmtAmount(val)}
                 </div>
               ) : (
                 <div className="flex justify-center">
@@ -345,7 +414,8 @@ const RevenueMaster = () => {
 
   const renderTableHead = () => (
     <tr className="border-b border-white/10">
-      <th className="w-8 bg-bg-primary/80" />
+      <th className="w-6 bg-bg-primary/80" /> {/* drag handle */}
+      <th className="w-8 bg-bg-primary/80" /> {/* delete */}
       <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-widest text-text-tertiary bg-bg-primary/80">Creator</th>
       <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-widest text-text-tertiary bg-bg-primary/80">% Rev</th>
       <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-widest text-text-tertiary bg-white/[0.02]">Wk Earned</th>
@@ -371,6 +441,18 @@ const RevenueMaster = () => {
   const inactiveCreators = creators.filter(c => !c.is_active);
   const filteredActive = agencyFilter ? activeCreators.filter(c => c.agency_id === agencyFilter) : activeCreators;
   const filteredInactive = agencyFilter ? inactiveCreators.filter(c => c.agency_id === agencyFilter) : inactiveCreators;
+
+  // Apply per-agency drag order to the rendered rows
+  const orderedActive = (() => {
+    if (agencyFilter) return applyOrder(filteredActive, agencyFilter);
+    // No filter — order within each agency, then concatenate
+    const result = [];
+    agencies.forEach(agency => {
+      const slice = activeCreators.filter(c => c.agency_id === agency.id);
+      result.push(...applyOrder(slice, agency.id));
+    });
+    return result;
+  })();
 
   // Month summary stats (computed from current earnings state)
   const monthSummary = (() => {
@@ -494,7 +576,7 @@ const RevenueMaster = () => {
                   </td>
                 </tr>
               ) : (
-                filteredActive.map(c => renderRow(c))
+                orderedActive.map(c => renderRow(c))
               )}
             </tbody>
           </table>
