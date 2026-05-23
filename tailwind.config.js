@@ -13,7 +13,7 @@ export default {
         text: {
           primary:   '#ffffff',
           secondary: '#a8b2d1',
-          tertiary:  '#6b7494',
+          tertiary:  '#8f98b8',   // bumped from #6b7494 → passes 4.5:1 on all bg surfaces
         },
         accent: {
           cyan:   '#00d9ff',

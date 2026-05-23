@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Search, LayoutDashboard, TrendingUp, BarChart3, Star, CheckSquare,
   Users, MessageSquare, Brain, FileText, DollarSign, X, ArrowRight,
@@ -27,7 +27,27 @@ const CommandPalette = () => {
   const [query, setQuery]   = useState('');
   const [selIdx, setSelIdx] = useState(0);
   const inputRef            = useRef(null);
+  const panelRef            = useRef(null);
   const setCurrentView      = useStore(s => s.setCurrentView);
+
+  // Focus trap — keep Tab/Shift+Tab inside the panel while open
+  const handleTrapFocus = useCallback((e) => {
+    if (!panelRef.current) return;
+    const focusable = panelRef.current.querySelectorAll(
+      'button, input, [tabindex]:not([tabindex="-1"])'
+    );
+    const first = focusable[0];
+    const last  = focusable[focusable.length - 1];
+    if (e.key === 'Tab') {
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+  }, []);
 
   // Open / close on Ctrl+K or Cmd+K
   useEffect(() => {
@@ -42,14 +62,18 @@ const CommandPalette = () => {
     return () => window.removeEventListener('keydown', handler);
   }, []);
 
-  // Focus input when opened
+  // Focus input when opened; attach/detach focus trap
   useEffect(() => {
     if (open) {
       setTimeout(() => inputRef.current?.focus(), 10);
       setQuery('');
       setSelIdx(0);
+      document.addEventListener('keydown', handleTrapFocus);
+    } else {
+      document.removeEventListener('keydown', handleTrapFocus);
     }
-  }, [open]);
+    return () => document.removeEventListener('keydown', handleTrapFocus);
+  }, [open, handleTrapFocus]);
 
   const filtered = COMMANDS.filter(c =>
     c.label.toLowerCase().includes(query.toLowerCase())
@@ -97,10 +121,14 @@ const CommandPalette = () => {
 
       {/* Panel */}
       <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Command palette"
         className="relative w-full mx-xl overflow-hidden animate-palette-open"
         style={{
           maxWidth: 520,
-          background: '#252b36',
+          background: '#252523',
           borderRadius: 18,
           boxShadow: '10px 10px 20px rgba(0,0,0,0.45), -10px -10px 20px rgba(255,255,255,0.045)',
           border: '1px solid rgba(255,255,255,0.06)',
@@ -139,15 +167,16 @@ const CommandPalette = () => {
             </kbd>
             <button
               onClick={() => setOpen(false)}
-              className="text-text-tertiary hover:text-text-primary transition-colors"
+              aria-label="Close command palette"
+              className="text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-cyan/50 rounded"
             >
-              <X size={14} />
+              <X size={14} aria-hidden="true" />
             </button>
           </div>
         </div>
 
         {/* Results */}
-        <div className="overflow-y-auto p-sm" style={{ maxHeight: 320 }}>
+        <div role="listbox" aria-label="Commands" className="overflow-y-auto p-sm" style={{ maxHeight: 320 }}>
           {filtered.length === 0 ? (
             <p className="text-center py-xl text-text-tertiary text-sm">No results for "{query}"</p>
           ) : (
@@ -163,6 +192,8 @@ const CommandPalette = () => {
                   return (
                     <button
                       key={cmd.id}
+                      role="option"
+                      aria-selected={isSelected}
                       onClick={() => execute(cmd)}
                       onMouseEnter={() => setSelIdx(globalIdx)}
                       className="w-full flex items-center gap-md px-md py-sm rounded-xl text-left transition-all group"
@@ -202,9 +233,9 @@ const CommandPalette = () => {
           className="flex items-center gap-md px-lg py-sm text-xs text-text-tertiary"
           style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
         >
-          <span><kbd style={{ fontFamily: 'inherit' }}>↑↓</kbd> Navigate</span>
-          <span><kbd style={{ fontFamily: 'inherit' }}>↵</kbd> Open</span>
-          <span><kbd style={{ fontFamily: 'inherit' }}>Esc</kbd> Close</span>
+          <span><kbd aria-label="Up and down arrows" style={{ fontFamily: 'inherit' }}>↑↓</kbd> Navigate</span>
+          <span><kbd aria-label="Enter" style={{ fontFamily: 'inherit' }}>↵</kbd> Open</span>
+          <span><kbd aria-label="Escape" style={{ fontFamily: 'inherit' }}>Esc</kbd> Close</span>
         </div>
       </div>
     </div>

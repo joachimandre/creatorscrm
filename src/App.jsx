@@ -59,11 +59,19 @@ function App() {
 
   return (
     <div className="flex flex-col h-screen bg-bg-primary overflow-hidden">
+      {/* Skip link — lets keyboard users jump past the dock straight to content */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-10 focus:left-4 focus:z-[300] focus:px-md focus:py-sm focus:rounded-xl focus:bg-accent-cyan focus:text-bg-primary focus:font-semibold focus:text-sm"
+      >
+        Skip to content
+      </a>
+
       {/* OS top menu bar */}
       <MenuBar />
 
       {/* Main content — key causes remount + view-enter animation on every view change */}
-      <main className="flex-1 overflow-hidden relative">
+      <main id="main-content" className="flex-1 overflow-hidden relative">
         <div key={currentView} className="h-full overflow-auto animate-view-enter">
           {currentView === 'dashboard'      && <Dashboard />}
           {currentView === 'revenue-master' && <RevenueMaster />}

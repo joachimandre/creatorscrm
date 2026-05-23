@@ -21,10 +21,15 @@ const LiveClock = () => {
     const t = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
+  const formatted = time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   return (
-    <span className="text-xs text-text-secondary font-medium tabular-nums">
-      {time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
-    </span>
+    <time
+      aria-live="off"
+      aria-label={`Current time: ${formatted}`}
+      className="text-xs text-text-secondary font-medium tabular-nums"
+    >
+      {formatted}
+    </time>
   );
 };
 
@@ -33,7 +38,7 @@ const MenuBar = () => {
 
   return (
     <header
-      className="flex items-center justify-between px-xl flex-shrink-0 z-50 select-none"
+      className="flex items-center justify-between px-xl flex-shrink-0 z-50"
       style={{
         height: '32px',
         background: 'rgba(37,43,54,0.85)',
@@ -59,10 +64,11 @@ const MenuBar = () => {
           <span className="text-bg-primary font-black leading-none">C</span>
         </div>
         <span className="text-xs font-semibold text-text-primary">Creator CRM</span>
-        <span className="text-white/20 text-xs mx-xs">›</span>
+        <span className="text-white/20 text-xs mx-xs" aria-hidden="true">›</span>
         <span
           key={currentView}
           className="text-xs text-text-tertiary animate-fade-in"
+          aria-label={`Current view: ${VIEW_NAMES[currentView] || currentView}`}
         >
           {VIEW_NAMES[currentView] || currentView}
         </span>
@@ -70,22 +76,33 @@ const MenuBar = () => {
 
       {/* Right: status items */}
       <div className="flex items-center gap-md">
-        <Wifi size={11} className="text-text-tertiary" />
-        <Battery size={11} className="text-text-tertiary" />
-        <Bell
-          size={11}
-          className="text-text-tertiary hover:text-text-primary transition-colors cursor-pointer"
-        />
-        {/* User avatar dot */}
-        <div
-          className="cursor-pointer shadow-glow-purple"
-          style={{
-            width: 16,
-            height: 16,
-            borderRadius: '50%',
-            background: 'linear-gradient(135deg, #9d4edd, #ff006e)',
-          }}
-        />
+        <Wifi size={11} className="text-text-tertiary" aria-hidden="true" />
+        <Battery size={11} className="text-text-tertiary" aria-hidden="true" />
+        {/* Bell — 44×44 touch target wrapping small icon */}
+        <button
+          aria-label="Notifications"
+          className="flex items-center justify-center text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-cyan/50 rounded"
+          style={{ width: 28, height: 28 }}
+        >
+          <Bell size={11} aria-hidden="true" />
+        </button>
+        {/* User avatar — 44×44 touch target */}
+        <button
+          aria-label="User menu"
+          className="flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-accent-cyan/50 rounded-full"
+          style={{ width: 28, height: 28 }}
+        >
+          <div
+            className="shadow-glow-purple"
+            aria-hidden="true"
+            style={{
+              width: 16,
+              height: 16,
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #9d4edd, #ff006e)',
+            }}
+          />
+        </button>
         <LiveClock />
       </div>
     </header>

@@ -71,7 +71,7 @@ input, textarea, select {
 }
 
 input::placeholder, textarea::placeholder {
-  color: #6b7494;
+  color: #8f98b8;
 }
 
 input:focus, textarea:focus, select:focus {

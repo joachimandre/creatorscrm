@@ -44,13 +44,15 @@ const Dock = () => {
   const currentView  = useStore(s => s.currentView);
   const setCurrentView = useStore(s => s.setCurrentView);
   const tasks        = useStore(s => s.tasks);
-  const [hoveredIdx, setHoveredIdx] = useState(-1);
+  const [hoveredIdx, setHoveredIdx]   = useState(-1);
+  const [focusedIdx, setFocusedIdx]   = useState(-1);
 
   const today = new Date().toISOString().split('T')[0];
   const overdueCount = tasks.filter(t => !t.is_completed && t.due_date && t.due_date < today).length;
 
   return (
     <div className="flex justify-center items-end pb-3 flex-shrink-0 relative z-40">
+      <nav aria-label="Main navigation">
       <div
         className="flex items-end gap-xs px-md py-sm"
         style={{
@@ -67,6 +69,8 @@ const Dock = () => {
           const scale = getScale(i, hoveredIdx);
           const color = ICON_HEX[item.id];
 
+          const showTooltip = hoveredIdx === i || focusedIdx === i;
+
           return (
             <div
               key={item.id}
@@ -79,8 +83,8 @@ const Dock = () => {
               onMouseEnter={() => setHoveredIdx(i)}
               onMouseLeave={() => setHoveredIdx(-1)}
             >
-              {/* Tooltip */}
-              {hoveredIdx === i && (
+              {/* Tooltip — shown on hover OR keyboard focus */}
+              {showTooltip && (
                 <div
                   className="absolute text-xs text-text-primary px-sm py-xs rounded-lg whitespace-nowrap animate-tooltip-show pointer-events-none"
                   style={{
@@ -99,6 +103,12 @@ const Dock = () => {
               {/* Icon button */}
               <button
                 onClick={() => setCurrentView(item.id)}
+                onFocus={() => setFocusedIdx(i)}
+                onBlur={() => setFocusedIdx(-1)}
+                aria-label={item.id === 'tasks' && overdueCount > 0
+                  ? `${item.label} — ${overdueCount} overdue`
+                  : item.label}
+                aria-current={isActive ? 'page' : undefined}
                 className="relative flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-accent-cyan/40"
                 style={{
                   width: 48,
@@ -106,17 +116,17 @@ const Dock = () => {
                   borderRadius: 14,
                   background: isActive
                     ? `linear-gradient(135deg, ${color}22, ${color}0a)`
-                    : '#252b36',
+                    : '#252523',
                   boxShadow: isActive
                     ? `inset 4px 4px 8px rgba(0,0,0,0.38), inset -4px -4px 8px rgba(255,255,255,0.035), 0 0 12px ${color}30`
                     : '4px 4px 8px rgba(0,0,0,0.35), -4px -4px 8px rgba(255,255,255,0.03)',
                   transition: 'box-shadow 0.25s ease, background 0.25s ease',
                 }}
-                aria-label={item.label}
               >
                 {/* Task overdue badge */}
                 {item.id === 'tasks' && overdueCount > 0 && (
                   <span
+                    aria-hidden="true"
                     className="absolute -top-1 -right-1 flex items-center justify-center text-white font-bold z-10"
                     style={{
                       width: 16,
@@ -151,6 +161,7 @@ const Dock = () => {
           );
         })}
       </div>
+      </nav>
     </div>
   );
 };
