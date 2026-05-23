@@ -4,7 +4,7 @@ import { useStore } from '../../store.js';
 import {
   Users, Plus, Trash2, X, Check, Settings,
   ChevronLeft, ChevronRight, ChevronDown,
-  UserPlus, Minus, Pencil, Calendar,
+  UserPlus, Minus, Pencil, Calendar, Copy,
 } from 'lucide-react';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -346,6 +346,7 @@ const Team = () => {
   const loadTeamSchedule      = useStore(s => s.loadTeamSchedule);
   const setScheduleEntry      = useStore(s => s.setScheduleEntry);
   const setDayNote            = useStore(s => s.setDayNote);
+  const copyScheduleWeek      = useStore(s => s.copyScheduleWeek);
 
   // ── UI state ──────────────────────────────────────────────────────────────────
   const [selectedAgency, setSelectedAgency] = useState(null);
@@ -354,6 +355,7 @@ const Team = () => {
   const [weekStart,      setWeekStart]      = useState(() => mondayOfWeek(new Date().toISOString().split('T')[0]));
   const [pickerOpen,     setPickerOpen]     = useState(false);
   const [pickerPos,      setPickerPos]      = useState({ top: 0, left: 0 });
+  const [copySuccess,    setCopySuccess]    = useState(false);
   const weekBtnRef        = useRef(null);
   const weekPickerDropRef = useRef(null);
 
@@ -679,6 +681,24 @@ const Team = () => {
                   </button>
 
                   <div className="flex items-center gap-sm">
+                    {/* Copy from previous week */}
+                    <button
+                      onClick={() => {
+                        if (!team) return;
+                        const prevWeekStart = addDays(weekStart, -7);
+                        copyScheduleWeek(team.id, prevWeekStart, weekStart, weekStart, weekEnd);
+                        setCopySuccess(true);
+                        setTimeout(() => setCopySuccess(false), 2000);
+                      }}
+                      title="Copy schedule from last week"
+                      className={`flex items-center gap-xs text-xs transition-all px-sm py-xs rounded-lg border ${
+                        copySuccess
+                          ? 'text-accent-lime border-accent-lime/40 bg-accent-lime/10'
+                          : 'text-text-tertiary hover:text-accent-lime border-transparent hover:border-accent-lime/20 hover:bg-accent-lime/5'
+                      }`}>
+                      {copySuccess ? <Check size={12} /> : <Copy size={12} />}
+                      {copySuccess ? 'Copied!' : 'Copy prev'}
+                    </button>
                     <button
                       onClick={() => setWeekStart(mondayOfWeek(today))}
                       className="text-xs text-text-tertiary hover:text-accent-lime transition-colors px-sm py-xs rounded-lg hover:bg-accent-lime/5 border border-transparent hover:border-accent-lime/20">

@@ -430,6 +430,27 @@ export const useStore = create((set, get) => ({
     set(state => ({ teamSchedule: state.teamSchedule.filter(s => !(s.team_id === teamId && s.date === date && s.shift_index === shiftIndex)) }));
   },
 
+  copyScheduleWeek: (teamId, fromWeekStart, toWeekStart, viewStart, viewEnd) => {
+    const pad = n => String(n).padStart(2, '0');
+    const shiftDate = (isoDate, days) => {
+      const d = new Date(isoDate + 'T00:00:00');
+      d.setDate(d.getDate() + days);
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    };
+    const fromEnd = shiftDate(fromWeekStart, 6);
+    const sourceEntries = db.getScheduleForTeam(teamId, fromWeekStart, fromEnd);
+    const dayDiff = Math.round(
+      (new Date(toWeekStart + 'T00:00:00') - new Date(fromWeekStart + 'T00:00:00')) / 86400000
+    );
+    sourceEntries.forEach(entry => {
+      const targetDate = shiftDate(entry.date, dayDiff);
+      db.upsertScheduleEntry(teamId, targetDate, entry.shift_index, entry.chatter_id, entry.is_cover === 1);
+    });
+    const teamSchedule = db.getScheduleForTeam(teamId, viewStart, viewEnd);
+    const teamDayNotes = db.getDayNotesForTeam(teamId, viewStart, viewEnd);
+    set({ teamSchedule, teamDayNotes });
+  },
+
   setDayNote: (teamId, date, notes) => {
     db.upsertDayNote(teamId, date, notes);
     set(state => {
