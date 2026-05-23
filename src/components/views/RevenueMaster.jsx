@@ -121,7 +121,7 @@ const RevenueMaster = () => {
     if (type === 'day') {
       const date = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
       const amount = parseFloat(pendingValue);
-      if (!isNaN(amount) && amount > 0) db.addDailyEarning(creatorId, date, amount);
+      if (!isNaN(amount) && amount >= 0) db.addDailyEarning(creatorId, date, amount);
       else db.deleteDailyEarning(creatorId, date);
       loadEarnings();
     } else if (type === 'name') {

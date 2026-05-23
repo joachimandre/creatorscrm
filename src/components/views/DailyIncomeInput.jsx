@@ -30,8 +30,9 @@ const DailyIncomeInput = () => {
   const handleSubmit = () => {
     let hasData = false;
     Object.entries(earnings).forEach(([creatorId, amount]) => {
-      if (amount && parseFloat(amount) > 0) {
-        db.addDailyEarning(parseInt(creatorId), selectedDate, parseFloat(amount));
+      const parsed = parseFloat(amount);
+      if (amount !== '' && !isNaN(parsed) && parsed >= 0) {
+        db.addDailyEarning(parseInt(creatorId), selectedDate, parsed);
         hasData = true;
       }
     });
