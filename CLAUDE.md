@@ -39,7 +39,14 @@ Zustand store with a flat shape. All React components read state via `useStore(s
 **Payroll period** is stored as `{ periodStart: 'YYYY-MM-DD', periodEnd: 'YYYY-MM-DD' }` — no year/month/half fields.
 
 ### App Shell (`src/App.jsx`)
-Layout: `[Sidebar (w-64)] | [flex-col: TopBar (h-[60px]) + main (flex-1 overflow-auto)]`. `TopBar.jsx` is a pure presentational header (search pill + bell + avatar) that renders above every view.
+Layout: `[MenuBar (h-8)] | [main (flex-1 overflow-auto)] | [Dock (~80px)]`. The OS chrome is:
+- **`MenuBar.jsx`** — 32px top bar with LiveClock, logo mark, current view breadcrumb, status icons (wifi, battery, bell, avatar dot). Clock updates every second via `setInterval`.
+- **`Dock.jsx`** — macOS-style bottom dock pill. Icon magnification via React state `hoveredIdx` + inline `transform: scale()`. Active icon shows a neu-inset shadow + color glow; inactive icons are neu raised. Task overdue badge shown on the Tasks icon.
+- **`CommandPalette.jsx`** — Ctrl+K / Cmd+K global overlay. 10 navigation commands + filter. Arrow key + Enter navigation. Closes on Escape or backdrop click.
+
+`key={currentView}` on the view wrapper forces React remount on every navigation, triggering `animate-view-enter` (0.4s spring fade+scale+translate).
+
+`Sidebar.jsx` and `TopBar.jsx` are no longer imported — they remain as dead files.
 
 ### Routing
 View routing is purely state-based: `currentView` in the Zustand store drives which component renders in `App.jsx`. No React Router. Valid view IDs: `dashboard`, `analytics`, `revenue-master`, `creators`, `tasks`, `team`, `chatters`, `brain-dump`, `reports`, `payroll`.
@@ -54,7 +61,7 @@ View routing is purely state-based: `currentView` in the Zustand store drives wh
 | `Tasks.jsx` | `tasks` | |
 | `Team.jsx` | `team` | Teams + shift schedule + member assignment |
 | `Chatters.jsx` | `chatters` | |
-| `BrainDumpSpace.jsx` | `brain-dump` | Uses inline glass pattern — does NOT use `Button.jsx` or `Card.jsx` |
+| `BrainDumpSpace.jsx` | `brain-dump` | Uses inline neu-card pattern — does NOT use `Button.jsx` or `Card.jsx` |
 | `Reports.jsx` | `reports` | `<iframe src="/HOTTTR_Report_Builder.html">` |
 | `Payroll.jsx` | `payroll` | Calendar picker, inline editing, team filter |
 
@@ -81,21 +88,29 @@ accent-cyan / accent-purple / accent-pink / accent-lime / accent-orange / accent
 
 For dynamic colors (e.g. team color pickers), use inline `style={{ backgroundColor: hex }}` rather than constructing Tailwind class names at runtime — dynamic class names are not purged reliably. Store color tokens as the CSS-token string (`'accent-cyan'`) and maintain a local hex map for inline styles.
 
-Shadow utilities: `shadow-glow`, `shadow-glow-purple`, `shadow-glow-pink`, `shadow-glow-lime`.
+Shadow utilities: `shadow-neu`, `shadow-neu-lg`, `shadow-neu-sm`, `shadow-neu-inset`, `shadow-neu-inset-sm`, `shadow-neu-dock`, `shadow-glow`, `shadow-glow-purple`, `shadow-glow-pink`, `shadow-glow-lime`.
 
-Animation utilities: `animate-pulse-glow`, `animate-float`, `animate-slide-up`, `animate-fade-in`, `animate-scale-in`.
+Animation utilities: `animate-view-enter`, `animate-palette-open`, `animate-dock-item-in`, `animate-tooltip-show`, `animate-pulse-glow`, `animate-float`, `animate-slide-up`, `animate-fade-in`, `animate-scale-in`.
 
-**Standard glass card pattern** (use this, not `bg-white/5`):
+**Standard neumorphic card pattern** (use instead of glass):
 ```
-bg-gradient-to-br from-white/[0.06] to-white/[0.02] border border-white/10 rounded-2xl p-lg
-shadow-[inset_0_1px_0_rgba(255,255,255,0.07)]
+neu-card p-lg          ← raised surface (default for all cards)
+neu-card-inset p-md    ← sunken/recessed surface (inputs, code blocks)
+neu-btn                ← raised button surface (secondary/ghost buttons)
 ```
-Add `hover:border-white/20` for interactive cards.
+CSS for these utilities lives in `src/index.css`. `.neu-card:hover` automatically deepens the shadow. Do NOT use the old glass pattern (`from-white/[0.06]...`) — it has been removed from all views.
+
+Background colors are now charcoal (not navy):
+- `bg-primary: #1d2027` — OS desktop surface
+- `bg-secondary: #252b36` — card/panel surface (same as `.neu-card` background)
+- `bg-tertiary: #2e3545` — elevated/inset fields
+
+Input fields receive the neu-inset treatment globally via `index.css` — no per-component classes needed.
 
 **Tokens that do NOT exist** (Tailwind silently ignores them — do not use):
 `accent-primary`, `accent-danger`, `surface-0`, `surface-1`, `surface-2`
 
-**Sidebar section colors** — each nav area has an assigned accent used for its icon, page title gradient, and primary CTA:
+**Dock icon colors** — each nav area has an assigned accent used for its Dock icon, page title gradient, and primary CTA:
 | View | Accent | Title gradient |
 |------|--------|---------------|
 | Dashboard | `#00d9ff` | `from-accent-cyan to-accent-blue` |
