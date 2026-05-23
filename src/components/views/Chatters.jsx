@@ -3,7 +3,7 @@ import { useStore } from '../../store.js';
 import * as db from '../../db/index.js';
 import {
   MessageSquare, ExternalLink, Pencil, X, Check, Plus, Trash2,
-  Search, Link2, Clock, DollarSign,
+  Search, Link2, Clock, DollarSign, BarChart2, Download,
 } from 'lucide-react';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -56,6 +56,7 @@ const Chatters = () => {
   const [confirmDelete,  setConfirmDelete]  = useState(null);
   const [payrollData,    setPayrollData]    = useState({});
   const [shiftCounts,    setShiftCounts]    = useState({});
+  const [payrollHistory, setPayrollHistory] = useState({}); // chatterId → total across all periods
 
   const activeAgency = selectedAgency ?? agencies[0]?.id ?? null;
 
@@ -100,8 +101,16 @@ const Chatters = () => {
       newShifts[chatter.id] = shifts.length;
     });
 
+    // All-time payroll totals
+    const newHistory = {};
+    chatters.forEach(chatter => {
+      const allRecs = rawDb.payroll_records.filter(r => r.person_type === 'chatter' && r.person_id === chatter.id);
+      newHistory[chatter.id] = allRecs.reduce((s, r) => s + r.net_pay, 0);
+    });
+
     setPayrollData(newPayroll);
     setShiftCounts(newShifts);
+    setPayrollHistory(newHistory);
   }, [chatters]);
 
   // ── Escape key ────────────────────────────────────────────────────────────
@@ -271,6 +280,14 @@ const Chatters = () => {
                 {shifts > 0 ? `${shifts} assigned` : 'None'}
               </span>
             </div>
+            {payrollHistory[chatter.id] > 0 && (
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="flex items-center gap-xs text-text-tertiary/60">
+                  <BarChart2 size={9} className="text-accent-purple/50" /> All-time earned
+                </span>
+                <span className="font-mono font-bold text-text-secondary">{fmt$(payrollHistory[chatter.id])}</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -379,10 +396,30 @@ const Chatters = () => {
           <MessageSquare size={32} className="text-accent-lime" />
           <h1 className="text-3xl font-bold bg-gradient-to-r from-accent-lime to-accent-cyan bg-clip-text text-transparent">Chatters</h1>
         </div>
-        <button onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-sm px-lg py-sm rounded-xl text-sm font-semibold bg-gradient-to-r from-accent-lime to-accent-cyan text-bg-primary border-transparent shadow-glow hover:opacity-90 transition-all">
-          <Plus size={16} /> New Chatter
-        </button>
+        <div className="flex items-center gap-sm">
+          <button onClick={() => {
+            const rows = [['Name','Role','Agency','Team','Hourly Rate','Commission %','This Week Shifts','Last Payroll Net','All-Time Earned']];
+            agencyChatters.forEach(c => {
+              const team = getChatterTeam(c.id);
+              const pay = payrollData[c.id];
+              rows.push([c.name, c.role||'', '', team?.name||'',
+                c.hourly_rate||0, c.commission_rate||0,
+                shiftCounts[c.id]||0, pay?.total||0, payrollHistory[c.id]||0]);
+            });
+            const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+            a.download = `chatters-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+          }}
+            className="flex items-center gap-xs px-md py-sm rounded-xl text-sm font-semibold neu-btn text-text-secondary hover:text-text-primary transition-all">
+            <Download size={14} /> Export CSV
+          </button>
+          <button onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-sm px-lg py-sm rounded-xl text-sm font-semibold bg-gradient-to-r from-accent-lime to-accent-cyan text-bg-primary border-transparent shadow-glow hover:opacity-90 transition-all">
+            <Plus size={16} /> New Chatter
+          </button>
+        </div>
       </div>
 
       {/* Agency tabs */}

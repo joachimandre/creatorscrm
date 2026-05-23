@@ -3,7 +3,7 @@ import { useStore } from '../../store.js';
 import {
   CheckSquare, Plus, Trash2, Pencil, Check, X,
   AlertCircle, Clock, Calendar, Star, Link, Search,
-  Flame, Minus, ArrowUp,
+  Flame, Minus, ArrowUp, RefreshCw, Square,
 } from 'lucide-react';
 
 // ─── Constants ──────────────────────────────────────────────────────────────────
@@ -44,7 +44,7 @@ const sortByPriority = (arr) => [...arr].sort((a, b) => {
 });
 
 // ─── Kanban Card ────────────────────────────────────────────────────────────────
-const KanbanCard = ({ task, onToggle, onUpdate, onDelete, isDragging, onDragStart, onDragEnd }) => {
+const KanbanCard = ({ task, onToggle, onUpdate, onDelete, isDragging, onDragStart, onDragEnd, bulkMode, isSelected, onSelect }) => {
   const [expanded, setExpanded] = useState(false);
   const [editing,  setEditing]  = useState(false);
   const [editData, setEditData] = useState({});
@@ -56,11 +56,12 @@ const KanbanCard = ({ task, onToggle, onUpdate, onDelete, isDragging, onDragStar
   const openEdit = (e) => {
     e.stopPropagation();
     setEditData({
-      title:       task.title,
-      description: task.description || '',
-      due_date:    task.due_date   || '',
-      priority:    task.priority   || 'none',
-      link:        task.link       || '',
+      title:          task.title,
+      description:    task.description || '',
+      due_date:       task.due_date   || '',
+      priority:       task.priority   || 'none',
+      link:           task.link       || '',
+      recurring_days: task.recurring_days ? String(task.recurring_days) : '',
     });
     setEditing(true);
     setExpanded(true);
@@ -69,11 +70,12 @@ const KanbanCard = ({ task, onToggle, onUpdate, onDelete, isDragging, onDragStar
   const saveEdit = () => {
     if (!editData.title.trim()) return;
     onUpdate(task.id, {
-      title:       editData.title.trim(),
-      description: editData.description,
-      due_date:    editData.due_date || null,
-      priority:    editData.priority,
-      link:        editData.link,
+      title:          editData.title.trim(),
+      description:    editData.description,
+      due_date:       editData.due_date || null,
+      priority:       editData.priority,
+      link:           editData.link,
+      recurring_days: editData.recurring_days ? parseInt(editData.recurring_days) : null,
     });
     setEditing(false);
   };
@@ -83,12 +85,22 @@ const KanbanCard = ({ task, onToggle, onUpdate, onDelete, isDragging, onDragStar
       draggable
       onDragStart={e => { e.stopPropagation(); onDragStart(task.id); }}
       onDragEnd={e => { e.stopPropagation(); onDragEnd(); }}
+      onClick={bulkMode ? (e) => { e.stopPropagation(); onSelect && onSelect(task.id); } : undefined}
       className={`group relative neu-card overflow-hidden select-none transition-all duration-200
-        ${isDragging ? 'opacity-40 scale-[0.96] cursor-grabbing' : 'cursor-grab hover:shadow-neu-lg'}
+        ${isDragging ? 'opacity-40 scale-[0.96] cursor-grabbing' : bulkMode ? 'cursor-pointer hover:shadow-neu-lg' : 'cursor-grab hover:shadow-neu-lg'}
         ${task.is_completed ? 'opacity-55' : ''}
+        ${isSelected ? 'ring-2 ring-accent-purple/60' : ''}
       `}
       style={{ borderLeft: `3px solid ${p.color}55` }}
     >
+      {/* Bulk select overlay */}
+      {bulkMode && (
+        <div className={`absolute top-sm right-sm w-4 h-4 rounded flex items-center justify-center transition-all z-10
+          ${isSelected ? 'bg-accent-purple' : 'bg-white/10 border border-white/20'}`}>
+          {isSelected && <Check size={9} className="text-white" />}
+        </div>
+      )}
+
       {/* Card body */}
       <div className="p-md space-y-xs">
 
@@ -119,12 +131,18 @@ const KanbanCard = ({ task, onToggle, onUpdate, onDelete, isDragging, onDragStar
           {task.title}
         </p>
 
-        {/* Context row: creator + bookmark */}
+        {/* Context row: creator + recurring badge + bookmark */}
         <div className="flex items-center justify-between gap-xs">
-          {task.creator_name
-            ? <span className="text-[11px] text-text-tertiary/50 truncate">{task.creator_name}</span>
-            : <span />
-          }
+          <div className="flex items-center gap-xs min-w-0">
+            {task.creator_name && (
+              <span className="text-[11px] text-text-tertiary/50 truncate">{task.creator_name}</span>
+            )}
+            {task.recurring_days > 0 && (
+              <span className="inline-flex items-center gap-[2px] text-[9px] text-accent-cyan/60 bg-accent-cyan/8 px-[4px] py-[1px] rounded-full shrink-0">
+                <RefreshCw size={7} /> {task.recurring_days}d
+              </span>
+            )}
+          </div>
           {task.is_bookmarked ? <Star size={10} style={{ color: '#ff6b35' }} fill="currentColor" /> : null}
         </div>
 
@@ -199,6 +217,22 @@ const KanbanCard = ({ task, onToggle, onUpdate, onDelete, isDragging, onDragStar
                 onChange={e => setEditData(d => ({ ...d, link: e.target.value }))}
                 placeholder="https://…"
                 className="w-full rounded-lg px-sm py-xs text-text-secondary text-xs focus:outline-none" />
+              {/* Recurring */}
+              <div className="flex items-center gap-sm">
+                <RefreshCw size={10} className="text-text-tertiary/50 flex-shrink-0" />
+                <span className="text-[10px] text-text-tertiary/60">Repeat every</span>
+                <input type="number" min="1" max="365" value={editData.recurring_days}
+                  onChange={e => setEditData(d => ({ ...d, recurring_days: e.target.value }))}
+                  placeholder="—"
+                  className="w-14 rounded-lg px-xs py-[2px] text-text-primary text-xs text-center focus:outline-none" />
+                <span className="text-[10px] text-text-tertiary/60">days</span>
+                {editData.recurring_days && (
+                  <button onClick={() => setEditData(d => ({ ...d, recurring_days: '' }))}
+                    className="text-text-tertiary/40 hover:text-accent-pink transition-colors ml-auto">
+                    <X size={10} />
+                  </button>
+                )}
+              </div>
               <div className="flex gap-xs justify-end">
                 <button onClick={() => setEditing(false)}
                   className="px-sm py-[3px] neu-btn rounded-lg text-xs text-text-tertiary transition-colors">
@@ -236,7 +270,7 @@ const KanbanCard = ({ task, onToggle, onUpdate, onDelete, isDragging, onDragStar
 const KanbanColumn = ({
   column, tasks, isDragTarget, onDragOver, onDragLeave, onDrop,
   onAdd, onToggle, onUpdate, onDelete, draggedId, onClearDone,
-  onDragStart, onDragEnd,
+  onDragStart, onDragEnd, bulkMode, selectedIds, onSelect,
 }) => {
   const [addingTask, setAddingTask] = useState(false);
   const [addTitle,   setAddTitle]   = useState('');
@@ -339,6 +373,9 @@ const KanbanColumn = ({
               onToggle={onToggle}
               onUpdate={onUpdate}
               onDelete={onDelete}
+              bulkMode={bulkMode}
+              isSelected={selectedIds?.has(task.id)}
+              onSelect={onSelect}
             />
           </div>
         ))}
@@ -361,6 +398,28 @@ const Tasks = () => {
   const [search,         setSearch]         = useState('');
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [confirmClear,   setConfirmClear]   = useState(false);
+
+  // Bulk select
+  const [selectedIds,  setSelectedIds]  = useState(new Set());
+  const [bulkMode,     setBulkMode]     = useState(false);
+
+  const toggleSelect = (id) => setSelectedIds(prev => {
+    const next = new Set(prev);
+    next.has(id) ? next.delete(id) : next.add(id);
+    return next;
+  });
+
+  const handleBulkComplete = () => {
+    selectedIds.forEach(id => updateTask(id, { is_completed: 1 }));
+    setSelectedIds(new Set());
+    setBulkMode(false);
+  };
+
+  const handleBulkDelete = () => {
+    selectedIds.forEach(id => deleteTask(id));
+    setSelectedIds(new Set());
+    setBulkMode(false);
+  };
 
   // Drag state
   const [draggedId,  setDraggedId]  = useState(null);
@@ -441,12 +500,20 @@ const Tasks = () => {
             </span>
           )}
         </div>
-        {tasksByCol.done.length > 0 && (
-          <button onClick={() => setConfirmClear(true)}
-            className="text-xs text-text-tertiary hover:text-accent-pink neu-btn rounded-lg px-md py-xs transition-all">
-            Clear {tasksByCol.done.length} completed
+        <div className="flex items-center gap-sm">
+          {tasksByCol.done.length > 0 && (
+            <button onClick={() => setConfirmClear(true)}
+              className="text-xs text-text-tertiary hover:text-accent-pink neu-btn rounded-lg px-md py-xs transition-all">
+              Clear {tasksByCol.done.length} completed
+            </button>
+          )}
+          <button
+            onClick={() => { setBulkMode(v => !v); setSelectedIds(new Set()); }}
+            className={`flex items-center gap-xs text-xs rounded-lg px-md py-xs transition-all
+              ${bulkMode ? 'bg-accent-purple/20 text-accent-purple border border-accent-purple/40' : 'neu-btn text-text-tertiary hover:text-text-primary'}`}>
+            <Square size={11} /> {bulkMode ? 'Cancel Select' : 'Select'}
           </button>
-        )}
+        </div>
       </div>
 
       {/* Agency tabs */}
@@ -506,6 +573,23 @@ const Tasks = () => {
             </div>
           </div>
 
+          {/* ── Bulk action bar ──────────────────────────────────────────────── */}
+          {bulkMode && selectedIds.size > 0 && (
+            <div className="flex items-center gap-md neu-card px-lg py-sm flex-shrink-0 animate-slide-up">
+              <span className="text-sm font-semibold text-text-primary">{selectedIds.size} selected</span>
+              <div className="flex items-center gap-sm ml-auto">
+                <button onClick={handleBulkComplete}
+                  className="flex items-center gap-xs px-md py-xs bg-accent-lime/20 text-accent-lime text-xs font-semibold rounded-lg hover:bg-accent-lime/30 transition-all">
+                  <Check size={12} /> Mark Complete
+                </button>
+                <button onClick={handleBulkDelete}
+                  className="flex items-center gap-xs px-md py-xs bg-accent-pink/15 text-accent-pink text-xs font-semibold rounded-lg hover:bg-accent-pink/25 transition-all">
+                  <Trash2 size={12} /> Delete
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* ── Kanban board ─────────────────────────────────────────────────── */}
           <div className="relative flex-1 min-h-0">
           {/* Right-edge fade affordance */}
@@ -529,6 +613,9 @@ const Tasks = () => {
                 onClearDone={col.id === 'done' ? () => setConfirmClear(true) : null}
                 onDragStart={(id) => setDraggedId(id)}
                 onDragEnd={() => { setDraggedId(null); setDragOverCol(null); }}
+                bulkMode={bulkMode}
+                selectedIds={selectedIds}
+                onSelect={toggleSelect}
               />
             ))}
           </div>

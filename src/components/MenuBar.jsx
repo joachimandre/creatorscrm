@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Bell, Wifi, Battery } from 'lucide-react';
 import { useStore } from '../store.js';
+import NotificationPanel from './NotificationPanel.jsx';
 
 const VIEW_NAMES = {
   'dashboard':      'Dashboard',
@@ -33,8 +34,14 @@ const LiveClock = () => {
   );
 };
 
+const TODAY = new Date().toISOString().split('T')[0];
+
 const MenuBar = () => {
-  const currentView = useStore(s => s.currentView);
+  const currentView   = useStore(s => s.currentView);
+  const tasks         = useStore(s => s.tasks);
+  const [notifOpen, setNotifOpen] = useState(false);
+
+  const overdueCount = tasks.filter(t => !t.is_completed && t.due_date && t.due_date < TODAY).length;
 
   return (
     <header
@@ -79,14 +86,23 @@ const MenuBar = () => {
       <div className="flex items-center gap-md">
         <Wifi size={11} className="text-text-tertiary" aria-hidden="true" />
         <Battery size={11} className="text-text-tertiary" aria-hidden="true" />
-        {/* Bell — 44×44 touch target wrapping small icon */}
-        <button
-          aria-label="Notifications"
-          className="flex items-center justify-center text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-cyan/50 rounded"
-          style={{ width: 28, height: 28 }}
-        >
-          <Bell size={11} aria-hidden="true" />
-        </button>
+        {/* Bell — live notification count */}
+        <div className="relative">
+          <button
+            aria-label="Notifications"
+            onClick={() => setNotifOpen(v => !v)}
+            className={`flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-accent-cyan/50 rounded ${notifOpen ? 'text-text-primary' : 'text-text-tertiary hover:text-text-primary'}`}
+            style={{ width: 28, height: 28 }}
+          >
+            <Bell size={11} aria-hidden="true" />
+            {overdueCount > 0 && (
+              <span className="absolute -top-[3px] -right-[3px] w-3 h-3 rounded-full bg-accent-pink flex items-center justify-center text-[7px] font-black text-white leading-none">
+                {overdueCount > 9 ? '9+' : overdueCount}
+              </span>
+            )}
+          </button>
+          {notifOpen && <NotificationPanel onClose={() => setNotifOpen(false)} />}
+        </div>
         {/* User avatar — 44×44 touch target */}
         <button
           aria-label="User menu"

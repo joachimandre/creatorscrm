@@ -5,6 +5,13 @@ import {
 } from 'lucide-react';
 import { useStore } from '../store.js';
 
+const ICON_HEX = {
+  Navigate: '#00d9ff',
+  Creators: '#9d4edd',
+  Chatters: '#00ff88',
+  Tasks:    '#ff6b35',
+};
+
 const COMMANDS = [
   { id: 'nav-dashboard',      label: 'Go to Dashboard',      icon: LayoutDashboard, view: 'dashboard',      group: 'Navigate' },
   { id: 'nav-analytics',      label: 'Go to Analytics',      icon: TrendingUp,      view: 'analytics',      group: 'Navigate' },
@@ -18,10 +25,6 @@ const COMMANDS = [
   { id: 'nav-payroll',        label: 'Go to Payroll',        icon: DollarSign,      view: 'payroll',        group: 'Navigate' },
 ];
 
-const ICON_HEX = {
-  Navigate: '#00d9ff',
-};
-
 const CommandPalette = () => {
   const [open, setOpen]     = useState(false);
   const [query, setQuery]   = useState('');
@@ -29,6 +32,9 @@ const CommandPalette = () => {
   const inputRef            = useRef(null);
   const panelRef            = useRef(null);
   const setCurrentView      = useStore(s => s.setCurrentView);
+  const creators            = useStore(s => s.creators);
+  const chatters            = useStore(s => s.chatters);
+  const tasks               = useStore(s => s.tasks);
 
   // Focus trap — keep Tab/Shift+Tab inside the panel while open
   const handleTrapFocus = useCallback((e) => {
@@ -75,9 +81,26 @@ const CommandPalette = () => {
     return () => document.removeEventListener('keydown', handleTrapFocus);
   }, [open, handleTrapFocus]);
 
-  const filtered = COMMANDS.filter(c =>
-    c.label.toLowerCase().includes(query.toLowerCase())
-  );
+  // Build dynamic search results when query is non-empty
+  const dynamicResults = query.trim().length > 0 ? [
+    ...creators
+      .filter(c => c.stage_name.toLowerCase().includes(query.toLowerCase()))
+      .slice(0, 4)
+      .map(c => ({ id: `creator-${c.id}`, label: c.stage_name, icon: Star, view: 'creators', group: 'Creators', hint: c.is_active ? 'Active' : 'Inactive' })),
+    ...chatters
+      .filter(c => c.name.toLowerCase().includes(query.toLowerCase()))
+      .slice(0, 4)
+      .map(c => ({ id: `chatter-${c.id}`, label: c.name, icon: MessageSquare, view: 'chatters', group: 'Chatters', hint: c.role || '' })),
+    ...tasks
+      .filter(t => !t.is_completed && t.title.toLowerCase().includes(query.toLowerCase()))
+      .slice(0, 4)
+      .map(t => ({ id: `task-${t.id}`, label: t.title, icon: CheckSquare, view: 'tasks', group: 'Tasks', hint: t.due_date || '' })),
+  ] : [];
+
+  const filtered = [
+    ...COMMANDS.filter(c => c.label.toLowerCase().includes(query.toLowerCase())),
+    ...dynamicResults,
+  ];
 
   // Keyboard navigation
   const handleKeyDown = (e) => {
@@ -212,11 +235,14 @@ const CommandPalette = () => {
                           boxShadow: '2px 2px 5px rgba(0,0,0,0.35), -2px -2px 5px rgba(255,255,255,0.03)',
                         }}
                       >
-                        <Icon size={14} className={isSelected ? 'text-accent-cyan' : 'text-text-tertiary'} />
+                        <Icon size={14} style={{ color: isSelected ? (ICON_HEX[cmd.group] || '#00d9ff') : undefined }} className={isSelected ? '' : 'text-text-tertiary'} />
                       </div>
                       <span className={`text-sm flex-1 ${isSelected ? 'text-text-primary' : 'text-text-secondary'}`}>
                         {cmd.label}
                       </span>
+                      {cmd.hint && (
+                        <span className="text-[10px] text-text-tertiary/50 shrink-0">{cmd.hint}</span>
+                      )}
                       {isSelected && (
                         <ArrowRight size={13} className="text-text-tertiary" />
                       )}

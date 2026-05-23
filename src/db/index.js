@@ -99,6 +99,10 @@ function runMigrations() {
   if (!db._nextIds.team_day_note) db._nextIds.team_day_note = 1;
   db.creators.forEach(c => { if (c.drive_url === undefined) c.drive_url = ''; });
   if (!db.creator_subscribers) { db.creator_subscribers = []; db._nextIds.creator_subscribers = 1; }
+  // creator notes
+  if (!db.creator_notes) { db.creator_notes = []; db._nextIds.creator_notes = 1; }
+  // recurring tasks
+  db.tasks.forEach(t => { if (t.recurring_days === undefined) t.recurring_days = null; });
 }
 
 export function saveDB() {
@@ -781,6 +785,56 @@ export function getSubscriberHistory(creatorId) {
 export function getLatestSubscriberCount(creatorId) {
   const history = getSubscriberHistory(creatorId);
   return history.length > 0 ? history[history.length - 1] : null;
+}
+
+// ─── Creator Notes ────────────────────────────────────────────────────────────
+
+export function addCreatorNote(creatorId, note) {
+  const id = getNextId('creator_notes');
+  db.creator_notes.push({ id, creator_id: creatorId, note, created_at: now() });
+  saveDB();
+  return id;
+}
+
+export function getCreatorNotes(creatorId) {
+  return db.creator_notes
+    .filter(n => n.creator_id === creatorId)
+    .sort((a, b) => b.created_at.localeCompare(a.created_at));
+}
+
+export function deleteCreatorNote(noteId) {
+  db.creator_notes = db.creator_notes.filter(n => n.id !== noteId);
+  saveDB();
+}
+
+// ─── Recurring Tasks ──────────────────────────────────────────────────────────
+
+export function spawnRecurringTask(task) {
+  if (!task.recurring_days || task.recurring_days <= 0) return null;
+  const pad = n => String(n).padStart(2, '0');
+  const base = task.due_date || new Date().toISOString().split('T')[0];
+  const d = new Date(base + 'T00:00:00');
+  d.setDate(d.getDate() + task.recurring_days);
+  const nextDue = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const id = getNextId('tasks');
+  const newTask = {
+    id,
+    agency_id:     task.agency_id,
+    creator_id:    task.creator_id || null,
+    title:         task.title,
+    description:   task.description || '',
+    due_date:      nextDue,
+    priority:      task.priority || 'none',
+    link:          task.link || '',
+    is_completed:  0,
+    is_bookmarked: 0,
+    recurring_days: task.recurring_days,
+    created_at:    now(),
+    updated_at:    now(),
+  };
+  db.tasks.push(newTask);
+  saveDB();
+  return newTask;
 }
 
 // ─── Creator display order (UI pref — local only, not synced to cloud) ────────

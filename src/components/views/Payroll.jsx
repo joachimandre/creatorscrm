@@ -5,7 +5,7 @@ import * as db from '../../db/index.js';
 import {
   DollarSign, Users, ChevronLeft, ChevronRight,
   Pencil, Trash2, Copy, Printer, Zap, Check, TrendingUp,
-  Calendar, X, AlertTriangle, Settings2, CheckSquare, Square,
+  Calendar, X, AlertTriangle, Settings2, CheckSquare, Square, Download,
 } from 'lucide-react';
 
 // ─── Constants ──────────────────────────────────────────────────────────────
@@ -535,6 +535,26 @@ const Payroll = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleExportCSV = () => {
+    const rows = [['Type','Name','Role','Agency','Base Revenue','Commission %','Commission $','Hourly Rate','Hours','Hourly $','Deductions','Bonuses','Gross Pay','Net Pay','Status']];
+    creatorRecords.forEach(r => {
+      rows.push(['Creator', getCreatorName(r.person_id), '', agencies.find(a=>a.id===r.agency_id)?.name||'',
+        r.base_revenue, r.commission_rate, r.commission_amount, '', '', '',
+        r.deductions, r.bonuses, r.gross_pay, r.net_pay, r.status]);
+    });
+    chatterRecords.forEach(r => {
+      rows.push(['Chatter', getChatterName(r.person_id), getChatterRole(r.person_id), agencies.find(a=>a.id===r.agency_id)?.name||'',
+        r.base_revenue, r.commission_rate, r.commission_amount,
+        r.hourly_rate, r.hours_worked, r.hourly_amount,
+        r.deductions, r.bonuses, r.gross_pay, r.net_pay, r.status]);
+    });
+    const csv = rows.map(r => r.map(v => `"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+    a.download = `payroll-${periodStart}-to-${periodEnd}.csv`;
+    a.click();
+  };
+
   const handlePrint = () => {
     const style = document.createElement('style');
     style.id = 'payroll-print-style';
@@ -702,6 +722,10 @@ const Payroll = () => {
           </div>
         </div>
         <div className="flex items-center gap-md flex-wrap">
+          <button onClick={handleExportCSV}
+            className="flex items-center gap-xs px-md py-sm text-xs text-text-tertiary hover:text-text-primary neu-btn rounded-lg transition-all">
+            <Download size={12} /> CSV
+          </button>
           <button onClick={() => setShowExport(v => !v)}
             className="flex items-center gap-xs px-md py-sm text-xs text-text-tertiary hover:text-text-primary neu-btn rounded-lg transition-all">
             <Printer size={12} /> Export

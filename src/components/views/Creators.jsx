@@ -4,6 +4,7 @@ import * as db from '../../db/index.js';
 import {
   Star, ExternalLink, Pencil, X, Check, Plus, Trash2,
   Search, ChevronDown, ChevronUp, Target, Link2, Users, GripVertical,
+  StickyNote, Download, Send,
 } from 'lucide-react';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -81,6 +82,33 @@ const Creators = () => {
   const [showAddModal,   setShowAddModal]   = useState(false);
   const [newCreator,     setNewCreator]     = useState({ name: '', dailyGoal: '', weeklyGoal: '', monthlyGoal: '', commissionRate: '', driveUrl: '' });
   const [confirmDelete,  setConfirmDelete]  = useState(null);
+
+  // Creator notes state
+  const [notesOpen,    setNotesOpen]    = useState(null); // creatorId or null
+  const [notesList,    setNotesList]    = useState({});   // creatorId → [{id, note, created_at}]
+  const [newNoteText,  setNewNoteText]  = useState('');
+  const addCreatorNote   = useStore(s => s.addCreatorNote);
+  const getCreatorNotes  = useStore(s => s.getCreatorNotes);
+  const deleteCreatorNote = useStore(s => s.deleteCreatorNote);
+
+  const openNotes = (creatorId) => {
+    const notes = getCreatorNotes(creatorId);
+    setNotesList(prev => ({ ...prev, [creatorId]: notes }));
+    setNotesOpen(creatorId);
+    setNewNoteText('');
+  };
+
+  const handleAddNote = (creatorId) => {
+    if (!newNoteText.trim()) return;
+    addCreatorNote(creatorId, newNoteText.trim());
+    setNotesList(prev => ({ ...prev, [creatorId]: getCreatorNotes(creatorId) }));
+    setNewNoteText('');
+  };
+
+  const handleDeleteNote = (creatorId, noteId) => {
+    deleteCreatorNote(noteId);
+    setNotesList(prev => ({ ...prev, [creatorId]: getCreatorNotes(creatorId) }));
+  };
 
   // Subscriber tracker state
   const [subscriberCounts, setSubscriberCounts] = useState({});
@@ -223,6 +251,31 @@ const Creators = () => {
 
   const activeCreators   = filteredCreators.filter(c => c.is_active);
   const inactiveCreators = filteredCreators.filter(c => !c.is_active);
+
+  // ── CSV Export ───────────────────────────────────────────────────────────────
+  const exportCSV = () => {
+    const rows = [['Name','Status','Monthly Earned','Monthly Goal','% of Goal','Today Earned','Commission %','Team']];
+    filteredCreators.forEach(c => {
+      const earned = getMonthlyTotal(c.id);
+      const pct = c.monthly_goal ? ((earned / c.monthly_goal) * 100).toFixed(1) : '';
+      const team = getCreatorTeam(c.id)?.name || '';
+      rows.push([
+        c.stage_name,
+        c.is_active ? 'Active' : 'Inactive',
+        earned.toFixed(2),
+        c.monthly_goal || '',
+        pct,
+        (todayEarnings[c.id] || 0).toFixed(2),
+        c.commission_rate || 0,
+        team,
+      ]);
+    });
+    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+    a.download = `creators-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+  };
 
   // ── Edit handlers ─────────────────────────────────────────────────────────────
   const openEdit = (creator) => {
@@ -622,13 +675,67 @@ const Creators = () => {
           </div>
         )}
 
-        {/* Hover edit button (only when not in edit mode) */}
-        {!isEditing && (
-          <button
-            onClick={e => { e.stopPropagation(); openEdit(creator); }}
-            className="absolute bottom-md right-md opacity-0 group-hover:opacity-100 transition-all flex items-center gap-xs px-sm py-[4px] bg-bg-secondary/90 border border-white/15 rounded-lg text-xs text-text-tertiary hover:text-text-primary hover:border-white/25 shadow-lg">
-            <Pencil size={10} /> Edit
-          </button>
+        {/* Notes panel */}
+        {notesOpen === creator.id && (
+          <div className="border-t border-white/10 bg-bg-primary/60 p-md space-y-xs animate-slide-up"
+            onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-xs">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-text-tertiary">Notes</span>
+              <button onClick={() => setNotesOpen(null)} className="text-text-tertiary hover:text-text-primary transition-colors">
+                <X size={12} />
+              </button>
+            </div>
+            {/* Existing notes */}
+            <div className="space-y-xs max-h-36 overflow-y-auto">
+              {(notesList[creator.id] || []).length === 0 && (
+                <p className="text-[11px] text-text-tertiary/40 italic">No notes yet</p>
+              )}
+              {(notesList[creator.id] || []).map(n => (
+                <div key={n.id} className="group/note flex items-start gap-xs">
+                  <p className="text-[11px] text-text-secondary leading-relaxed flex-1">{n.note}</p>
+                  <span className="text-[9px] text-text-tertiary/30 shrink-0 mt-[1px]">
+                    {n.created_at?.slice(5, 10)}
+                  </span>
+                  <button onClick={() => handleDeleteNote(creator.id, n.id)}
+                    className="opacity-0 group-hover/note:opacity-100 transition-opacity text-text-tertiary/40 hover:text-accent-pink">
+                    <X size={9} />
+                  </button>
+                </div>
+              ))}
+            </div>
+            {/* New note input */}
+            <div className="flex gap-xs pt-xs border-t border-white/5">
+              <input
+                autoFocus
+                value={newNoteText}
+                onChange={e => setNewNoteText(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') handleAddNote(creator.id); if (e.key === 'Escape') setNotesOpen(null); }}
+                placeholder="Add a note…"
+                className="flex-1 bg-transparent text-text-primary text-xs focus:outline-none placeholder-text-tertiary/30"
+              />
+              <button onClick={() => handleAddNote(creator.id)}
+                disabled={!newNoteText.trim()}
+                className="text-accent-purple disabled:opacity-20 hover:text-accent-pink transition-colors">
+                <Send size={11} />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Hover action buttons */}
+        {!isEditing && notesOpen !== creator.id && (
+          <div className="absolute bottom-md right-md opacity-0 group-hover:opacity-100 transition-all flex items-center gap-xs">
+            <button
+              onClick={e => { e.stopPropagation(); openNotes(creator.id); }}
+              className="flex items-center gap-xs px-sm py-[4px] bg-bg-secondary/90 border border-white/15 rounded-lg text-xs text-text-tertiary hover:text-accent-cyan hover:border-accent-cyan/30 shadow-lg transition-all">
+              <StickyNote size={10} />
+            </button>
+            <button
+              onClick={e => { e.stopPropagation(); openEdit(creator); }}
+              className="flex items-center gap-xs px-sm py-[4px] bg-bg-secondary/90 border border-white/15 rounded-lg text-xs text-text-tertiary hover:text-text-primary hover:border-white/25 shadow-lg transition-all">
+              <Pencil size={10} /> Edit
+            </button>
+          </div>
         )}
       </div>
     );
@@ -644,10 +751,16 @@ const Creators = () => {
           <Star size={32} className="text-accent-purple" />
           <h1 className="text-3xl font-bold bg-gradient-to-r from-accent-purple to-accent-pink bg-clip-text text-transparent">Creators</h1>
         </div>
-        <button onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-sm px-lg py-sm rounded-xl text-sm font-semibold bg-gradient-to-r from-accent-purple to-accent-pink text-white border-transparent shadow-glow-purple hover:opacity-90 transition-all">
-          <Plus size={16} /> New Creator
-        </button>
+        <div className="flex items-center gap-sm">
+          <button onClick={exportCSV}
+            className="flex items-center gap-xs px-md py-sm rounded-xl text-sm font-semibold neu-btn text-text-secondary hover:text-text-primary transition-all">
+            <Download size={14} /> Export CSV
+          </button>
+          <button onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-sm px-lg py-sm rounded-xl text-sm font-semibold bg-gradient-to-r from-accent-purple to-accent-pink text-white border-transparent shadow-glow-purple hover:opacity-90 transition-all">
+            <Plus size={16} /> New Creator
+          </button>
+        </div>
       </div>
 
       {/* Agency tabs */}

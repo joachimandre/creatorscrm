@@ -1,0 +1,14 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Creator CRM Dev",
+      "runtimeExecutable": "C:\\Users\\Joachim\\Desktop\\Claude Code Fun\\node_modules\\.bin\\vite.cmd",
+      "runtimeArgs": [],
+      "port": 5173,
+      "env": {
+        "PATH": "C:\\Program Files\\nodejs;C:\\Windows\\System32;C:\\Windows"
+      }
+    }
+  ]
+}

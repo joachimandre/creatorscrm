@@ -473,6 +473,14 @@ const Team = () => {
     return e.chatter_id ? String(e.chatter_id) : '';
   };
 
+  // Returns Set of chatter IDs that appear more than once across all shifts on a given day (within this team)
+  const conflictedChattersOnDay = (date) => {
+    const entries = teamSchedule.filter(s => s.team_id === team?.id && s.date === date && s.chatter_id);
+    const seen = new Map();
+    entries.forEach(e => seen.set(e.chatter_id, (seen.get(e.chatter_id) || 0) + 1));
+    return new Set([...seen.entries()].filter(([, count]) => count > 1).map(([id]) => id));
+  };
+
   const getDayNote = date =>
     teamDayNotes.find(n => n.team_id === team?.id && n.date === date)?.notes || '';
 
@@ -780,20 +788,27 @@ const Team = () => {
                         </div>
 
                         {/* Shift cells — custom dropdown */}
-                        {shifts.map((shift, si) => {
-                          const s   = SHIFT_STYLE[shift.color] || SHIFT_STYLE['accent-cyan'];
-                          const hex = SHIFT_HEX[shift.color]   || '#888';
-                          return (
-                            <div key={si} style={{ borderLeft: `1px solid ${hex}20` }}>
-                              <ShiftCell
-                                value={cellValue(date, si)}
-                                onChange={val => handleShiftChange(date, si, val)}
-                                chatters={myChatters}
-                                shiftStyle={s}
-                              />
-                            </div>
-                          );
-                        })}
+                        {(() => {
+                          const conflicts = conflictedChattersOnDay(date);
+                          return shifts.map((shift, si) => {
+                            const s   = SHIFT_STYLE[shift.color] || SHIFT_STYLE['accent-cyan'];
+                            const hex = SHIFT_HEX[shift.color]   || '#888';
+                            const entry = teamSchedule.find(e => e.team_id === team?.id && e.date === date && e.shift_index === si);
+                            const isConflict = entry?.chatter_id && conflicts.has(entry.chatter_id);
+                            return (
+                              <div key={si} style={{ borderLeft: `1px solid ${hex}20` }}
+                                title={isConflict ? '⚠️ Double-booked on this day' : undefined}
+                                className={isConflict ? 'ring-1 ring-inset ring-accent-orange/60 bg-accent-orange/5' : ''}>
+                                <ShiftCell
+                                  value={cellValue(date, si)}
+                                  onChange={val => handleShiftChange(date, si, val)}
+                                  chatters={myChatters}
+                                  shiftStyle={s}
+                                />
+                              </div>
+                            );
+                          });
+                        })()}
 
                         {/* Notes */}
                         <DayNoteCell date={date} initialValue={getDayNote(date)} onBlur={(d, v) => setDayNote(team.id, d, v)} />

@@ -166,9 +166,21 @@ export const useStore = create((set, get) => ({
 
   updateTask: (id, updates) => {
     db.updateAgencyTask(id, updates);
-    set(state => ({
-      tasks: state.tasks.map(t => t.id === id ? { ...t, ...updates, updated_at: new Date().toISOString() } : t)
-    }));
+    set(state => {
+      const updatedTasks = state.tasks.map(t => t.id === id ? { ...t, ...updates, updated_at: new Date().toISOString() } : t);
+      // If marking complete and task is recurring, spawn the next instance
+      if (updates.is_completed === 1) {
+        const task = state.tasks.find(t => t.id === id);
+        if (task && task.recurring_days) {
+          const next = db.spawnRecurringTask({ ...task, ...updates });
+          if (next) {
+            const enriched = { ...next, creator_name: task.creator_name, agency_name: task.agency_name };
+            return { tasks: [...updatedTasks, enriched] };
+          }
+        }
+      }
+      return { tasks: updatedTasks };
+    });
   },
 
   deleteTask: (id) => {
@@ -226,6 +238,14 @@ export const useStore = create((set, get) => ({
       subscriberCounts: { ...state.subscriberCounts, [creatorId]: { latest, prev } }
     }));
   },
+
+  // Creator notes
+  addCreatorNote: (creatorId, note) => {
+    const id = db.addCreatorNote(creatorId, note);
+    return id;
+  },
+  getCreatorNotes: (creatorId) => db.getCreatorNotes(creatorId),
+  deleteCreatorNote: (noteId) => { db.deleteCreatorNote(noteId); },
 
   // Brain dump operations
   addBrainDumpNote: (creatorId, content) => {
