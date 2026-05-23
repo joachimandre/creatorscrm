@@ -1,0 +1,214 @@
+import { useState, useEffect, useRef } from 'react';
+import {
+  Search, LayoutDashboard, TrendingUp, BarChart3, Star, CheckSquare,
+  Users, MessageSquare, Brain, FileText, DollarSign, X, ArrowRight,
+} from 'lucide-react';
+import { useStore } from '../store.js';
+
+const COMMANDS = [
+  { id: 'nav-dashboard',      label: 'Go to Dashboard',      icon: LayoutDashboard, view: 'dashboard',      group: 'Navigate' },
+  { id: 'nav-analytics',      label: 'Go to Analytics',      icon: TrendingUp,      view: 'analytics',      group: 'Navigate' },
+  { id: 'nav-revenue',        label: 'Go to Revenue Master', icon: BarChart3,       view: 'revenue-master', group: 'Navigate' },
+  { id: 'nav-creators',       label: 'Go to Creators',       icon: Star,            view: 'creators',       group: 'Navigate' },
+  { id: 'nav-tasks',          label: 'Go to Tasks',          icon: CheckSquare,     view: 'tasks',          group: 'Navigate' },
+  { id: 'nav-team',           label: 'Go to Team',           icon: Users,           view: 'team',           group: 'Navigate' },
+  { id: 'nav-chatters',       label: 'Go to Chatters',       icon: MessageSquare,   view: 'chatters',       group: 'Navigate' },
+  { id: 'nav-brain-dump',     label: 'Go to Brain Dump',     icon: Brain,           view: 'brain-dump',     group: 'Navigate' },
+  { id: 'nav-reports',        label: 'Go to Reports',        icon: FileText,        view: 'reports',        group: 'Navigate' },
+  { id: 'nav-payroll',        label: 'Go to Payroll',        icon: DollarSign,      view: 'payroll',        group: 'Navigate' },
+];
+
+const ICON_HEX = {
+  Navigate: '#00d9ff',
+};
+
+const CommandPalette = () => {
+  const [open, setOpen]     = useState(false);
+  const [query, setQuery]   = useState('');
+  const [selIdx, setSelIdx] = useState(0);
+  const inputRef            = useRef(null);
+  const setCurrentView      = useStore(s => s.setCurrentView);
+
+  // Open / close on Ctrl+K or Cmd+K
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setOpen(prev => !prev);
+      }
+      if (e.key === 'Escape') setOpen(false);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
+  // Focus input when opened
+  useEffect(() => {
+    if (open) {
+      setTimeout(() => inputRef.current?.focus(), 10);
+      setQuery('');
+      setSelIdx(0);
+    }
+  }, [open]);
+
+  const filtered = COMMANDS.filter(c =>
+    c.label.toLowerCase().includes(query.toLowerCase())
+  );
+
+  // Keyboard navigation
+  const handleKeyDown = (e) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setSelIdx(i => Math.min(i + 1, filtered.length - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSelIdx(i => Math.max(i - 1, 0));
+    } else if (e.key === 'Enter' && filtered[selIdx]) {
+      execute(filtered[selIdx]);
+    }
+  };
+
+  const execute = (cmd) => {
+    if (cmd.view) setCurrentView(cmd.view);
+    setOpen(false);
+    setQuery('');
+  };
+
+  if (!open) return null;
+
+  // Group commands
+  const groups = {};
+  filtered.forEach(cmd => {
+    if (!groups[cmd.group]) groups[cmd.group] = [];
+    groups[cmd.group].push(cmd);
+  });
+
+  return (
+    <div
+      className="fixed inset-0 z-[200] flex items-start justify-center animate-fade-in"
+      style={{ paddingTop: '18vh' }}
+      onClick={() => setOpen(false)}
+    >
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0"
+        style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(6px)' }}
+      />
+
+      {/* Panel */}
+      <div
+        className="relative w-full mx-xl overflow-hidden animate-palette-open"
+        style={{
+          maxWidth: 520,
+          background: '#252b36',
+          borderRadius: 18,
+          boxShadow: '10px 10px 20px rgba(0,0,0,0.45), -10px -10px 20px rgba(255,255,255,0.045)',
+          border: '1px solid rgba(255,255,255,0.06)',
+        }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Search row */}
+        <div
+          className="flex items-center gap-sm px-lg"
+          style={{
+            borderBottom: '1px solid rgba(255,255,255,0.06)',
+            height: 52,
+          }}
+        >
+          <Search size={16} className="text-text-tertiary flex-shrink-0" />
+          <input
+            ref={inputRef}
+            type="text"
+            value={query}
+            onChange={e => { setQuery(e.target.value); setSelIdx(0); }}
+            onKeyDown={handleKeyDown}
+            placeholder="Search or jump to…"
+            className="flex-1 bg-transparent text-text-primary text-sm placeholder:text-text-tertiary"
+            style={{ border: 'none', boxShadow: 'none', outline: 'none', padding: 0 }}
+          />
+          <div className="flex items-center gap-xs">
+            <kbd
+              className="text-text-tertiary text-xs rounded px-sm py-[2px]"
+              style={{
+                background: '#1d2027',
+                boxShadow: 'inset 2px 2px 4px rgba(0,0,0,0.35), inset -2px -2px 4px rgba(255,255,255,0.025)',
+                fontFamily: 'inherit',
+              }}
+            >
+              ESC
+            </kbd>
+            <button
+              onClick={() => setOpen(false)}
+              className="text-text-tertiary hover:text-text-primary transition-colors"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+
+        {/* Results */}
+        <div className="overflow-y-auto p-sm" style={{ maxHeight: 320 }}>
+          {filtered.length === 0 ? (
+            <p className="text-center py-xl text-text-tertiary text-sm">No results for "{query}"</p>
+          ) : (
+            Object.entries(groups).map(([group, cmds]) => (
+              <div key={group}>
+                <p className="text-xs text-text-tertiary uppercase tracking-widest px-md pb-xs pt-sm font-semibold">
+                  {group}
+                </p>
+                {cmds.map(cmd => {
+                  const globalIdx = filtered.indexOf(cmd);
+                  const isSelected = globalIdx === selIdx;
+                  const Icon = cmd.icon;
+                  return (
+                    <button
+                      key={cmd.id}
+                      onClick={() => execute(cmd)}
+                      onMouseEnter={() => setSelIdx(globalIdx)}
+                      className="w-full flex items-center gap-md px-md py-sm rounded-xl text-left transition-all group"
+                      style={{
+                        background: isSelected ? 'rgba(0,217,255,0.08)' : 'transparent',
+                        boxShadow: isSelected ? 'inset 2px 2px 4px rgba(0,0,0,0.2), inset -2px -2px 4px rgba(255,255,255,0.02)' : 'none',
+                      }}
+                    >
+                      <div
+                        className="flex items-center justify-center flex-shrink-0"
+                        style={{
+                          width: 30,
+                          height: 30,
+                          borderRadius: 8,
+                          background: '#1d2027',
+                          boxShadow: '2px 2px 5px rgba(0,0,0,0.35), -2px -2px 5px rgba(255,255,255,0.03)',
+                        }}
+                      >
+                        <Icon size={14} className={isSelected ? 'text-accent-cyan' : 'text-text-tertiary'} />
+                      </div>
+                      <span className={`text-sm flex-1 ${isSelected ? 'text-text-primary' : 'text-text-secondary'}`}>
+                        {cmd.label}
+                      </span>
+                      {isSelected && (
+                        <ArrowRight size={13} className="text-text-tertiary" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Footer hint */}
+        <div
+          className="flex items-center gap-md px-lg py-sm text-xs text-text-tertiary"
+          style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
+        >
+          <span><kbd style={{ fontFamily: 'inherit' }}>↑↓</kbd> Navigate</span>
+          <span><kbd style={{ fontFamily: 'inherit' }}>↵</kbd> Open</span>
+          <span><kbd style={{ fontFamily: 'inherit' }}>Esc</kbd> Close</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default CommandPalette;

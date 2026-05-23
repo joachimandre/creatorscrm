@@ -262,10 +262,10 @@ const Creators = () => {
 
     return (
       <div key={creator.id}
-        className={`relative group flex flex-col bg-gradient-to-br from-white/[0.06] to-white/[0.02] border rounded-2xl overflow-hidden transition-all duration-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]
+        className={`relative group flex flex-col neu-card overflow-hidden transition-all duration-200
           ${isInactive ? 'opacity-60' : ''}
-          ${hasDrive && !isInactive ? 'cursor-pointer hover:border-white/20 hover:shadow-lg hover:-translate-y-[1px]' : 'border-white/10'}
-          ${colors.glow && !isInactive ? 'border-accent-lime/30 shadow-glow-lime' : 'border-white/8'}
+          ${hasDrive && !isInactive ? 'cursor-pointer hover:shadow-lg hover:-translate-y-[1px]' : ''}
+          ${colors.glow && !isInactive ? '!border-accent-lime/30 shadow-glow-lime' : ''}
         `}
         onClick={() => {
           if (!isEditing && hasDrive && !isInactive) {
@@ -582,7 +582,7 @@ const Creators = () => {
 
   // ── Page render ───────────────────────────────────────────────────────────────
   return (
-    <div className="p-lg bg-gradient-to-br from-bg-primary via-bg-secondary to-bg-tertiary h-full overflow-auto space-y-lg">
+    <div className="p-lg h-full overflow-auto space-y-lg">
 
       {/* Page header */}
       <div className="flex items-center justify-between">

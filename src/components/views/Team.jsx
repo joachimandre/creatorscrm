@@ -226,7 +226,7 @@ const WeekPicker = ({ currentWeekStart, onApply, onClose }) => {
   for (let d = 1; d <= totalDays; d++) cells.push(d);
 
   return (
-    <div className="bg-gradient-to-br from-bg-secondary to-bg-tertiary border border-white/15 rounded-2xl shadow-2xl w-[292px] overflow-hidden">
+    <div className="neu-card shadow-2xl w-[292px] overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-lg py-md border-b border-white/8">
         <div className="flex items-center gap-sm">
@@ -453,7 +453,7 @@ const Team = () => {
 
   // ── Render ────────────────────────────────────────────────────────────────────
   return (
-    <div className="p-lg bg-gradient-to-br from-bg-primary via-bg-secondary to-bg-tertiary h-full overflow-auto space-y-lg">
+    <div className="p-lg h-full overflow-auto space-y-lg">
 
       {/* Page header */}
       <div className="flex items-center gap-md">
@@ -740,7 +740,7 @@ const Team = () => {
               <div className="xl:col-span-2 space-y-md">
 
                 {/* Team info card */}
-                <div className="bg-gradient-to-br from-bg-tertiary to-bg-secondary border border-white/8 rounded-xl overflow-hidden">
+                <div className="neu-card overflow-hidden">
                   <div className="h-[2px] bg-accent-purple/50" />
                   <div className="p-lg space-y-md">
                     <h3 className="text-xs font-bold text-text-tertiary uppercase tracking-widest">Team Info</h3>
@@ -779,7 +779,7 @@ const Team = () => {
                 </div>
 
                 {/* Shift editor */}
-                <div className="bg-gradient-to-br from-bg-tertiary to-bg-secondary border border-white/8 rounded-xl overflow-hidden">
+                <div className="neu-card overflow-hidden">
                   <div className="h-[2px] bg-accent-orange/50" />
                   <div className="p-lg space-y-md">
                     <div className="flex items-center justify-between">
@@ -836,7 +836,7 @@ const Team = () => {
               <div className="xl:col-span-3 space-y-md">
 
                 {/* Models card */}
-                <div className="bg-gradient-to-br from-bg-tertiary to-bg-secondary border border-white/8 rounded-xl overflow-hidden">
+                <div className="neu-card overflow-hidden">
                   <div className="h-[2px] bg-accent-cyan/50" />
                   <div className="p-lg space-y-md">
                     <div className="flex items-center justify-between">
@@ -889,7 +889,7 @@ const Team = () => {
                 </div>
 
                 {/* Chatters card */}
-                <div className="bg-gradient-to-br from-bg-tertiary to-bg-secondary border border-white/8 rounded-xl overflow-hidden">
+                <div className="neu-card overflow-hidden">
                   <div className="h-[2px] bg-accent-lime/50" />
                   <div className="p-lg space-y-md">
                     <div className="flex items-center justify-between gap-sm flex-wrap">

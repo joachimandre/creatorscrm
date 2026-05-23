@@ -63,7 +63,7 @@ const StatusBadge = ({ status, onClick }) => {
 };
 
 const StatCard = ({ label, value, sub, color, icon: Icon }) => (
-  <div className="bg-gradient-to-br from-bg-tertiary to-bg-secondary border border-white/8 rounded-xl p-lg relative overflow-hidden group hover:border-white/15 transition-all">
+  <div className="neu-card p-lg relative overflow-hidden group hover:border-white/15 transition-all">
     <div className="absolute inset-0 opacity-5 group-hover:opacity-10 transition-opacity rounded-xl"
       style={{ background: `radial-gradient(circle at top right, ${color}, transparent 60%)` }} />
     <div className="flex items-start justify-between mb-sm relative">
@@ -195,7 +195,7 @@ const CalendarPicker = ({ currentStart, currentEnd, onApply, onClose }) => {
   const canApply = stagingStart && stagingEnd && stagingStart <= stagingEnd;
 
   return (
-    <div className="bg-gradient-to-br from-bg-secondary to-bg-tertiary border border-white/15 rounded-2xl shadow-2xl w-[340px] overflow-hidden">
+    <div className="neu-card shadow-2xl w-[340px] overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-lg py-md border-b border-white/8">
         <div className="flex items-center gap-sm">
@@ -690,7 +690,7 @@ const Payroll = () => {
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="p-lg bg-gradient-to-br from-bg-primary via-bg-secondary to-bg-tertiary h-full overflow-auto space-y-lg">
+    <div className="p-lg h-full overflow-auto space-y-lg">
 
       {/* ── Header ── */}
       <div className="flex items-center justify-between flex-wrap gap-md">
@@ -731,7 +731,7 @@ const Payroll = () => {
           className={`flex items-center gap-md px-lg py-md rounded-xl border transition-all group ${
             pickerOpen
               ? 'bg-accent-lime/10 border-accent-lime/40 shadow-glow-lime'
-              : 'bg-gradient-to-br from-bg-tertiary to-bg-secondary border-white/10 hover:border-accent-lime/30 hover:bg-accent-lime/5'
+              : 'neu-card border-white/10 hover:border-accent-lime/30 hover:bg-accent-lime/5'
           }`}
         >
           <Calendar size={16} className={pickerOpen ? 'text-accent-lime' : 'text-text-tertiary group-hover:text-accent-lime transition-colors'} />
@@ -762,7 +762,7 @@ const Payroll = () => {
 
       {/* ── Export panel ── */}
       {showExport && (
-        <div className="bg-gradient-to-br from-bg-tertiary to-bg-secondary border border-white/10 rounded-xl p-lg flex items-center gap-md animate-slide-up flex-wrap">
+        <div className="neu-card p-lg flex items-center gap-md animate-slide-up flex-wrap">
           <p className="text-sm text-text-secondary flex-1">{periodLabel(periodStart, periodEnd)}</p>
           <button onClick={handleCopy}
             className="flex items-center gap-xs px-lg py-sm bg-white/5 border border-white/10 rounded-lg text-sm text-text-secondary hover:text-text-primary hover:border-accent-cyan/30 transition-all">
@@ -777,7 +777,7 @@ const Payroll = () => {
 
       {/* ── History ── */}
       {historyPeriods.length > 0 && (
-        <div className="bg-gradient-to-br from-bg-tertiary/50 to-bg-secondary/50 border border-white/8 rounded-xl overflow-hidden">
+        <div className="neu-card overflow-hidden">
           {/* History header */}
           <div className="flex items-center justify-between px-lg py-md border-b border-white/8">
             <button onClick={() => { setShowHistory(v => !v); setHistoryManage(false); setHistorySelected(new Set()); }}
@@ -1015,7 +1015,7 @@ const Payroll = () => {
 
           {/* Grand total */}
           <div className="flex justify-end">
-            <div className="bg-gradient-to-br from-bg-tertiary to-bg-secondary border border-accent-lime/20 rounded-xl px-xl py-md flex items-center gap-xl">
+            <div className="neu-card border-accent-lime/20 px-xl py-md flex items-center gap-xl">
               <span className="text-sm font-semibold uppercase tracking-widest text-text-tertiary">Grand Total</span>
               <span className="text-2xl font-bold text-accent-lime font-mono">{fmt(totalNet)}</span>
             </div>

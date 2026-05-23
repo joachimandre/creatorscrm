@@ -163,7 +163,7 @@ const Analytics = () => {
   const gridProps = { strokeDasharray: '3 3', stroke: 'rgba(255,255,255,0.05)' };
 
   return (
-    <div className="p-lg bg-gradient-to-br from-bg-primary via-bg-secondary to-bg-tertiary h-full overflow-auto space-y-lg">
+    <div className="p-lg h-full overflow-auto space-y-lg">
 
       {/* Header */}
       <div className="flex items-center gap-md">
@@ -244,7 +244,7 @@ const Analytics = () => {
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-lg">
 
           {/* Chart 1 — Monthly Trend */}
-          <div className="bg-white/[0.03] border border-white/8 rounded-2xl p-lg space-y-md">
+          <div className="neu-card p-lg space-y-md">
             <div className="flex items-start justify-between">
               <div>
                 <h3 className="text-sm font-bold text-text-primary">Monthly Revenue</h3>
@@ -264,7 +264,7 @@ const Analytics = () => {
           </div>
 
           {/* Chart 2 — Creator Leaderboard */}
-          <div className="bg-white/[0.03] border border-white/8 rounded-2xl p-lg space-y-md">
+          <div className="neu-card p-lg space-y-md">
             <div className="flex items-start justify-between">
               <div>
                 <h3 className="text-sm font-bold text-text-primary">Creator Leaderboard</h3>
@@ -302,7 +302,7 @@ const Analytics = () => {
           </div>
 
           {/* Chart 3 — Daily Revenue */}
-          <div className="bg-white/[0.03] border border-white/8 rounded-2xl p-lg space-y-md">
+          <div className="neu-card p-lg space-y-md">
             <div className="flex items-start justify-between">
               <div>
                 <h3 className="text-sm font-bold text-text-primary">Daily Revenue</h3>
@@ -337,7 +337,7 @@ const Analytics = () => {
           </div>
 
           {/* Chart 4 — Day of Week */}
-          <div className="bg-white/[0.03] border border-white/8 rounded-2xl p-lg space-y-md">
+          <div className="neu-card p-lg space-y-md">
             <div className="flex items-start justify-between">
               <div>
                 <h3 className="text-sm font-bold text-text-primary">Best Day of Week</h3>

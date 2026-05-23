@@ -9,12 +9,12 @@ const Button = ({
   disabled = false,
   ...props
 }) => {
-  const baseStyles = 'rounded-lg font-semibold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-accent-cyan/50 focus:ring-offset-1 focus:ring-offset-bg-primary';
+  const baseStyles = 'rounded-xl font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-accent-cyan/50 focus:ring-offset-1 focus:ring-offset-bg-primary';
 
   const variants = {
-    primary:   'bg-gradient-to-r from-accent-cyan to-accent-blue text-bg-primary hover:opacity-90 shadow-glow',
-    secondary: 'bg-white/5 text-text-primary border border-white/10 hover:bg-white/10 hover:border-white/20',
-    danger:    'bg-gradient-to-r from-accent-pink to-accent-orange/80 text-white hover:opacity-90',
+    primary:   'bg-gradient-to-r from-accent-cyan to-accent-blue text-bg-primary hover:opacity-90 shadow-neu-sm active:shadow-neu-inset-sm active:scale-[0.98]',
+    secondary: 'neu-btn text-text-primary',
+    danger:    'bg-gradient-to-r from-accent-pink to-accent-orange/80 text-white hover:opacity-90 shadow-neu-sm active:shadow-neu-inset-sm active:scale-[0.98]',
     ghost:     'text-text-secondary hover:text-text-primary hover:bg-white/5',
   };
 

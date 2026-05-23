@@ -56,7 +56,7 @@ const QuickAdd = ({ agencyId, creators, onAdd }) => {
   };
 
   return (
-    <div className="bg-gradient-to-r from-bg-tertiary to-bg-secondary border border-white/10 rounded-xl p-md hover:border-accent-purple/30 transition-all">
+    <div className="neu-card p-md hover:border-accent-purple/30 transition-all">
       <div className="flex items-center gap-sm">
         <div className="w-5 h-5 rounded-md border-2 border-dashed border-white/20 flex items-center justify-center flex-shrink-0">
           <Plus size={11} className="text-text-tertiary" />
@@ -132,7 +132,7 @@ const TaskItem = ({ task, onToggle, onUpdate, onDelete, accentColor }) => {
 
   return (
     <div className={`group relative rounded-xl border transition-all duration-200 ${
-      task.is_completed ? 'opacity-60 bg-white/2 border-white/5' : 'bg-gradient-to-r from-bg-tertiary to-bg-secondary border-white/8 hover:border-white/15'
+      task.is_completed ? 'opacity-60 bg-white/2 border-white/5' : 'neu-card hover:border-white/15'
     }`} style={!task.is_completed ? { borderLeftColor: accentColor, borderLeftWidth: 3 } : {}}>
 
       {/* Main row */}
@@ -335,7 +335,7 @@ const Tasks = () => {
   const totalDoneCount = completedTasks.length;
 
   return (
-    <div className="p-lg bg-gradient-to-br from-bg-primary via-bg-secondary to-bg-tertiary h-full overflow-auto space-y-lg">
+    <div className="p-lg h-full overflow-auto space-y-lg">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-md">
         <div className="flex items-center gap-md">

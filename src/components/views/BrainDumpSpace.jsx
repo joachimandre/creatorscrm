@@ -32,7 +32,7 @@ const BrainDumpSpace = () => {
   };
 
   return (
-    <div className="p-lg bg-gradient-to-br from-bg-primary via-bg-secondary to-bg-tertiary h-full overflow-auto space-y-lg">
+    <div className="p-lg h-full overflow-auto space-y-lg">
 
       {/* Header */}
       <div className="flex items-center gap-md">
@@ -45,7 +45,7 @@ const BrainDumpSpace = () => {
       <div className="max-w-2xl space-y-lg">
 
         {/* Input card */}
-        <div className="bg-gradient-to-br from-white/[0.06] to-white/[0.02] border border-white/10 rounded-2xl p-lg space-y-md shadow-[inset_0_1px_0_rgba(255,255,255,0.07)]">
+        <div className="neu-card p-lg space-y-md">
           <p className="text-text-secondary text-sm">
             Dump all your thoughts, ideas, and reminders here. Sort them later without breaking your workflow.
           </p>
@@ -83,7 +83,7 @@ const BrainDumpSpace = () => {
             {notes.map(note => (
               <div
                 key={note.id}
-                className="bg-gradient-to-br from-white/[0.06] to-white/[0.02] border border-white/10 rounded-2xl p-lg group hover:border-white/18 transition-all shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
+                className="neu-card p-lg group hover:border-white/20 transition-all"
               >
                 <textarea
                   defaultValue={note.content}

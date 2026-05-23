@@ -13,9 +13,8 @@ const AGENCY_COLORS = ['#00d9ff', '#9d4edd', '#ff6b35', '#ff006e', '#00ff88'];
 
 // ─── Stat card ────────────────────────────────────────────────────────────────
 const StatCard = ({ icon: Icon, label, value, sub, chip, chipColor, color = '#00d9ff', pulse }) => (
-  <div className="bg-gradient-to-br from-white/[0.06] to-white/[0.02] border border-white/10 rounded-2xl p-lg
-    shadow-[inset_0_1px_0_rgba(255,255,255,0.07)] relative overflow-hidden group hover:border-white/20 transition-all">
-    <div className="absolute inset-0 opacity-5 group-hover:opacity-10 transition-opacity"
+  <div className="neu-card p-lg relative overflow-hidden group">
+    <div className="absolute inset-0 opacity-5 group-hover:opacity-10 transition-opacity rounded-2xl"
       style={{ background: `radial-gradient(circle at top right, ${color}, transparent 60%)` }} />
     {/* Top row: icon badge (left) + chip (right) */}
     <div className="flex items-start justify-between mb-md relative">
@@ -38,7 +37,7 @@ const StatCard = ({ icon: Icon, label, value, sub, chip, chipColor, color = '#00
 
 // ─── Task pill ─────────────────────────────────────────────────────────────────
 const TaskPill = ({ task, color }) => (
-  <div className="flex items-center gap-sm px-md py-sm bg-white/5 border border-white/8 rounded-lg hover:bg-white/8 transition-colors">
+  <div className="flex items-center gap-sm px-md py-sm rounded-lg transition-all" style={{ background: '#1d2027', boxShadow: 'inset 2px 2px 4px rgba(0,0,0,0.3), inset -2px -2px 4px rgba(255,255,255,0.02)' }}>
     <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: color }} />
     <div className="flex-1 min-w-0">
       <p className="text-sm text-text-primary truncate">{task.title}</p>
@@ -56,7 +55,7 @@ const AddAgencyModal = ({ onClose, onAdd }) => {
   const handle = () => { if (name.trim()) { onAdd(name.trim()); onClose(); } };
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-bg-secondary border border-accent-cyan/30 rounded-2xl p-xl shadow-2xl w-full max-w-sm mx-lg animate-scale-in" onClick={e => e.stopPropagation()}>
+      <div className="neu-card p-xl w-full max-w-sm mx-lg animate-scale-in" onClick={e => e.stopPropagation()}>
         <h3 className="text-lg font-bold text-text-primary mb-lg">New Agency</h3>
         <input
           type="text"
@@ -125,7 +124,7 @@ const AgencyPanel = ({ agency, accentColor, creators, chatters, allEarnings, tas
         </div>
 
         {/* Tasks panel */}
-        <div className="bg-gradient-to-br from-bg-tertiary to-bg-secondary border border-white/8 rounded-xl p-lg flex flex-col">
+        <div className="neu-card p-lg flex flex-col">
           <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wider mb-md">Tasks</h3>
 
           {/* Tabs */}
@@ -259,8 +258,7 @@ const OverviewPanel = ({ agencies, creators, allEarnings, chatters, tasks }) => 
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-lg">
           {/* Top Creators table — takes 2 cols */}
           {topCreators.length > 0 && (
-            <div className="xl:col-span-2 bg-gradient-to-br from-white/[0.06] to-white/[0.02] border border-white/10
-              rounded-2xl p-lg shadow-[inset_0_1px_0_rgba(255,255,255,0.07)]">
+            <div className="xl:col-span-2 neu-card p-lg">
               <div className="mb-md">
                 <h3 className="text-sm font-semibold text-text-primary">Top Creators</h3>
                 <p className="text-xs text-text-tertiary mt-xs">By revenue this month</p>
@@ -298,8 +296,7 @@ const OverviewPanel = ({ agencies, creators, allEarnings, chatters, tasks }) => 
 
           {/* Revenue Trend chart — 1 col */}
           {dailyTotals.length > 0 && (
-            <div className={`${topCreators.length === 0 ? 'xl:col-span-3' : ''} bg-gradient-to-br from-white/[0.06] to-white/[0.02]
-              border border-white/10 rounded-2xl p-lg shadow-[inset_0_1px_0_rgba(255,255,255,0.07)]`}>
+            <div className={`${topCreators.length === 0 ? 'xl:col-span-3' : ''} neu-card p-lg`}>
               <h3 className="text-sm font-semibold text-text-primary mb-xs">Revenue Trend</h3>
               <p className="text-xs text-text-tertiary mb-md">This month, daily</p>
               <ResponsiveContainer width="100%" height={160}>
@@ -313,7 +310,7 @@ const OverviewPanel = ({ agencies, creators, allEarnings, chatters, tasks }) => 
                   <Area type="monotone" dataKey="total" stroke="#00d9ff" strokeWidth={2}
                     fill="url(#cyanAreaGrad)" dot={false} />
                   <Tooltip
-                    contentStyle={{ background: '#141829', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 11 }}
+                    contentStyle={{ background: '#252b36', border: 'none', borderRadius: 10, fontSize: 11, boxShadow: '4px 4px 8px rgba(0,0,0,0.4), -4px -4px 8px rgba(255,255,255,0.03)' }}
                     itemStyle={{ color: '#00d9ff' }}
                     labelStyle={{ color: '#6b7494' }}
                     formatter={(v) => [`$${Number(v).toFixed(2)}`, 'Revenue']}
@@ -327,8 +324,7 @@ const OverviewPanel = ({ agencies, creators, allEarnings, chatters, tasks }) => 
 
       {/* Earnings Summary */}
       {totalRevenue > 0 && (
-        <div className="bg-gradient-to-br from-white/[0.06] to-white/[0.02] border border-white/10
-          rounded-2xl p-lg shadow-[inset_0_1px_0_rgba(255,255,255,0.07)]">
+        <div className="neu-card p-lg">
           <p className="text-xs text-text-tertiary uppercase tracking-wider mb-xs">Total Earnings</p>
           <p className="text-xs text-text-tertiary/60 mb-md">Across all agencies this month</p>
           <p className="text-4xl font-black bg-gradient-to-r from-accent-lime to-accent-cyan bg-clip-text text-transparent">
@@ -356,10 +352,8 @@ const OverviewPanel = ({ agencies, creators, allEarnings, chatters, tasks }) => 
           });
           const maxSpark = Math.max(...last3, 1);
           return (
-            <div key={agency.id} className="bg-gradient-to-br from-white/[0.06] to-white/[0.02] border border-white/10
-              rounded-2xl p-lg hover:border-white/20 transition-all overflow-hidden relative group
-              shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
-              style={{ borderLeftColor: color, borderLeftWidth: 3 }}>
+            <div key={agency.id} className="neu-card p-lg overflow-hidden relative group cursor-pointer"
+              style={{ borderLeft: `3px solid ${color}` }}>
               <div className="absolute inset-0 opacity-0 group-hover:opacity-5 transition-opacity"
                 style={{ background: `radial-gradient(circle at top right, ${color}, transparent 60%)` }} />
               <div className="flex items-start justify-between mb-md relative">
@@ -444,7 +438,7 @@ const Dashboard = () => {
   const selectedAgencyObj = agencies.find(a => a.id === selectedAgency);
 
   return (
-    <div className="p-lg bg-gradient-to-br from-bg-primary via-bg-secondary to-bg-tertiary h-full overflow-auto">
+    <div className="p-lg h-full overflow-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-lg flex-wrap gap-md">
         <div className="flex items-center gap-md">
@@ -474,11 +468,12 @@ const Dashboard = () => {
       <div className="flex items-center gap-sm flex-wrap mb-xl">
         <button
           onClick={() => setSelectedAgency(null)}
-          className={`px-lg py-sm rounded-xl text-sm font-semibold transition-all border ${
+          className={`px-lg py-sm rounded-xl text-sm font-semibold transition-all ${
             selectedAgency === null
-              ? 'bg-gradient-to-r from-accent-cyan/20 to-accent-blue/20 border-accent-cyan/40 text-accent-cyan'
-              : 'bg-white/5 border-white/10 text-text-secondary hover:text-text-primary hover:bg-white/8'
+              ? 'text-accent-cyan'
+              : 'text-text-secondary hover:text-text-primary neu-btn'
           }`}
+          style={selectedAgency === null ? { background: '#252b36', boxShadow: 'inset 4px 4px 8px rgba(0,0,0,0.38), inset -4px -4px 8px rgba(255,255,255,0.035), 0 0 0 1px rgba(0,217,255,0.3)' } : {}}
         >
           Overview
         </button>
@@ -490,8 +485,8 @@ const Dashboard = () => {
             <button
               key={agency.id}
               onClick={() => setSelectedAgency(agency.id)}
-              className={`px-lg py-sm rounded-xl text-sm font-semibold transition-all border ${
-                isActive ? 'text-bg-primary border-transparent shadow-lg' : 'bg-white/5 border-white/10 text-text-secondary hover:text-text-primary hover:bg-white/8'
+              className={`px-lg py-sm rounded-xl text-sm font-semibold transition-all ${
+                isActive ? 'text-bg-primary shadow-neu-sm' : 'neu-btn text-text-secondary hover:text-text-primary'
               }`}
               style={isActive ? { background: color, borderColor: color } : {}}
             >
@@ -549,7 +544,7 @@ const Dashboard = () => {
       {/* Delete Agency confirmation */}
       {confirmDeleteAgency && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50" onClick={() => setConfirmDeleteAgency(null)}>
-          <div className="bg-bg-secondary border border-accent-pink/30 rounded-2xl p-xl shadow-2xl max-w-sm w-full mx-lg animate-scale-in" onClick={e => e.stopPropagation()}>
+          <div className="neu-card p-xl max-w-sm w-full mx-lg animate-scale-in" onClick={e => e.stopPropagation()}>
             <h3 className="text-lg font-bold text-text-primary mb-sm">Remove Agency?</h3>
             <p className="text-text-secondary text-sm mb-lg">
               Permanently delete <span className="text-accent-pink font-semibold">"{confirmDeleteAgency.name}"</span>?

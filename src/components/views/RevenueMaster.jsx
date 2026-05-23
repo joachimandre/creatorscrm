@@ -386,7 +386,7 @@ const RevenueMaster = () => {
   })();
 
   return (
-    <div className="p-lg bg-gradient-to-br from-bg-primary via-bg-secondary to-bg-tertiary h-full overflow-auto space-y-lg">
+    <div className="p-lg h-full overflow-auto space-y-lg">
       <h1 className="text-3xl font-bold flex items-center gap-md">
         <BarChart3 size={32} className="text-accent-lime" />
         <span className="bg-gradient-to-r from-accent-lime to-accent-cyan bg-clip-text text-transparent">Revenue Master</span>
@@ -411,7 +411,7 @@ const RevenueMaster = () => {
 
       {/* Add Creator Form */}
       {showAddCreator && (
-        <div className="bg-gradient-to-br from-bg-tertiary to-bg-secondary border border-accent-cyan/20 rounded-xl p-lg animate-slide-up">
+        <div className="neu-card p-lg animate-slide-up">
           <h3 className="text-sm font-semibold text-accent-cyan mb-md uppercase tracking-wider">New Creator</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-md">
             <div>

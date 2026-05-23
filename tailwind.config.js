@@ -4,24 +4,24 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Modern dark theme with vibrant accents
+        // Charcoal neumorphism base palette
         bg: {
-          primary: '#0a0e27',    // Deep space blue-black
-          secondary: '#141829',  // Slightly lighter
-          tertiary: '#1a1f3a',   // Card backgrounds
+          primary:   '#1d2027',   // OS desktop surface
+          secondary: '#252b36',   // Card / panel neu surface
+          tertiary:  '#2e3545',   // Elevated / inset fields
         },
         text: {
-          primary: '#ffffff',
+          primary:   '#ffffff',
           secondary: '#a8b2d1',
-          tertiary: '#6b7494',
+          tertiary:  '#6b7494',
         },
         accent: {
-          cyan: '#00d9ff',       // Vibrant cyan
-          purple: '#9d4edd',     // Deep purple
-          pink: '#ff006e',       // Hot pink
-          lime: '#00ff88',       // Neon lime
-          orange: '#ff6b35',     // Vibrant orange
-          blue: '#4361ee',       // Electric blue
+          cyan:   '#00d9ff',
+          purple: '#9d4edd',
+          pink:   '#ff006e',
+          lime:   '#00ff88',
+          orange: '#ff6b35',
+          blue:   '#4361ee',
         }
       },
       fontFamily: {
@@ -29,11 +29,11 @@ export default {
         mono: ['JetBrains Mono', 'monospace'],
       },
       spacing: {
-        xs: '4px',
-        sm: '8px',
-        md: '12px',
-        lg: '16px',
-        xl: '24px',
+        xs:  '4px',
+        sm:  '8px',
+        md:  '12px',
+        lg:  '16px',
+        xl:  '24px',
         '2xl': '32px',
       },
       minHeight: {
@@ -46,39 +46,72 @@ export default {
         lg: '20px',
       },
       boxShadow: {
-        glow: '0 0 20px rgba(0, 217, 255, 0.3)',
+        // Glow shadows (keep existing)
+        glow:          '0 0 20px rgba(0, 217, 255, 0.3)',
         'glow-purple': '0 0 20px rgba(157, 78, 221, 0.3)',
-        'glow-pink': '0 0 20px rgba(255, 0, 110, 0.3)',
-        'glow-lime': '0 0 20px rgba(0, 255, 136, 0.3)',
+        'glow-pink':   '0 0 20px rgba(255, 0, 110, 0.3)',
+        'glow-lime':   '0 0 20px rgba(0, 255, 136, 0.3)',
+        // Neumorphism shadows (new)
+        'neu':          '6px 6px 12px rgba(0,0,0,0.4), -6px -6px 12px rgba(255,255,255,0.04)',
+        'neu-lg':       '10px 10px 20px rgba(0,0,0,0.45), -10px -10px 20px rgba(255,255,255,0.045)',
+        'neu-sm':       '3px 3px 7px rgba(0,0,0,0.35), -3px -3px 7px rgba(255,255,255,0.03)',
+        'neu-inset':    'inset 4px 4px 8px rgba(0,0,0,0.38), inset -4px -4px 8px rgba(255,255,255,0.035)',
+        'neu-inset-sm': 'inset 2px 2px 5px rgba(0,0,0,0.35), inset -2px -2px 5px rgba(255,255,255,0.03)',
+        'neu-dock':     '0 -4px 30px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.06), 6px 6px 12px rgba(0,0,0,0.4), -6px -6px 12px rgba(255,255,255,0.04)',
       },
       animation: {
-        'pulse-glow': 'pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'float': 'float 3s ease-in-out infinite',
-        'slide-up': 'slide-up 0.3s ease-out',
-        'fade-in': 'fade-in 0.3s ease-out',
-        'scale-in': 'scale-in 0.2s ease-out',
+        // Keep existing
+        'pulse-glow':   'pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'float':        'float 3s ease-in-out infinite',
+        'slide-up':     'slide-up 0.3s ease-out',
+        'fade-in':      'fade-in 0.3s ease-out',
+        'scale-in':     'scale-in 0.2s ease-out',
         'bounce-light': 'bounce 1s ease-in-out infinite',
+        // Cinematic OS animations (new)
+        'view-enter':   'viewEnter 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+        'palette-open': 'paletteOpen 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+        'dock-item-in': 'dockItemIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both',
+        'tooltip-show': 'tooltipShow 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+        'animate-pulse-glow': 'pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
       },
       keyframes: {
+        // Keep existing
         'pulse-glow': {
           '0%, 100%': { opacity: '1' },
-          '50%': { opacity: '0.5' },
+          '50%':      { opacity: '0.5' },
         },
         'float': {
           '0%, 100%': { transform: 'translateY(0px)' },
-          '50%': { transform: 'translateY(-10px)' },
+          '50%':      { transform: 'translateY(-10px)' },
         },
         'slide-up': {
-          'from': { transform: 'translateY(10px)', opacity: '0' },
-          'to': { transform: 'translateY(0)', opacity: '1' },
+          from: { transform: 'translateY(10px)', opacity: '0' },
+          to:   { transform: 'translateY(0)',    opacity: '1' },
         },
         'fade-in': {
-          'from': { opacity: '0' },
-          'to': { opacity: '1' },
+          from: { opacity: '0' },
+          to:   { opacity: '1' },
         },
         'scale-in': {
-          'from': { transform: 'scale(0.9)', opacity: '0' },
-          'to': { transform: 'scale(1)', opacity: '1' },
+          from: { transform: 'scale(0.9)', opacity: '0' },
+          to:   { transform: 'scale(1)',   opacity: '1' },
+        },
+        // Cinematic OS animations (new)
+        viewEnter: {
+          from: { opacity: '0', transform: 'scale(0.98) translateY(8px)' },
+          to:   { opacity: '1', transform: 'scale(1) translateY(0)' },
+        },
+        paletteOpen: {
+          from: { opacity: '0', transform: 'translateY(-16px) scale(0.96)' },
+          to:   { opacity: '1', transform: 'translateY(0) scale(1)' },
+        },
+        dockItemIn: {
+          from: { opacity: '0', transform: 'translateY(20px) scale(0.8)' },
+          to:   { opacity: '1', transform: 'translateY(0) scale(1)' },
+        },
+        tooltipShow: {
+          from: { opacity: '0', transform: 'translateX(-50%) translateY(4px)' },
+          to:   { opacity: '1', transform: 'translateX(-50%) translateY(0)' },
         },
       },
     },

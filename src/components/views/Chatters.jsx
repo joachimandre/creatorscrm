@@ -177,7 +177,7 @@ const Chatters = () => {
 
     return (
       <div key={chatter.id}
-        className="relative group flex flex-col bg-gradient-to-br from-white/[0.06] to-white/[0.02] border border-white/10 rounded-2xl overflow-hidden transition-all duration-200 hover:border-white/20 hover:shadow-lg hover:-translate-y-[1px] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
+        className="relative group flex flex-col neu-card overflow-hidden transition-all duration-200 hover:shadow-lg hover:-translate-y-[1px]">
 
         {/* Colored top strip */}
         <div className="h-[2px]" style={{ backgroundColor: teamHex || av.hex }} />
@@ -371,7 +371,7 @@ const Chatters = () => {
 
   // ── Page render ───────────────────────────────────────────────────────────────
   return (
-    <div className="p-lg bg-gradient-to-br from-bg-primary via-bg-secondary to-bg-tertiary h-full overflow-auto space-y-lg">
+    <div className="p-lg h-full overflow-auto space-y-lg">
 
       {/* Header */}
       <div className="flex items-center justify-between">
