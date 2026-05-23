@@ -6,9 +6,9 @@ export default {
       colors: {
         // Charcoal neumorphism base palette
         bg: {
-          primary:   '#1d2027',   // OS desktop surface
-          secondary: '#252b36',   // Card / panel neu surface
-          tertiary:  '#2e3545',   // Elevated / inset fields
+          primary:   '#1c1c1e',   // OS desktop surface — neutral charcoal (Apple Space Gray)
+          secondary: '#252523',   // Card / panel neu surface — warm neutral
+          tertiary:  '#2e2c2a',   // Elevated / inset fields — warm neutral
         },
         text: {
           primary:   '#ffffff',
