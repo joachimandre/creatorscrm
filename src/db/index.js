@@ -1,115 +1,110 @@
-// Simple JSON-based database using localStorage
+// Cloud-synced database — primary store is Supabase, localStorage is the offline cache
+import { supabase } from '../lib/supabase.js';
+
 let db = null;
+
+// Push the current in-memory db to Supabase (called on initDB migration + every write)
+async function syncToSupabase() {
+  if (!db) return;
+  try {
+    const { error } = await supabase
+      .from('crm_data')
+      .upsert({ id: 1, data: db, updated_at: new Date().toISOString() });
+    if (error) console.warn('[Supabase] sync error:', error.message);
+  } catch (e) {
+    console.warn('[Supabase] offline — data saved locally only');
+  }
+}
 
 export async function initDB() {
   if (db) return db;
 
+  // ── Try Supabase first ────────────────────────────────────────────────────
+  try {
+    const { data, error } = await supabase
+      .from('crm_data')
+      .select('data')
+      .eq('id', 1)
+      .single();
+
+    if (!error && data && data.data && Object.keys(data.data).length > 0) {
+      // Supabase has data — use it (always the authoritative source)
+      db = data.data;
+      localStorage.setItem('crm_db', JSON.stringify(db)); // warm the local cache
+      runMigrations();
+      return db;
+    }
+  } catch (e) {
+    console.warn('[Supabase] unreachable — falling back to localStorage');
+  }
+
+  // ── Fall back to localStorage (offline or first-ever launch) ─────────────
   const savedDb = localStorage.getItem('crm_db');
 
   if (savedDb) {
     db = JSON.parse(savedDb);
-    // Migrations
-    if (!db.chatters) { db.chatters = []; db._nextIds.chatters = 1; }
-    // Payroll migrations
-    let payrollDirty = false;
-    db.creators.forEach(c => { if (c.commission_rate === undefined) { c.commission_rate = 0; payrollDirty = true; } });
-    db.chatters.forEach(c => {
-      if (c.commission_rate === undefined) { c.commission_rate = 0; payrollDirty = true; }
-      if (c.hourly_rate === undefined) { c.hourly_rate = 0; payrollDirty = true; }
-    });
-    if (!db.payroll_records) { db.payroll_records = []; db._nextIds.payroll_records = 1; payrollDirty = true; }
-    // Migrate period_year/month → period_start/period_end
-    db.payroll_records.forEach(r => {
-      if (!r.period_start) {
-        const lastDay = new Date(r.period_year, r.period_month, 0).getDate();
-        r.period_start = `${r.period_year}-${String(r.period_month).padStart(2, '0')}-01`;
-        r.period_end   = `${r.period_year}-${String(r.period_month).padStart(2, '0')}-${lastDay}`;
-        payrollDirty = true;
-      }
-    });
-    if (payrollDirty) saveDB();
-    // Add agency_id + priority to existing tasks
-    let dirty = false;
-    db.tasks.forEach(t => {
-      if (t.agency_id === undefined) {
-        const creator = db.creators.find(c => c.id === t.creator_id);
-        t.agency_id = creator ? creator.agency_id : null;
-        dirty = true;
-      }
-      if (t.priority === undefined) { t.priority = 'none'; dirty = true; }
-    });
-    if (dirty) saveDB();
-    // Team migrations
-    let teamDirty = false;
-    if (!db.teams)          { db.teams           = []; teamDirty = true; }
-    if (!db.team_members)   { db.team_members    = []; teamDirty = true; }
-    if (!db.team_chatters)  { db.team_chatters   = []; teamDirty = true; }
-    if (!db.team_schedules) { db.team_schedules  = []; teamDirty = true; }
-    if (!db.team_day_notes) { db.team_day_notes  = []; teamDirty = true; }
-    if (!db._nextIds.team)          { db._nextIds.team          = 1; teamDirty = true; }
-    if (!db._nextIds.team_member)   { db._nextIds.team_member   = 1; teamDirty = true; }
-    if (!db._nextIds.team_chatter)  { db._nextIds.team_chatter  = 1; teamDirty = true; }
-    if (!db._nextIds.team_schedule) { db._nextIds.team_schedule = 1; teamDirty = true; }
-    if (!db._nextIds.team_day_note) { db._nextIds.team_day_note = 1; teamDirty = true; }
-    if (teamDirty) saveDB();
-    // Creator drive_url migration
-    let driveDirty = false;
-    db.creators.forEach(c => {
-      if (c.drive_url === undefined) { c.drive_url = ''; driveDirty = true; }
-    });
-    if (driveDirty) saveDB();
-    // Chatter drive_url migration
-    let chatterDriveDirty = false;
-    db.chatters.forEach(c => {
-      if (c.drive_url === undefined) { c.drive_url = ''; chatterDriveDirty = true; }
-    });
-    if (chatterDriveDirty) saveDB();
-    // Subscriber tracker table
-    if (!db.creator_subscribers) {
-      db.creator_subscribers = [];
-      db._nextIds.creator_subscribers = 1;
-      saveDB();
-    }
   } else {
     db = {
-      agencies: [],
-      creators: [],
-      daily_earnings: [],
-      tasks: [],
-      brain_dump: [],
-      chatters: [],
-      payroll_records: [],
-      teams: [],
-      team_members: [],
-      team_chatters: [],
-      team_schedules: [],
-      team_day_notes: [],
-      creator_subscribers: [],
+      agencies: [], creators: [], daily_earnings: [], tasks: [],
+      brain_dump: [], chatters: [], payroll_records: [], teams: [],
+      team_members: [], team_chatters: [], team_schedules: [],
+      team_day_notes: [], creator_subscribers: [],
       _nextIds: {
-        agencies: 1,
-        creators: 1,
-        daily_earnings: 1,
-        tasks: 1,
-        brain_dump: 1,
-        chatters: 1,
-        payroll_records: 1,
-        team: 1,
-        team_member: 1,
-        team_chatter: 1,
-        team_schedule: 1,
-        team_day_note: 1,
-        creator_subscribers: 1,
+        agencies: 1, creators: 1, daily_earnings: 1, tasks: 1,
+        brain_dump: 1, chatters: 1, payroll_records: 1,
+        team: 1, team_member: 1, team_chatter: 1,
+        team_schedule: 1, team_day_note: 1, creator_subscribers: 1,
       }
     };
-    saveDB();
   }
 
+  runMigrations();
+  saveDB(); // writes localStorage + kicks off Supabase upload (first-time migration)
   return db;
+}
+
+// ── All schema migrations in one place ───────────────────────────────────────
+function runMigrations() {
+  if (!db.chatters) { db.chatters = []; db._nextIds.chatters = 1; }
+  db.creators.forEach(c => { if (c.commission_rate === undefined) c.commission_rate = 0; });
+  db.chatters.forEach(c => {
+    if (c.commission_rate === undefined) c.commission_rate = 0;
+    if (c.hourly_rate    === undefined) c.hourly_rate     = 0;
+    if (c.drive_url      === undefined) c.drive_url       = '';
+  });
+  if (!db.payroll_records) { db.payroll_records = []; db._nextIds.payroll_records = 1; }
+  db.payroll_records.forEach(r => {
+    if (!r.period_start) {
+      const lastDay = new Date(r.period_year, r.period_month, 0).getDate();
+      r.period_start = `${r.period_year}-${String(r.period_month).padStart(2, '0')}-01`;
+      r.period_end   = `${r.period_year}-${String(r.period_month).padStart(2, '0')}-${lastDay}`;
+    }
+  });
+  db.tasks.forEach(t => {
+    if (t.agency_id === undefined) {
+      const creator = db.creators.find(c => c.id === t.creator_id);
+      t.agency_id = creator ? creator.agency_id : null;
+    }
+    if (t.priority === undefined) t.priority = 'none';
+  });
+  if (!db.teams)          { db.teams          = []; }
+  if (!db.team_members)   { db.team_members   = []; }
+  if (!db.team_chatters)  { db.team_chatters  = []; }
+  if (!db.team_schedules) { db.team_schedules = []; }
+  if (!db.team_day_notes) { db.team_day_notes = []; }
+  if (!db._nextIds.team)          db._nextIds.team          = 1;
+  if (!db._nextIds.team_member)   db._nextIds.team_member   = 1;
+  if (!db._nextIds.team_chatter)  db._nextIds.team_chatter  = 1;
+  if (!db._nextIds.team_schedule) db._nextIds.team_schedule = 1;
+  if (!db._nextIds.team_day_note) db._nextIds.team_day_note = 1;
+  db.creators.forEach(c => { if (c.drive_url === undefined) c.drive_url = ''; });
+  if (!db.creator_subscribers) { db.creator_subscribers = []; db._nextIds.creator_subscribers = 1; }
 }
 
 export function saveDB() {
   if (!db) return;
-  localStorage.setItem('crm_db', JSON.stringify(db));
+  localStorage.setItem('crm_db', JSON.stringify(db)); // instant local save
+  syncToSupabase();                                    // background cloud sync
 }
 
 export function getDB() {
