@@ -3,7 +3,7 @@ import { useStore } from '../../store.js';
 import {
   CheckSquare, Plus, Trash2, Pencil, Check, X,
   AlertCircle, Clock, Calendar, Star, Link, Search,
-  Flame, Minus, ArrowUp, RefreshCw, Square,
+  Flame, Minus, ArrowUp, RefreshCw, Square, Copy,
 } from 'lucide-react';
 
 // ─── Constants ──────────────────────────────────────────────────────────────────
@@ -44,7 +44,7 @@ const sortByPriority = (arr) => [...arr].sort((a, b) => {
 });
 
 // ─── Kanban Card ────────────────────────────────────────────────────────────────
-const KanbanCard = ({ task, onToggle, onUpdate, onDelete, isDragging, onDragStart, onDragEnd, bulkMode, isSelected, onSelect }) => {
+const KanbanCard = ({ task, onToggle, onUpdate, onDelete, onClone, isDragging, onDragStart, onDragEnd, bulkMode, isSelected, onSelect }) => {
   const [expanded, setExpanded] = useState(false);
   const [editing,  setEditing]  = useState(false);
   const [editData, setEditData] = useState({});
@@ -166,6 +166,12 @@ const KanbanCard = ({ task, onToggle, onUpdate, onDelete, isDragging, onDragStar
                   <Pencil size={11} />
                 </button>
                 <button
+                  onClick={e => { e.stopPropagation(); onClone && onClone(task); }}
+                  title="Clone task"
+                  className="p-xs rounded-lg text-text-tertiary hover:text-accent-purple hover:bg-white/5 transition-all">
+                  <Copy size={11} />
+                </button>
+                <button
                   onClick={e => { e.stopPropagation(); onUpdate(task.id, { is_bookmarked: task.is_bookmarked ? 0 : 1 }); }}
                   className="p-xs rounded-lg transition-all"
                   style={{ color: task.is_bookmarked ? '#ff6b35' : undefined }}>
@@ -269,7 +275,7 @@ const KanbanCard = ({ task, onToggle, onUpdate, onDelete, isDragging, onDragStar
 // ─── Kanban Column ──────────────────────────────────────────────────────────────
 const KanbanColumn = ({
   column, tasks, isDragTarget, onDragOver, onDragLeave, onDrop,
-  onAdd, onToggle, onUpdate, onDelete, draggedId, onClearDone,
+  onAdd, onToggle, onUpdate, onDelete, onClone, draggedId, onClearDone,
   onDragStart, onDragEnd, bulkMode, selectedIds, onSelect,
 }) => {
   const [addingTask, setAddingTask] = useState(false);
@@ -373,6 +379,7 @@ const KanbanColumn = ({
               onToggle={onToggle}
               onUpdate={onUpdate}
               onDelete={onDelete}
+              onClone={onClone}
               bulkMode={bulkMode}
               isSelected={selectedIds?.has(task.id)}
               onSelect={onSelect}
@@ -460,6 +467,19 @@ const Tasks = () => {
     const task = tasks.find(t => t.id === id);
     if (!task) return;
     updateTask(id, { is_completed: task.is_completed ? 0 : 1 });
+  };
+
+  const handleClone = (task) => {
+    if (!task.agency_id) return;
+    addTask(
+      task.agency_id,
+      task.creator_id || null,
+      `${task.title} (copy)`,
+      task.description || '',
+      task.due_date || null,
+      task.priority || 'none',
+      task.link || '',
+    );
   };
 
   // ── Drag & drop ─────────────────────────────────────────────────────────────
@@ -610,6 +630,7 @@ const Tasks = () => {
                 onToggle={handleToggle}
                 onUpdate={updateTask}
                 onDelete={deleteTask}
+                onClone={handleClone}
                 onClearDone={col.id === 'done' ? () => setConfirmClear(true) : null}
                 onDragStart={(id) => setDraggedId(id)}
                 onDragEnd={() => { setDraggedId(null); setDragOverCol(null); }}

@@ -103,6 +103,12 @@ function runMigrations() {
   if (!db.creator_notes) { db.creator_notes = []; db._nextIds.creator_notes = 1; }
   // recurring tasks
   db.tasks.forEach(t => { if (t.recurring_days === undefined) t.recurring_days = null; });
+  // platform tagging on earnings
+  db.daily_earnings.forEach(e => { if (e.platform === undefined) e.platform = 'onlyfans'; });
+  // campaign / promo tracker
+  if (!db.creator_campaigns) { db.creator_campaigns = []; db._nextIds.creator_campaigns = 1; }
+  // hours worked per schedule entry
+  db.team_schedules.forEach(s => { if (s.hours_worked === undefined) s.hours_worked = null; });
 }
 
 export function saveDB() {
@@ -236,10 +242,11 @@ export function deleteDailyEarning(creatorId, date) {
   saveDB();
 }
 
-export function addDailyEarning(creatorId, date, amount) {
+export function addDailyEarning(creatorId, date, amount, platform = 'onlyfans') {
   const existing = db.daily_earnings.find(e => e.creator_id === creatorId && e.date === date);
   if (existing) {
     existing.amount = amount;
+    existing.platform = platform || existing.platform || 'onlyfans';
     existing.updated_at = now();
   } else {
     db.daily_earnings.push({
@@ -247,11 +254,24 @@ export function addDailyEarning(creatorId, date, amount) {
       creator_id: creatorId,
       date,
       amount,
+      platform: platform || 'onlyfans',
       created_at: now(),
       updated_at: now(),
     });
   }
   saveDB();
+}
+
+export function getPlatformBreakdown(creatorId, year, month) {
+  const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+  const endDate   = `${year}-${String(month).padStart(2, '0')}-31`;
+  const entries = db.daily_earnings.filter(e => e.creator_id === creatorId && e.date >= startDate && e.date <= endDate);
+  const breakdown = {};
+  entries.forEach(e => {
+    const p = e.platform || 'onlyfans';
+    breakdown[p] = (breakdown[p] || 0) + e.amount;
+  });
+  return breakdown;
 }
 
 // Tasks
@@ -709,22 +729,35 @@ export function getScheduleForTeam(teamId, dateFrom, dateTo) {
   return db.team_schedules.filter(s => s.team_id === teamId && s.date >= dateFrom && s.date <= dateTo);
 }
 
-export function upsertScheduleEntry(teamId, date, shiftIndex, chatterId, isCover) {
+export function upsertScheduleEntry(teamId, date, shiftIndex, chatterId, isCover, hoursWorked = null) {
   const existing = db.team_schedules.find(
     s => s.team_id === teamId && s.date === date && s.shift_index === shiftIndex
   );
   if (existing) {
     existing.chatter_id = chatterId;
     existing.is_cover = isCover ? 1 : 0;
+    if (hoursWorked !== undefined) existing.hours_worked = hoursWorked;
     existing.updated_at = now();
   } else {
     db.team_schedules.push({
       id: db._nextIds.team_schedule++, team_id: teamId, date,
       shift_index: shiftIndex, chatter_id: chatterId, is_cover: isCover ? 1 : 0,
+      hours_worked: hoursWorked,
       created_at: now(), updated_at: now(),
     });
   }
   saveDB();
+}
+
+export function updateScheduleHours(teamId, date, shiftIndex, hoursWorked) {
+  const existing = db.team_schedules.find(
+    s => s.team_id === teamId && s.date === date && s.shift_index === shiftIndex
+  );
+  if (existing) {
+    existing.hours_worked = hoursWorked;
+    existing.updated_at = now();
+    saveDB();
+  }
 }
 
 export function deleteScheduleEntry(teamId, date, shiftIndex) {
@@ -785,6 +818,39 @@ export function getSubscriberHistory(creatorId) {
 export function getLatestSubscriberCount(creatorId) {
   const history = getSubscriberHistory(creatorId);
   return history.length > 0 ? history[history.length - 1] : null;
+}
+
+// ─── Earnings by date range ───────────────────────────────────────────────────
+
+export function getEarningsForCreatorRange(creatorId, fromDate, toDate) {
+  return db.daily_earnings
+    .filter(e => e.creator_id === creatorId && e.date >= fromDate && e.date <= toDate)
+    .reduce((sum, e) => sum + e.amount, 0);
+}
+
+// ─── Campaign / Promo Tracker ─────────────────────────────────────────────────
+
+export function addCampaign(creatorId, name, discountPct, startDate, endDate, notes = '') {
+  const id = getNextId('creator_campaigns');
+  db.creator_campaigns.push({
+    id, creator_id: creatorId, name,
+    discount_pct: discountPct || 0,
+    start_date: startDate, end_date: endDate,
+    notes, created_at: now(),
+  });
+  saveDB();
+  return id;
+}
+
+export function getCampaigns(creatorId) {
+  return db.creator_campaigns
+    .filter(c => c.creator_id === creatorId)
+    .sort((a, b) => b.start_date.localeCompare(a.start_date));
+}
+
+export function deleteCampaign(id) {
+  db.creator_campaigns = db.creator_campaigns.filter(c => c.id !== id);
+  saveDB();
 }
 
 // ─── Creator Notes ────────────────────────────────────────────────────────────

@@ -107,7 +107,7 @@ const DayNoteCell = ({ date, initialValue, onBlur }) => {
 };
 
 // ── ShiftCell — portal dropdown that escapes overflow-x-auto ──────────────────
-const ShiftCell = ({ value, onChange, chatters, shiftStyle: s }) => {
+const ShiftCell = ({ value, onChange, chatters, shiftStyle: s, hoursValue, onHoursChange }) => {
   const [open, setOpen]     = useState(false);
   const [dropPos, setDropPos] = useState({ top: 0, left: 0, width: 0 });
   const btnRef  = useRef(null);
@@ -179,7 +179,7 @@ const ShiftCell = ({ value, onChange, chatters, shiftStyle: s }) => {
   ) : null;
 
   return (
-    <div className="relative h-full flex items-center px-sm py-xs">
+    <div className="relative h-full flex flex-col justify-center px-sm py-xs gap-[2px]">
       <button
         ref={btnRef}
         onClick={handleToggle}
@@ -193,6 +193,20 @@ const ShiftCell = ({ value, onChange, chatters, shiftStyle: s }) => {
         <span className="truncate leading-tight">{label ?? '—'}</span>
         <ChevronDown size={9} className={`shrink-0 ml-xs transition-transform duration-200 opacity-35 ${open ? 'rotate-180' : ''}`} />
       </button>
+      {/* Hours input — only when a real chatter is assigned */}
+      {value && value !== '__cover__' && onHoursChange && (
+        <div className="flex items-center gap-[3px]">
+          <input
+            type="number" min="0" max="24" step="0.5"
+            value={hoursValue ?? ''}
+            onChange={e => onHoursChange(parseFloat(e.target.value) || 0)}
+            onClick={e => e.stopPropagation()}
+            placeholder="hrs"
+            className="w-10 bg-bg-primary/50 text-[9px] text-text-tertiary/70 placeholder-text-tertiary/20 text-center rounded px-[3px] py-[1px] focus:outline-none focus:text-text-secondary transition-colors border border-white/5"
+          />
+          <span className="text-[8px] text-text-tertiary/30">h</span>
+        </div>
+      )}
       {dropdown}
     </div>
   );
@@ -347,6 +361,7 @@ const Team = () => {
   const setScheduleEntry      = useStore(s => s.setScheduleEntry);
   const setDayNote            = useStore(s => s.setDayNote);
   const copyScheduleWeek      = useStore(s => s.copyScheduleWeek);
+  const updateScheduleHours   = useStore(s => s.updateScheduleHours);
 
   // ── UI state ──────────────────────────────────────────────────────────────────
   const [selectedAgency, setSelectedAgency] = useState(null);
@@ -471,6 +486,11 @@ const Team = () => {
     if (!e) return '';
     if (e.is_cover && !e.chatter_id) return '__cover__';
     return e.chatter_id ? String(e.chatter_id) : '';
+  };
+
+  const cellHours = (date, si) => {
+    const e = teamSchedule.find(s => s.team_id === team?.id && s.date === date && s.shift_index === si);
+    return e?.hours_worked ?? '';
   };
 
   // Returns Set of chatter IDs that appear more than once across all shifts on a given day (within this team)
@@ -804,6 +824,8 @@ const Team = () => {
                                   onChange={val => handleShiftChange(date, si, val)}
                                   chatters={myChatters}
                                   shiftStyle={s}
+                                  hoursValue={cellHours(date, si)}
+                                  onHoursChange={h => team && updateScheduleHours(team.id, date, si, h)}
                                 />
                               </div>
                             );

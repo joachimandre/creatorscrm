@@ -726,6 +726,17 @@ const Payroll = () => {
             className="flex items-center gap-xs px-md py-sm text-xs text-text-tertiary hover:text-text-primary neu-btn rounded-lg transition-all">
             <Download size={12} /> CSV
           </button>
+          {statusCounts.pending > 0 && (
+            <button
+              onClick={() => {
+                visibleRecords.filter(r => r.status === 'pending').forEach(r =>
+                  updatePayrollEntry(r.id, { status: 'approved' })
+                );
+              }}
+              className="flex items-center gap-xs px-md py-sm text-xs text-accent-blue hover:text-white bg-accent-blue/10 hover:bg-accent-blue/20 border border-accent-blue/30 rounded-lg transition-all font-semibold">
+              <CheckSquare size={12} /> Approve {statusCounts.pending} pending
+            </button>
+          )}
           <button onClick={() => setShowExport(v => !v)}
             className="flex items-center gap-xs px-md py-sm text-xs text-text-tertiary hover:text-text-primary neu-btn rounded-lg transition-all">
             <Printer size={12} /> Export

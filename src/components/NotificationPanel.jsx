@@ -61,6 +61,34 @@ function buildNotifications(tasks, creators, payrollPeriod) {
     }
   }
 
+  // Risk-flagged creators (last 3 days vs prior 3 days > 30% drop)
+  const padN = n => String(n).padStart(2, '0');
+  const shiftDay = (isoDate, days) => {
+    const d = new Date(isoDate + 'T00:00:00');
+    d.setDate(d.getDate() + days);
+    return `${d.getFullYear()}-${padN(d.getMonth()+1)}-${padN(d.getDate())}`;
+  };
+  const risked = creators.filter(c => {
+    if (!c.is_active) return false;
+    const rawDb = db.getDB();
+    if (!rawDb) return false;
+    const getAmt = date => rawDb.daily_earnings.find(e => e.creator_id === c.id && e.date === date)?.amount || 0;
+    const sumLast  = [0,1,2].map(i => getAmt(shiftDay(TODAY,-i))).reduce((a,b)=>a+b,0);
+    const sumPrior = [3,4,5].map(i => getAmt(shiftDay(TODAY,-i))).reduce((a,b)=>a+b,0);
+    return sumPrior > 5 && ((sumPrior - sumLast) / sumPrior) > 0.30;
+  });
+  if (risked.length > 0) {
+    notes.push({
+      id:    'risk-flag',
+      type:  'warning',
+      icon:  TrendingDown,
+      color: '#ff6b35',
+      title: `${risked.length} creator${risked.length > 1 ? 's' : ''} with earnings drop`,
+      body:  risked.slice(0, 3).map(c => c.stage_name).join(', ') + (risked.length > 3 ? ` +${risked.length - 3} more` : ''),
+      view:  'creators',
+    });
+  }
+
   if (notes.length === 0) {
     notes.push({
       id:    'all-clear',

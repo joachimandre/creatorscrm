@@ -4,7 +4,8 @@ import * as db from '../../db/index.js';
 import {
   Star, ExternalLink, Pencil, X, Check, Plus, Trash2,
   Search, ChevronDown, ChevronUp, Target, Link2, Users, GripVertical,
-  StickyNote, Download, Send,
+  StickyNote, Download, Send, TrendingUp, TrendingDown, AlertTriangle,
+  Megaphone, Calendar,
 } from 'lucide-react';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -83,6 +84,33 @@ const Creators = () => {
   const [newCreator,     setNewCreator]     = useState({ name: '', dailyGoal: '', weeklyGoal: '', monthlyGoal: '', commissionRate: '', driveUrl: '' });
   const [confirmDelete,  setConfirmDelete]  = useState(null);
 
+  // Campaign state
+  const [campaignOpen,   setCampaignOpen]   = useState(null); // creatorId or null
+  const [campaignList,   setCampaignList]   = useState({});
+  const [newCampaign,    setNewCampaign]    = useState({ name: '', discountPct: '', startDate: '', endDate: '', notes: '' });
+  const addCampaign    = useStore(s => s.addCampaign);
+  const getCampaigns   = useStore(s => s.getCampaigns);
+  const deleteCampaign = useStore(s => s.deleteCampaign);
+
+  const openCampaigns = (creatorId) => {
+    setCampaignList(prev => ({ ...prev, [creatorId]: getCampaigns(creatorId) }));
+    setCampaignOpen(creatorId);
+    setNewCampaign({ name: '', discountPct: '', startDate: todayIso, endDate: '', notes: '' });
+  };
+
+  const handleAddCampaign = (creatorId) => {
+    if (!newCampaign.name.trim() || !newCampaign.startDate) return;
+    addCampaign(creatorId, newCampaign.name.trim(), parseFloat(newCampaign.discountPct) || 0,
+      newCampaign.startDate, newCampaign.endDate || newCampaign.startDate, newCampaign.notes.trim());
+    setCampaignList(prev => ({ ...prev, [creatorId]: getCampaigns(creatorId) }));
+    setNewCampaign({ name: '', discountPct: '', startDate: todayIso, endDate: '', notes: '' });
+  };
+
+  const handleDeleteCampaign = (creatorId, campId) => {
+    deleteCampaign(campId);
+    setCampaignList(prev => ({ ...prev, [creatorId]: getCampaigns(creatorId) }));
+  };
+
   // Creator notes state
   const [notesOpen,    setNotesOpen]    = useState(null); // creatorId or null
   const [notesList,    setNotesList]    = useState({});   // creatorId → [{id, note, created_at}]
@@ -134,18 +162,72 @@ const Creators = () => {
   });
 
   // ── Load earnings ─────────────────────────────────────────────────────────────
+  const [wowPct,        setWowPct]        = useState({}); // creatorId → % change
+  const [bestDayOfWeek, setBestDayOfWeek] = useState({}); // creatorId → 'Mon'|'Tue'|...
+  const [riskFlag,      setRiskFlag]      = useState({}); // creatorId → true/false
+  const [platformSplit, setPlatformSplit] = useState({}); // creatorId → {onlyfans:$, fansly:$, ...}
+
+  const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
   const loadEarnings = () => {
     const newEarnings  = {};
     const newToday     = {};
     const newLast7     = {};
+    const newWow       = {};
+    const newBest      = {};
+    const newRisk      = {};
+    const newPlatform  = {};
+
+    // Week boundaries
+    const pad = n => String(n).padStart(2, '0');
+    const shiftDay = (isoDate, days) => {
+      const d = new Date(isoDate + 'T00:00:00');
+      d.setDate(d.getDate() + days);
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    };
+    const thisWeekStart = shiftDay(todayIso, -6);
+    const lastWeekStart = shiftDay(todayIso, -13);
+    const lastWeekEnd   = shiftDay(todayIso, -7);
+
     creators.forEach(c => {
       newEarnings[c.id]  = db.getEarningsForCreatorMonth(c.id, currentYear, currentMonth);
       newToday[c.id]     = db.getEarningsForCreator(c.id, todayIso)?.amount || 0;
       newLast7[c.id]     = last7Dates.map(d => db.getEarningsForCreator(c.id, d)?.amount || 0);
+
+      // Week-over-week
+      const thisWeek = db.getEarningsForCreatorRange(c.id, thisWeekStart, todayIso);
+      const lastWeek = db.getEarningsForCreatorRange(c.id, lastWeekStart, lastWeekEnd);
+      newWow[c.id] = lastWeek > 0 ? ((thisWeek - lastWeek) / lastWeek) * 100 : null;
+
+      // Best day of week (from last 28 days)
+      const dayTotals = [0,0,0,0,0,0,0];
+      for (let i = 0; i < 28; i++) {
+        const d = new Date(todayIso + 'T00:00:00'); d.setDate(d.getDate() - i);
+        const iso = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+        const amt = db.getEarningsForCreator(c.id, iso)?.amount || 0;
+        dayTotals[d.getDay()] += amt;
+      }
+      const maxDay = dayTotals.indexOf(Math.max(...dayTotals));
+      newBest[c.id] = dayTotals[maxDay] > 0 ? DAY_NAMES[maxDay] : null;
+
+      // Risk flag: last 3 days vs prior 3 days > 30% drop
+      const last3  = [0,1,2].map(i => db.getEarningsForCreator(c.id, shiftDay(todayIso,-i))?.amount || 0);
+      const prior3 = [3,4,5].map(i => db.getEarningsForCreator(c.id, shiftDay(todayIso,-i))?.amount || 0);
+      const sumLast  = last3.reduce((a,b)=>a+b,0);
+      const sumPrior = prior3.reduce((a,b)=>a+b,0);
+      newRisk[c.id] = sumPrior > 0 && ((sumPrior - sumLast) / sumPrior) > 0.30 && c.is_active;
+
+      // Platform breakdown
+      newPlatform[c.id] = db.getPlatformBreakdown(c.id, currentYear, currentMonth);
     });
+
     setEarnings(newEarnings);
     setTodayEarnings(newToday);
     setLast7Earnings(newLast7);
+    setWowPct(newWow);
+    setBestDayOfWeek(newBest);
+    setRiskFlag(newRisk);
+    setPlatformSplit(newPlatform);
   };
 
   useEffect(() => { loadEarnings(); }, [creators]);
@@ -441,15 +523,33 @@ const Creators = () => {
           <div className="space-y-xs">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-text-tertiary/60 uppercase tracking-wider">Monthly Goal</span>
-              {colors.label && (
-                <span className="text-xs font-bold text-accent-lime">{colors.label}</span>
-              )}
+              <div className="flex items-center gap-xs">
+                {riskFlag[creator.id] && (
+                  <span className="flex items-center gap-[2px] text-[9px] font-bold text-accent-orange bg-accent-orange/10 px-xs py-[1px] rounded-full border border-accent-orange/25 animate-pulse-glow">
+                    <AlertTriangle size={7} /> Risk
+                  </span>
+                )}
+                {colors.label && (
+                  <span className="text-xs font-bold text-accent-lime">{colors.label}</span>
+                )}
+              </div>
             </div>
             <div className="flex items-end justify-between gap-sm">
-              <div>
+              <div className="flex items-center gap-xs flex-wrap">
                 <span className={`text-base font-black font-mono ${colors.text}`}>{fmt(monthEarned)}</span>
                 {creator.monthly_goal > 0 && (
-                  <span className="text-xs text-text-tertiary/50 ml-xs">of {fmt(creator.monthly_goal)}</span>
+                  <span className="text-xs text-text-tertiary/50">of {fmt(creator.monthly_goal)}</span>
+                )}
+                {/* WoW % badge */}
+                {wowPct[creator.id] !== null && wowPct[creator.id] !== undefined && (
+                  <span className={`inline-flex items-center gap-[2px] text-[9px] font-bold px-xs py-[1px] rounded-full ${
+                    wowPct[creator.id] > 0
+                      ? 'bg-accent-lime/15 text-accent-lime'
+                      : 'bg-accent-pink/15 text-accent-pink'
+                  }`}>
+                    {wowPct[creator.id] > 0 ? <TrendingUp size={7} /> : <TrendingDown size={7} />}
+                    {Math.abs(Math.round(wowPct[creator.id]))}% WoW
+                  </span>
                 )}
               </div>
               {creator.monthly_goal > 0 && (
@@ -471,7 +571,14 @@ const Creators = () => {
           {/* Sparkline + today stat */}
           <div className="flex items-end justify-between gap-md pt-xs border-t border-white/5">
             <div className="flex flex-col gap-xs">
-              <span className="text-[9px] text-text-tertiary/40 uppercase tracking-wider">Last 7 days</span>
+              <div className="flex items-center gap-sm">
+                <span className="text-[9px] text-text-tertiary/40 uppercase tracking-wider">Last 7 days</span>
+                {bestDayOfWeek[creator.id] && (
+                  <span className="text-[9px] text-accent-cyan/60 flex items-center gap-[2px]">
+                    <Calendar size={7} className="opacity-70" /> Best: {bestDayOfWeek[creator.id]}
+                  </span>
+                )}
+              </div>
               <Sparkline values={last7} barHex={colors.hex} />
             </div>
             <div className="text-right">
@@ -484,6 +591,26 @@ const Creators = () => {
               )}
             </div>
           </div>
+
+          {/* Platform split — only when there's non-default data */}
+          {(() => {
+            const split = platformSplit[creator.id] || {};
+            const entries = Object.entries(split).filter(([, v]) => v > 0);
+            if (entries.length < 2) return null;
+            const total = entries.reduce((s, [, v]) => s + v, 0);
+            return (
+              <div className="flex items-center gap-sm pt-xs border-t border-white/5 flex-wrap">
+                {entries.map(([platform, amt]) => (
+                  <div key={platform} className="flex items-center gap-[3px]">
+                    <div className="w-1.5 h-1.5 rounded-full"
+                      style={{ backgroundColor: platform === 'onlyfans' ? '#00d9ff' : platform === 'fansly' ? '#9d4edd' : '#ff6b35' }} />
+                    <span className="text-[9px] text-text-tertiary/60 capitalize">{platform}</span>
+                    <span className="text-[9px] font-mono text-text-tertiary/50">{Math.round(amt / total * 100)}%</span>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
 
           {/* Agency % share */}
           {agencyMonthlyTotal > 0 && monthEarned > 0 && (
@@ -722,9 +849,85 @@ const Creators = () => {
           </div>
         )}
 
+        {/* Campaign panel */}
+        {campaignOpen === creator.id && (
+          <div className="border-t border-white/10 bg-bg-primary/60 p-md space-y-xs animate-slide-up"
+            onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-xs">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-text-tertiary flex items-center gap-xs">
+                <Megaphone size={10} /> Campaigns
+              </span>
+              <button onClick={() => setCampaignOpen(null)} className="text-text-tertiary hover:text-text-primary transition-colors">
+                <X size={12} />
+              </button>
+            </div>
+            {/* Existing campaigns */}
+            <div className="space-y-xs max-h-28 overflow-y-auto">
+              {(campaignList[creator.id] || []).length === 0 && (
+                <p className="text-[11px] text-text-tertiary/40 italic">No campaigns yet</p>
+              )}
+              {(campaignList[creator.id] || []).map(camp => (
+                <div key={camp.id} className="group/camp flex items-start gap-xs">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] text-text-secondary font-semibold truncate">{camp.name}</p>
+                    <p className="text-[9px] text-text-tertiary/40">
+                      {camp.discount_pct > 0 && <span>{camp.discount_pct}% off · </span>}
+                      {camp.start_date?.slice(5)} – {camp.end_date?.slice(5)}
+                    </p>
+                  </div>
+                  <button onClick={() => handleDeleteCampaign(creator.id, camp.id)}
+                    className="opacity-0 group-hover/camp:opacity-100 transition-opacity text-text-tertiary/40 hover:text-accent-pink shrink-0">
+                    <X size={9} />
+                  </button>
+                </div>
+              ))}
+            </div>
+            {/* Add campaign form */}
+            <div className="space-y-xs pt-xs border-t border-white/5">
+              <div className="flex gap-xs">
+                <input
+                  value={newCampaign.name}
+                  onChange={e => setNewCampaign(f => ({ ...f, name: e.target.value }))}
+                  onKeyDown={e => { if (e.key === 'Enter') handleAddCampaign(creator.id); }}
+                  placeholder="Campaign name…"
+                  className="flex-1 bg-transparent text-text-primary text-xs focus:outline-none placeholder-text-tertiary/30"
+                />
+                <input type="number" min="0" max="100" step="1"
+                  value={newCampaign.discountPct}
+                  onChange={e => setNewCampaign(f => ({ ...f, discountPct: e.target.value }))}
+                  placeholder="% off"
+                  className="w-14 bg-transparent text-text-secondary text-xs focus:outline-none text-right placeholder-text-tertiary/30"
+                />
+              </div>
+              <div className="flex gap-xs items-center">
+                <input type="date" value={newCampaign.startDate}
+                  onChange={e => setNewCampaign(f => ({ ...f, startDate: e.target.value }))}
+                  className="flex-1 bg-transparent text-text-tertiary/60 text-[10px] focus:outline-none"
+                />
+                <span className="text-text-tertiary/30 text-[10px]">→</span>
+                <input type="date" value={newCampaign.endDate}
+                  onChange={e => setNewCampaign(f => ({ ...f, endDate: e.target.value }))}
+                  className="flex-1 bg-transparent text-text-tertiary/60 text-[10px] focus:outline-none"
+                />
+                <button onClick={() => handleAddCampaign(creator.id)}
+                  disabled={!newCampaign.name.trim()}
+                  className="text-accent-lime disabled:opacity-20 hover:text-accent-cyan transition-colors shrink-0">
+                  <Plus size={12} />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Hover action buttons */}
-        {!isEditing && notesOpen !== creator.id && (
+        {!isEditing && notesOpen !== creator.id && campaignOpen !== creator.id && (
           <div className="absolute bottom-md right-md opacity-0 group-hover:opacity-100 transition-all flex items-center gap-xs">
+            <button
+              onClick={e => { e.stopPropagation(); openCampaigns(creator.id); }}
+              title="Campaigns"
+              className="flex items-center gap-xs px-sm py-[4px] bg-bg-secondary/90 border border-white/15 rounded-lg text-xs text-text-tertiary hover:text-accent-orange hover:border-accent-orange/30 shadow-lg transition-all">
+              <Megaphone size={10} />
+            </button>
             <button
               onClick={e => { e.stopPropagation(); openNotes(creator.id); }}
               className="flex items-center gap-xs px-sm py-[4px] bg-bg-secondary/90 border border-white/15 rounded-lg text-xs text-text-tertiary hover:text-accent-cyan hover:border-accent-cyan/30 shadow-lg transition-all">

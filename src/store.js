@@ -148,8 +148,8 @@ export const useStore = create((set, get) => ({
   },
 
   // Earnings operations
-  addEarning: (creatorId, date, amount) => {
-    db.addDailyEarning(creatorId, date, amount);
+  addEarning: (creatorId, date, amount, platform = 'onlyfans') => {
+    db.addDailyEarning(creatorId, date, amount, platform);
     const state = get();
     const key = `${creatorId}-${date}`;
     set({
@@ -236,6 +236,40 @@ export const useStore = create((set, get) => ({
     const prev   = history.length >= 2 ? history[history.length - 2] : null;
     set(state => ({
       subscriberCounts: { ...state.subscriberCounts, [creatorId]: { latest, prev } }
+    }));
+  },
+
+  // Campaign / promo tracker
+  addCampaign: (creatorId, name, discountPct, startDate, endDate, notes) =>
+    db.addCampaign(creatorId, name, discountPct, startDate, endDate, notes),
+  getCampaigns: (creatorId) => db.getCampaigns(creatorId),
+  deleteCampaign: (id) => { db.deleteCampaign(id); },
+
+  // Hours tracker for schedule entries
+  updateScheduleHours: (teamId, date, shiftIndex, hours) => {
+    db.updateScheduleHours(teamId, date, shiftIndex, hours);
+    set(state => ({
+      teamSchedule: state.teamSchedule.map(s =>
+        s.team_id === teamId && s.date === date && s.shift_index === shiftIndex
+          ? { ...s, hours_worked: hours }
+          : s
+      ),
+    }));
+  },
+
+  // Bulk payroll approve
+  bulkApprovePayroll: (agencyId) => {
+    const state = get();
+    const toApprove = state.payrollRecords.filter(r =>
+      r.status === 'pending' && (!agencyId || r.agency_id === agencyId)
+    );
+    toApprove.forEach(r => db.updatePayrollRecord(r.id, { status: 'approved' }));
+    set(s => ({
+      payrollRecords: s.payrollRecords.map(r =>
+        r.status === 'pending' && (!agencyId || r.agency_id === agencyId)
+          ? { ...r, status: 'approved' }
+          : r
+      ),
     }));
   },
 
