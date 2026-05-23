@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useStore } from '../../store.js';
 import * as db from '../../db/index.js';
 import {
@@ -335,7 +336,9 @@ const Payroll = () => {
   const [showExport,      setShowExport]      = useState(false);
   const [copied,          setCopied]          = useState(false);
   const [pickerOpen,      setPickerOpen]      = useState(false);
-  const pickerRef = useRef(null);
+  const [pickerPos,       setPickerPos]       = useState({ top: 0, left: 0 });
+  const pickerBtnRef = useRef(null);
+  const pickerDropRef = useRef(null);
 
   // ── Inline editing ─────────────────────────────────────────────────────────
   const [editing,      setEditing]      = useState(null); // { recordId, field }
@@ -347,24 +350,21 @@ const Payroll = () => {
     setHistoryPeriods(db.getPayrollHistory());
   }, [periodStart, periodEnd]);
 
-  // Close picker on outside click
+  // Close picker on outside click or Escape
   useEffect(() => {
     if (!pickerOpen) return;
-    const handler = (e) => {
-      if (pickerRef.current && !pickerRef.current.contains(e.target)) {
-        setPickerOpen(false);
-      }
+    const onMouse = (e) => {
+      const inBtn    = pickerBtnRef.current?.contains(e.target);
+      const inPicker = pickerDropRef.current?.contains(e.target);
+      if (!inBtn && !inPicker) setPickerOpen(false);
     };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [pickerOpen]);
-
-  // Close picker on Escape
-  useEffect(() => {
-    if (!pickerOpen) return;
-    const handler = (e) => { if (e.key === 'Escape') setPickerOpen(false); };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
+    const onKey = (e) => { if (e.key === 'Escape') setPickerOpen(false); };
+    document.addEventListener('mousedown', onMouse);
+    document.addEventListener('keydown',   onKey);
+    return () => {
+      document.removeEventListener('mousedown', onMouse);
+      document.removeEventListener('keydown',   onKey);
+    };
   }, [pickerOpen]);
 
   // ── Inline edit handlers ───────────────────────────────────────────────────
@@ -725,9 +725,16 @@ const Payroll = () => {
       </div>
 
       {/* ── Period bar + picker ── */}
-      <div className="relative" ref={pickerRef}>
+      <div>
         <button
-          onClick={() => setPickerOpen(v => !v)}
+          ref={pickerBtnRef}
+          onClick={() => {
+            if (!pickerOpen && pickerBtnRef.current) {
+              const r = pickerBtnRef.current.getBoundingClientRect();
+              setPickerPos({ top: r.bottom + 8, left: r.left });
+            }
+            setPickerOpen(v => !v);
+          }}
           className={`flex items-center gap-md px-lg py-md rounded-xl border transition-all group ${
             pickerOpen
               ? 'bg-accent-lime/10 border-accent-lime/40 shadow-glow-lime'
@@ -744,15 +751,20 @@ const Payroll = () => {
           <Pencil size={12} className="ml-auto text-text-tertiary/40 group-hover:text-accent-lime/60 transition-colors" />
         </button>
 
-        {pickerOpen && (
-          <div className="absolute top-full mt-sm left-0 z-50 animate-scale-in">
+        {pickerOpen && createPortal(
+          <div
+            ref={pickerDropRef}
+            style={{ position: 'fixed', top: pickerPos.top, left: pickerPos.left, zIndex: 9999 }}
+            className="animate-scale-in"
+          >
             <CalendarPicker
               currentStart={periodStart}
               currentEnd={periodEnd}
               onApply={applyPeriod}
               onClose={() => setPickerOpen(false)}
             />
-          </div>
+          </div>,
+          document.body
         )}
 
         <p className="text-xs text-text-tertiary/40 mt-sm hidden sm:block">

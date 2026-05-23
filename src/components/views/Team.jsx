@@ -353,7 +353,9 @@ const Team = () => {
   const [manageMode,     setManageMode]     = useState(false);
   const [weekStart,      setWeekStart]      = useState(() => mondayOfWeek(new Date().toISOString().split('T')[0]));
   const [pickerOpen,     setPickerOpen]     = useState(false);
-  const weekPickerRef = useRef(null);
+  const [pickerPos,      setPickerPos]      = useState({ top: 0, left: 0 });
+  const weekBtnRef        = useRef(null);
+  const weekPickerDropRef = useRef(null);
 
   const [showNewTeam,  setShowNewTeam]  = useState(false);
   const [newTeamName,  setNewTeamName]  = useState('');
@@ -412,20 +414,21 @@ const Team = () => {
     if (team) loadTeamSchedule(team.id, weekDates[0], weekDates[6]);
   }, [team?.id, weekStart]);
 
-  // WeekPicker: close on outside click
+  // WeekPicker: close on outside click or Escape
   useEffect(() => {
     if (!pickerOpen) return;
-    const h = e => { if (weekPickerRef.current && !weekPickerRef.current.contains(e.target)) setPickerOpen(false); };
-    document.addEventListener('mousedown', h);
-    return () => document.removeEventListener('mousedown', h);
-  }, [pickerOpen]);
-
-  // WeekPicker: close on Escape
-  useEffect(() => {
-    if (!pickerOpen) return;
-    const h = e => { if (e.key === 'Escape') setPickerOpen(false); };
-    document.addEventListener('keydown', h);
-    return () => document.removeEventListener('keydown', h);
+    const onMouse = e => {
+      const inBtn    = weekBtnRef.current?.contains(e.target);
+      const inPicker = weekPickerDropRef.current?.contains(e.target);
+      if (!inBtn && !inPicker) setPickerOpen(false);
+    };
+    const onKey = e => { if (e.key === 'Escape') setPickerOpen(false); };
+    document.addEventListener('mousedown', onMouse);
+    document.addEventListener('keydown',   onKey);
+    return () => {
+      document.removeEventListener('mousedown', onMouse);
+      document.removeEventListener('keydown',   onKey);
+    };
   }, [pickerOpen]);
 
   // Manage dropdowns: close on outside click
@@ -647,7 +650,7 @@ const Team = () => {
               </div>
 
               {/* Week navigator + calendar picker */}
-              <div className="relative" ref={weekPickerRef}>
+              <div className="relative">
                 <div className="flex items-center justify-between neu-card-inset rounded-xl px-lg py-sm">
                   <button
                     onClick={() => setWeekStart(w => addDays(w, -7))}
@@ -657,7 +660,14 @@ const Team = () => {
 
                   {/* Clickable week label → opens WeekPicker */}
                   <button
-                    onClick={() => setPickerOpen(v => !v)}
+                    ref={weekBtnRef}
+                    onClick={() => {
+                      if (!pickerOpen && weekBtnRef.current) {
+                        const r = weekBtnRef.current.getBoundingClientRect();
+                        setPickerPos({ top: r.bottom + 8, left: r.left + r.width / 2 });
+                      }
+                      setPickerOpen(v => !v);
+                    }}
                     className={`flex items-center gap-sm px-md py-xs rounded-xl border transition-all ${
                       pickerOpen
                         ? 'border-accent-lime/50 bg-accent-lime/10 text-accent-lime'
@@ -682,14 +692,19 @@ const Team = () => {
                   </div>
                 </div>
 
-                {pickerOpen && (
-                  <div className="absolute top-full mt-sm left-1/2 -translate-x-1/2 z-50 animate-scale-in">
+                {pickerOpen && createPortal(
+                  <div
+                    ref={weekPickerDropRef}
+                    style={{ position: 'fixed', top: pickerPos.top, left: pickerPos.left, transform: 'translateX(-50%)', zIndex: 9999 }}
+                    className="animate-scale-in"
+                  >
                     <WeekPicker
                       currentWeekStart={weekStart}
                       onApply={w => { setWeekStart(w); setPickerOpen(false); }}
                       onClose={() => setPickerOpen(false)}
                     />
-                  </div>
+                  </div>,
+                  document.body
                 )}
               </div>
 
