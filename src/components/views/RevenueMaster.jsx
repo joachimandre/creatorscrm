@@ -64,11 +64,25 @@ const RevenueMaster = () => {
   const [dragOverId, setDragOverId] = useState(null);
   const [localOrder, setLocalOrder] = useState(() => db.getCreatorOrder());
 
-  const currentDate = new Date();
-  const currentMonth = currentDate.getMonth() + 1;
-  const currentYear = currentDate.getFullYear();
-  const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
-  const today = currentDate.getDate();
+  const realDate  = new Date();
+  const realMonth = realDate.getMonth() + 1;
+  const realYear  = realDate.getFullYear();
+  const realDay   = realDate.getDate();
+
+  const [viewMonth, setViewMonth] = useState(realMonth);
+  const [viewYear,  setViewYear]  = useState(realYear);
+
+  // Alias so all downstream code stays unchanged
+  const currentMonth  = viewMonth;
+  const currentYear   = viewYear;
+  const daysInMonth   = new Date(viewYear, viewMonth, 0).getDate();
+  // Only highlight "today" column when viewing the actual current month/year
+  const today = (viewMonth === realMonth && viewYear === realYear) ? realDay : -1;
+
+  const isCurrentPeriod = viewMonth === realMonth && viewYear === realYear;
+
+  // Build the year list: 3 years back → current year + 1
+  const yearOptions = Array.from({ length: 5 }, (_, i) => realYear - 3 + i);
 
   useEffect(() => { loadEarnings(); }, [creators]);
 
@@ -418,7 +432,7 @@ const RevenueMaster = () => {
       <th className="w-8 bg-bg-primary/80" /> {/* delete */}
       <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-widest text-text-tertiary bg-bg-primary/80">Creator</th>
       <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-widest text-text-tertiary bg-bg-primary/80">% Rev</th>
-      <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-widest text-text-tertiary bg-white/[0.02]">Wk Earned</th>
+      <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-widest text-text-tertiary bg-white/[0.02]">Wk Earned <span className="normal-case text-[9px] text-text-tertiary/40">(cur)</span></th>
       <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-widest text-accent-cyan/60 bg-white/[0.02]">Wk Goal</th>
       <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-widest text-text-tertiary bg-white/[0.02]">Mo Earned</th>
       <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-widest text-accent-cyan/60 bg-white/[0.02]">Mo Goal</th>
@@ -481,6 +495,24 @@ const RevenueMaster = () => {
           <option value="">All Agencies</option>
           {agencies.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
         </select>
+
+        {/* Month / Year navigator */}
+        <div className="flex items-center gap-xs neu-card-inset rounded-xl px-md py-xs">
+          <select value={viewMonth} onChange={e => setViewMonth(parseInt(e.target.value))}
+            className="bg-transparent text-text-primary text-sm focus:outline-none border-none shadow-none rounded-lg py-0 px-xs">
+            {MONTH_NAMES.map((m, i) => <option key={i + 1} value={i + 1}>{m}</option>)}
+          </select>
+          <select value={viewYear} onChange={e => setViewYear(parseInt(e.target.value))}
+            className="bg-transparent text-text-primary text-sm focus:outline-none border-none shadow-none rounded-lg py-0 px-xs">
+            {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
+          </select>
+          {!isCurrentPeriod && (
+            <button onClick={() => { setViewMonth(realMonth); setViewYear(realYear); }}
+              className="ml-xs text-xs text-accent-cyan hover:text-accent-cyan/70 font-semibold transition-colors whitespace-nowrap">
+              ↩ Now
+            </button>
+          )}
+        </div>
 
         <button
           onClick={() => { setShowAddCreator(v => !v); setNewCreator(n => ({ ...n, agencyId: agencyFilter ? String(agencyFilter) : '' })); }}
