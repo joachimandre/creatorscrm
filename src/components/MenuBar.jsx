@@ -40,7 +40,8 @@ const MenuBar = () => {
     <header
       className="flex items-center justify-between px-xl flex-shrink-0 z-50"
       style={{
-        height: '32px',
+        height: 'max(32px, calc(32px + env(safe-area-inset-top)))',
+        paddingTop: 'env(safe-area-inset-top)',
         background: 'rgba(37,43,54,0.85)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',

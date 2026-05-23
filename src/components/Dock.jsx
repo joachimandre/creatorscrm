@@ -51,10 +51,10 @@ const Dock = () => {
   const overdueCount = tasks.filter(t => !t.is_completed && t.due_date && t.due_date < today).length;
 
   return (
-    <div className="flex justify-center items-end pb-3 flex-shrink-0 relative z-40">
+    <div className="flex justify-center items-end flex-shrink-0 relative z-40" style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}>
       <nav aria-label="Main navigation">
       <div
-        className="flex items-end gap-xs px-md py-sm"
+        className="dock-pill flex items-end gap-xs px-md py-sm"
         style={{
           background: 'rgba(37,43,54,0.82)',
           backdropFilter: 'blur(24px)',

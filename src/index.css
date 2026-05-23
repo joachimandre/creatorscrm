@@ -161,3 +161,58 @@ a {
     scroll-behavior: auto !important;
   }
 }
+
+/* ── Mobile / tablet responsive ────────────────────────────────────────── */
+
+/* Respect iOS safe-area insets (notch, home bar, Dynamic Island) */
+body {
+  padding-top:    env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left:   env(safe-area-inset-left);
+  padding-right:  env(safe-area-inset-right);
+}
+
+/* Prevent text size inflation on orientation change (iOS) */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Make all scrollable containers momentum-scroll on iOS */
+.overflow-auto,
+.overflow-y-auto,
+.overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent double-tap zoom on interactive elements */
+button, a, input, select, textarea {
+  touch-action: manipulation;
+}
+
+/* ── Tablet-specific (portrait iPad = 768px, landscape = 1024px) ────────── */
+@media (max-width: 768px) {
+  /* Reduce page padding on narrow viewports */
+  .p-lg { padding: 12px; }
+  .p-xl { padding: 16px; }
+
+  /* Stack 2-col grids to 1 col on small tablets / large phones */
+  .grid-cols-2 { grid-template-columns: 1fr !important; }
+
+  /* Kanban columns: slightly narrower on tablet portrait */
+  .kanban-col-width { width: 240px !important; }
+}
+
+@media (max-width: 1024px) {
+  /* Reduce dock padding so all 10 icons stay on one row */
+  .dock-pill {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+    gap: 4px !important;
+  }
+  /* Slightly smaller dock icons on tablet */
+  .dock-icon-btn {
+    width: 42px !important;
+    height: 42px !important;
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "name": "Creator CRM",
+  "short_name": "Creator CRM",
+  "description": "OnlyFans Creator Management Platform",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#1d2027",
+  "theme_color": "#1d2027",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
