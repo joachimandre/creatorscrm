@@ -68,10 +68,10 @@ export default {
         'scale-in':     'scale-in 0.2s ease-out',
         'bounce-light': 'bounce 1s ease-in-out infinite',
         // Cinematic OS animations (new)
-        'view-enter':   'viewEnter 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-        'palette-open': 'paletteOpen 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
-        'dock-item-in': 'dockItemIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both',
-        'tooltip-show': 'tooltipShow 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+        'view-enter':   'viewEnter 0.25s cubic-bezier(0.23, 1, 0.32, 1)',
+        'palette-open': 'paletteOpen 0.15s cubic-bezier(0.23, 1, 0.32, 1)',
+        'dock-item-in': 'dockItemIn 0.18s cubic-bezier(0.23, 1, 0.32, 1) both',
+        'tooltip-show': 'tooltipShow 0.18s cubic-bezier(0.23, 1, 0.32, 1)',
         'animate-pulse-glow': 'pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
       },
       keyframes: {
@@ -98,20 +98,22 @@ export default {
         },
         // Cinematic OS animations (new)
         viewEnter: {
-          from: { opacity: '0', transform: 'scale(0.98) translateY(8px)' },
+          from: { opacity: '0', transform: 'scale(0.97) translateY(6px)' },
           to:   { opacity: '1', transform: 'scale(1) translateY(0)' },
         },
         paletteOpen: {
-          from: { opacity: '0', transform: 'translateY(-16px) scale(0.96)' },
+          // Keyboard-triggered (Ctrl+K) — kept very fast so it never feels sluggish
+          from: { opacity: '0', transform: 'translateY(-8px) scale(0.97)' },
           to:   { opacity: '1', transform: 'translateY(0) scale(1)' },
         },
         dockItemIn: {
-          from: { opacity: '0', transform: 'translateY(20px) scale(0.8)' },
+          // Start near-full-size — nothing in the real world appears from nothing (Emil rule)
+          from: { opacity: '0', transform: 'translateY(10px) scale(0.93)' },
           to:   { opacity: '1', transform: 'translateY(0) scale(1)' },
         },
         tooltipShow: {
-          from: { opacity: '0', transform: 'translateX(-50%) translateY(4px)' },
-          to:   { opacity: '1', transform: 'translateX(-50%) translateY(0)' },
+          from: { opacity: '0', transform: 'translateX(-50%) translateY(3px) scale(0.97)' },
+          to:   { opacity: '1', transform: 'translateX(-50%) translateY(0) scale(1)' },
         },
       },
     },

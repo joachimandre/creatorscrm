@@ -33,7 +33,8 @@ body {
   background: #252523;
   border-radius: 16px;
   box-shadow: 6px 6px 12px rgba(0,0,0,0.4), -6px -6px 12px rgba(255,255,255,0.04);
-  transition: box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  /* Hover = frequent interaction — keep short so it doesn't feel laggy */
+  transition: box-shadow 0.2s ease-out;
 }
 .neu-card:hover {
   box-shadow: 10px 10px 20px rgba(0,0,0,0.45), -10px -10px 20px rgba(255,255,255,0.045);
@@ -113,8 +114,19 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 /* ── Global transitions ────────────────────────────────────────────────── */
 button, a {
-  transition: all 150ms ease-out;
+  /* Specify exact properties — avoid `transition: all` (animates expensive layout props) */
+  transition: background-color 150ms ease-out, box-shadow 150ms ease-out,
+              color 150ms ease-out, opacity 150ms ease-out, border-color 150ms ease-out;
   cursor: pointer;
+}
+
+/* ── Dock icon button — press feedback ─────────────────────────────────── */
+/* Dock buttons scale down on press to confirm the interface heard the tap (Emil rule) */
+.dock-icon-btn {
+  transition: transform 100ms ease-out;
+}
+.dock-icon-btn:active {
+  transform: scale(0.92);
 }
 
 button {
@@ -130,3 +142,13 @@ a {
 
 /* ── Table scroll ──────────────────────────────────────────────────────── */
 .table-scroll::-webkit-scrollbar { height: 6px; }
+
+/* ── Reduced motion — respect user OS preference ───────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

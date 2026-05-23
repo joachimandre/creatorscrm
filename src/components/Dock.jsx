@@ -78,7 +78,7 @@ const Dock = () => {
               style={{
                 transform: `scale(${scale})`,
                 transformOrigin: 'bottom center',
-                transition: 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                transition: 'transform 0.2s cubic-bezier(0.23, 1, 0.32, 1)',
               }}
               onMouseEnter={() => setHoveredIdx(i)}
               onMouseLeave={() => setHoveredIdx(-1)}
@@ -109,7 +109,7 @@ const Dock = () => {
                   ? `${item.label} — ${overdueCount} overdue`
                   : item.label}
                 aria-current={isActive ? 'page' : undefined}
-                className="relative flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-accent-cyan/40"
+                className="dock-icon-btn relative flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-accent-cyan/40"
                 style={{
                   width: 48,
                   height: 48,
