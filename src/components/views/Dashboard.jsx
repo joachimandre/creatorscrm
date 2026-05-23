@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useStore } from '../../store.js';
 import {
   TrendingUp, Users, CheckCircle2, AlertCircle, Clock, Plus, Trash2,
-  DollarSign, Target, BarChart3, Building2, X, ChevronRight
+  DollarSign, Target, BarChart3, Building2, X, ChevronRight, Settings2, Check,
 } from 'lucide-react';
 import { AreaChart, Area, ResponsiveContainer, Tooltip } from 'recharts';
 import AgencyRevenueChart from '../charts/AgencyRevenueChart.jsx';
@@ -185,7 +185,7 @@ const BAR_COLORS = [
   'from-accent-pink to-accent-orange',
 ];
 
-const OverviewPanel = ({ agencies, creators, allEarnings, chatters, tasks }) => {
+const OverviewPanel = ({ agencies, creators, allEarnings, chatters, tasks, widgets }) => {
   const today = new Date().toISOString().split('T')[0];
   const overdueTasks = tasks.filter(t => !t.is_completed && t.due_date && t.due_date < today);
   const doneTasks = tasks.filter(t => t.is_completed);
@@ -225,7 +225,7 @@ const OverviewPanel = ({ agencies, creators, allEarnings, chatters, tasks }) => 
   return (
     <div className="space-y-lg animate-fade-in">
       {/* KPI row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-md">
+      {(widgets?.kpiStats !== false) && <div className="grid grid-cols-2 lg:grid-cols-4 gap-md">
         <StatCard
           icon={DollarSign} label="Total Revenue" value={`$${totalRevenue.toFixed(0)}`}
           sub="this month" chip={`${agencies.length} ${agencies.length === 1 ? 'agency' : 'agencies'}`}
@@ -251,10 +251,10 @@ const OverviewPanel = ({ agencies, creators, allEarnings, chatters, tasks }) => 
           color={overdueTasks.length > 0 ? '#ff006e' : '#00ff88'}
           pulse={overdueTasks.length > 0}
         />
-      </div>
+      </div>}
 
       {/* 2-column: Top Creators table + Revenue Trend chart */}
-      {(topCreators.length > 0 || dailyTotals.length > 0) && (
+      {(widgets?.topCreators !== false) && (topCreators.length > 0 || dailyTotals.length > 0) && (
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-lg">
           {/* Top Creators table — takes 2 cols */}
           {topCreators.length > 0 && (
@@ -334,6 +334,7 @@ const OverviewPanel = ({ agencies, creators, allEarnings, chatters, tasks }) => 
       )}
 
       {/* Per-agency mini cards */}
+      {(widgets?.agencyBreakdown !== false) && <>
       <h3 className="text-xs font-semibold text-text-tertiary/70 uppercase tracking-wider">Agency Breakdown</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-lg">
         {agencies.map((agency, idx) => {
@@ -394,6 +395,7 @@ const OverviewPanel = ({ agencies, creators, allEarnings, chatters, tasks }) => 
           );
         })}
       </div>
+      </>}
     </div>
   );
 };
@@ -409,6 +411,30 @@ const Dashboard = () => {
   const [selectedAgency, setSelectedAgency] = useState(null); // null = overview
   const [showAddAgency, setShowAddAgency] = useState(false);
   const [confirmDeleteAgency, setConfirmDeleteAgency] = useState(null);
+
+  // ── Customizable widgets ────────────────────────────────────────────────────
+  const DEFAULT_WIDGETS = { kpiStats: true, topCreators: true, agencyBreakdown: true };
+  const [widgets, setWidgets] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('crm_dashboard_widgets') || '{}');
+      return { ...DEFAULT_WIDGETS, ...saved };
+    } catch { return DEFAULT_WIDGETS; }
+  });
+  const [showCustomize, setShowCustomize] = useState(false);
+
+  const toggleWidget = (key) => {
+    setWidgets(prev => {
+      const next = { ...prev, [key]: !prev[key] };
+      localStorage.setItem('crm_dashboard_widgets', JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const WIDGET_DEFS = [
+    { key: 'kpiStats',       label: 'KPI Stats',        desc: 'Revenue, agencies, team, tasks' },
+    { key: 'topCreators',    label: 'Top Creators',      desc: 'Leaderboard + revenue trend chart' },
+    { key: 'agencyBreakdown',label: 'Agency Breakdown',  desc: 'Per-agency mini cards' },
+  ];
 
   const currentMonth = new Date().getMonth() + 1;
   const currentYear = new Date().getFullYear();
@@ -453,15 +479,53 @@ const Dashboard = () => {
           )}
         </div>
 
-        {/* Delete agency button when one is selected */}
-        {selectedAgencyObj && (
-          <button
-            onClick={() => setConfirmDeleteAgency(selectedAgencyObj)}
-            className="flex items-center gap-xs px-md py-xs text-xs text-text-tertiary hover:text-accent-pink neu-btn rounded-lg transition-all"
-          >
-            <Trash2 size={12} /> Remove Agency
-          </button>
-        )}
+        <div className="flex items-center gap-sm">
+          {/* Delete agency button when one is selected */}
+          {selectedAgencyObj && (
+            <button
+              onClick={() => setConfirmDeleteAgency(selectedAgencyObj)}
+              className="flex items-center gap-xs px-md py-xs text-xs text-text-tertiary hover:text-accent-pink neu-btn rounded-lg transition-all"
+            >
+              <Trash2 size={12} /> Remove Agency
+            </button>
+          )}
+          {/* Customize dashboard */}
+          {!selectedAgency && (
+            <div className="relative">
+              <button
+                onClick={() => setShowCustomize(v => !v)}
+                className={`flex items-center gap-xs px-md py-xs text-xs font-semibold neu-btn rounded-lg transition-all ${
+                  showCustomize ? 'text-accent-cyan' : 'text-text-tertiary hover:text-text-primary'
+                }`}>
+                <Settings2 size={12} /> Customize
+              </button>
+              {showCustomize && (
+                <div className="absolute right-0 top-full mt-xs z-50 w-64 rounded-xl overflow-hidden animate-scale-in"
+                  style={{ background: '#252b36', boxShadow: '10px 10px 20px rgba(0,0,0,0.45), -10px -10px 20px rgba(255,255,255,0.045), 0 0 0 1px rgba(255,255,255,0.06)' }}>
+                  <div className="px-lg py-md border-b border-white/[0.06]">
+                    <p className="text-xs font-bold text-text-secondary uppercase tracking-widest">Dashboard Widgets</p>
+                  </div>
+                  <div className="p-sm space-y-xs">
+                    {WIDGET_DEFS.map(w => (
+                      <button key={w.key} onClick={() => toggleWidget(w.key)}
+                        className="w-full flex items-center gap-md p-md rounded-xl hover:bg-white/5 transition-all text-left">
+                        <div className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 transition-all ${
+                          widgets[w.key] ? 'bg-accent-cyan/80' : 'bg-white/10 border border-white/15'
+                        }`}>
+                          {widgets[w.key] && <Check size={11} className="text-bg-primary" />}
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-text-primary">{w.label}</p>
+                          <p className="text-[10px] text-text-tertiary/60">{w.desc}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Agency tabs */}
@@ -530,6 +594,7 @@ const Dashboard = () => {
           allEarnings={allEarnings}
           chatters={chatters}
           tasks={allTasks}
+          widgets={widgets}
         />
       )}
 
