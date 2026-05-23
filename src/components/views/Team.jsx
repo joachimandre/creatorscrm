@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useStore } from '../../store.js';
 import {
   Users, Plus, Trash2, X, Check, Settings,
@@ -105,16 +106,34 @@ const DayNoteCell = ({ date, initialValue, onBlur }) => {
   );
 };
 
-// ── ShiftCell — styled dropdown replacing raw <select> ─────────────────────────
+// ── ShiftCell — portal dropdown that escapes overflow-x-auto ──────────────────
 const ShiftCell = ({ value, onChange, chatters, shiftStyle: s }) => {
-  const [open, setOpen] = useState(false);
-  const ref = useRef(null);
+  const [open, setOpen]     = useState(false);
+  const [dropPos, setDropPos] = useState({ top: 0, left: 0, width: 0 });
+  const btnRef  = useRef(null);
+  const dropRef = useRef(null);
+
+  const handleToggle = () => {
+    if (!open && btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect();
+      setDropPos({ top: r.bottom + 4, left: r.left, width: Math.max(r.width, 192) });
+    }
+    setOpen(v => !v);
+  };
 
   useEffect(() => {
     if (!open) return;
-    const h = e => { if (!ref.current?.contains(e.target)) setOpen(false); };
-    document.addEventListener('mousedown', h);
-    return () => document.removeEventListener('mousedown', h);
+    const close = e => {
+      if (!dropRef.current?.contains(e.target) && e.target !== btnRef.current)
+        setOpen(false);
+    };
+    const closeKey = e => { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('mousedown', close);
+    document.addEventListener('keydown', closeKey);
+    return () => {
+      document.removeEventListener('mousedown', close);
+      document.removeEventListener('keydown', closeKey);
+    };
   }, [open]);
 
   const label = value === '__cover__'
@@ -123,10 +142,47 @@ const ShiftCell = ({ value, onChange, chatters, shiftStyle: s }) => {
       ? (chatters.find(c => String(c.id) === value)?.name || '?')
       : null;
 
-  return (
-    <div ref={ref} className="relative h-full flex items-center px-sm py-xs">
+  const dropdown = open ? createPortal(
+    <div
+      ref={dropRef}
+      style={{ position: 'fixed', top: dropPos.top, left: dropPos.left, minWidth: dropPos.width, zIndex: 9999 }}
+      className="bg-bg-secondary border border-white/15 rounded-xl shadow-2xl py-xs animate-scale-in max-h-60 overflow-y-auto"
+    >
       <button
-        onClick={() => setOpen(v => !v)}
+        onClick={() => { onChange(''); setOpen(false); }}
+        className="w-full text-left px-md py-sm text-xs text-text-tertiary/55 hover:text-text-primary hover:bg-white/5 transition-colors">
+        — Unassigned —
+      </button>
+      <button
+        onClick={() => { onChange('__cover__'); setOpen(false); }}
+        className="w-full text-left px-md py-sm text-xs text-accent-pink italic hover:bg-accent-pink/5 transition-colors">
+        Cover
+      </button>
+      {chatters.length > 0 && <div className="border-t border-white/8 my-xs" />}
+      {chatters.length === 0 && (
+        <p className="px-md py-sm text-xs text-text-tertiary/40 italic">No chatters in team</p>
+      )}
+      {chatters.map(c => (
+        <button key={c.id}
+          onClick={() => { onChange(String(c.id)); setOpen(false); }}
+          className={`w-full text-left px-md py-sm text-xs transition-colors hover:bg-white/5 flex items-center gap-sm
+            ${String(c.id) === value ? `${s.text} font-bold bg-white/[0.03]` : 'text-text-secondary'}`}>
+          <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold flex-shrink-0 ${s.bg} ${s.text}`}>
+            {c.name.slice(0, 2).toUpperCase()}
+          </span>
+          <span className="flex-1 truncate">{c.name}</span>
+          {c.role && <span className="text-[10px] text-text-tertiary/45 flex-shrink-0">{c.role}</span>}
+        </button>
+      ))}
+    </div>,
+    document.body
+  ) : null;
+
+  return (
+    <div className="relative h-full flex items-center px-sm py-xs">
+      <button
+        ref={btnRef}
+        onClick={handleToggle}
         className={`w-full flex items-center justify-between gap-xs px-sm py-[5px] rounded-lg border text-xs font-semibold transition-all focus:outline-none
           ${value === '__cover__'
             ? 'border-accent-pink/40 bg-accent-pink/10 text-accent-pink italic'
@@ -135,33 +191,9 @@ const ShiftCell = ({ value, onChange, chatters, shiftStyle: s }) => {
               : 'border-white/8 bg-white/[0.03] text-text-tertiary/30 hover:border-white/15 hover:text-text-tertiary/55'
           }`}>
         <span className="truncate leading-tight">{label ?? '—'}</span>
-        <ChevronDown size={9} className="shrink-0 opacity-35 ml-xs" />
+        <ChevronDown size={9} className={`shrink-0 ml-xs transition-transform duration-200 opacity-35 ${open ? 'rotate-180' : ''}`} />
       </button>
-
-      {open && (
-        <div className="absolute top-full left-0 z-40 mt-xs w-52 bg-bg-secondary border border-white/15 rounded-xl shadow-2xl py-xs animate-scale-in max-h-52 overflow-y-auto">
-          <button
-            onClick={() => { onChange(''); setOpen(false); }}
-            className="w-full text-left px-md py-[7px] text-xs text-text-tertiary/55 hover:text-text-primary hover:bg-white/5 transition-colors">
-            — Unassigned —
-          </button>
-          <button
-            onClick={() => { onChange('__cover__'); setOpen(false); }}
-            className="w-full text-left px-md py-[7px] text-xs text-accent-pink italic hover:bg-accent-pink/5 transition-colors">
-            Cover
-          </button>
-          {chatters.length > 0 && <div className="border-t border-white/8 my-xs" />}
-          {chatters.map(c => (
-            <button key={c.id}
-              onClick={() => { onChange(String(c.id)); setOpen(false); }}
-              className={`w-full text-left px-md py-[7px] text-xs transition-colors hover:bg-white/5
-                ${String(c.id) === value ? `${s.text} font-bold bg-white/[0.03]` : 'text-text-secondary'}`}>
-              <span>{c.name}</span>
-              {c.role && <span className="ml-xs text-[10px] text-text-tertiary/45"> · {c.role}</span>}
-            </button>
-          ))}
-        </div>
-      )}
+      {dropdown}
     </div>
   );
 };
@@ -332,6 +364,9 @@ const Team = () => {
   const [showAddChatter, setShowAddChatter] = useState(false);
   const [confirmDelete,  setConfirmDelete]  = useState(null);
 
+  const addModelRef   = useRef(null);
+  const addChatterRef = useRef(null);
+
   // Create-chatter sub-form state
   const [showCreateChatter, setShowCreateChatter] = useState(false);
   const [newChatter,        setNewChatter]        = useState({ name: '', role: '', hourlyRate: '', commissionRate: '' });
@@ -392,6 +427,17 @@ const Team = () => {
     document.addEventListener('keydown', h);
     return () => document.removeEventListener('keydown', h);
   }, [pickerOpen]);
+
+  // Manage dropdowns: close on outside click
+  useEffect(() => {
+    if (!showAddModel && !showAddChatter) return;
+    const h = e => {
+      if (showAddModel   && addModelRef.current   && !addModelRef.current.contains(e.target))   setShowAddModel(false);
+      if (showAddChatter && addChatterRef.current && !addChatterRef.current.contains(e.target)) setShowAddChatter(false);
+    };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, [showAddModel, showAddChatter]);
 
   // ── Handlers ──────────────────────────────────────────────────────────────────
   const handleCreateTeam = () => {
@@ -740,8 +786,7 @@ const Team = () => {
               <div className="xl:col-span-2 space-y-md">
 
                 {/* Team info card */}
-                <div className="neu-card overflow-hidden">
-                  <div className="h-[2px] bg-accent-purple/50" />
+                <div className="neu-card border-t-2 border-accent-purple/50">
                   <div className="p-lg space-y-md">
                     <h3 className="text-xs font-bold text-text-tertiary uppercase tracking-widest">Team Info</h3>
                     <div>
@@ -779,8 +824,7 @@ const Team = () => {
                 </div>
 
                 {/* Shift editor */}
-                <div className="neu-card overflow-hidden">
-                  <div className="h-[2px] bg-accent-orange/50" />
+                <div className="neu-card border-t-2 border-accent-orange/50">
                   <div className="p-lg space-y-md">
                     <div className="flex items-center justify-between">
                       <h3 className="text-xs font-bold text-text-tertiary uppercase tracking-widest">Shift Definitions</h3>
@@ -836,15 +880,14 @@ const Team = () => {
               <div className="xl:col-span-3 space-y-md">
 
                 {/* Models card */}
-                <div className="neu-card overflow-hidden">
-                  <div className="h-[2px] bg-accent-cyan/50" />
+                <div className="neu-card border-t-2 border-accent-cyan/50">
                   <div className="p-lg space-y-md">
                     <div className="flex items-center justify-between">
                       <div>
                         <h3 className="text-xs font-bold text-text-tertiary uppercase tracking-widest">Models</h3>
                         <p className="text-[10px] text-text-tertiary/50 mt-xs">{myCreators.length} assigned to this team</p>
                       </div>
-                      <div className="relative">
+                      <div className="relative" ref={addModelRef}>
                         <button
                           onClick={() => { setShowAddModel(v => !v); setShowAddChatter(false); }}
                           disabled={availCreators.length === 0}
@@ -852,11 +895,14 @@ const Team = () => {
                           <UserPlus size={12} /> Assign Model
                         </button>
                         {showAddModel && (
-                          <div className="absolute right-0 top-full mt-xs bg-bg-secondary border border-white/15 rounded-xl shadow-2xl z-20 py-xs min-w-48 animate-scale-in max-h-48 overflow-y-auto">
+                          <div className="absolute right-0 top-full mt-xs bg-bg-secondary border border-white/15 rounded-xl shadow-2xl z-50 py-xs min-w-52 animate-scale-in max-h-64 overflow-y-auto">
                             {availCreators.map(c => (
                               <button key={c.id}
                                 onClick={() => { addCreatorToTeam(team.id, c.id); setShowAddModel(false); }}
-                                className="w-full text-left px-md py-sm text-sm text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors">
+                                className="w-full text-left px-md py-sm text-sm text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors flex items-center gap-sm">
+                                <span className="w-6 h-6 rounded-full bg-accent-cyan/20 flex items-center justify-center text-[10px] font-bold text-accent-cyan flex-shrink-0">
+                                  {c.stage_name.slice(0, 2).toUpperCase()}
+                                </span>
                                 {c.stage_name}
                               </button>
                             ))}
@@ -889,8 +935,7 @@ const Team = () => {
                 </div>
 
                 {/* Chatters card */}
-                <div className="neu-card overflow-hidden">
-                  <div className="h-[2px] bg-accent-lime/50" />
+                <div className="neu-card border-t-2 border-accent-lime/50">
                   <div className="p-lg space-y-md">
                     <div className="flex items-center justify-between gap-sm flex-wrap">
                       <div>
@@ -899,7 +944,7 @@ const Team = () => {
                       </div>
                       <div className="flex items-center gap-xs">
                         {/* Assign existing chatter */}
-                        <div className="relative">
+                        <div className="relative" ref={addChatterRef}>
                           <button
                             onClick={() => { setShowAddChatter(v => !v); setShowAddModel(false); setShowCreateChatter(false); }}
                             disabled={availChatters.length === 0}
@@ -907,12 +952,16 @@ const Team = () => {
                             <UserPlus size={12} /> Assign
                           </button>
                           {showAddChatter && (
-                            <div className="absolute right-0 top-full mt-xs bg-bg-secondary border border-white/15 rounded-xl shadow-2xl z-20 py-xs min-w-48 animate-scale-in max-h-48 overflow-y-auto">
+                            <div className="absolute right-0 top-full mt-xs bg-bg-secondary border border-white/15 rounded-xl shadow-2xl z-50 py-xs min-w-52 animate-scale-in max-h-64 overflow-y-auto">
                               {availChatters.map(c => (
                                 <button key={c.id}
                                   onClick={() => { addChatterToTeam(team.id, c.id); setShowAddChatter(false); }}
-                                  className="w-full text-left px-md py-sm text-sm text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors">
-                                  {c.name}{c.role ? <span className="text-text-tertiary text-xs"> · {c.role}</span> : null}
+                                  className="w-full text-left px-md py-sm text-sm text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors flex items-center gap-sm">
+                                  <span className="w-6 h-6 rounded-full bg-accent-lime/20 flex items-center justify-center text-[10px] font-bold text-accent-lime flex-shrink-0">
+                                    {c.name.slice(0, 2).toUpperCase()}
+                                  </span>
+                                  <span className="flex-1">{c.name}</span>
+                                  {c.role && <span className="text-text-tertiary text-xs">{c.role}</span>}
                                 </button>
                               ))}
                             </div>
