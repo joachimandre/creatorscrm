@@ -15,6 +15,7 @@ import Payroll from './components/views/Payroll';
 import Creators from './components/views/Creators';
 import Chatters from './components/views/Chatters';
 import Analytics from './components/views/Analytics';
+import Requests from './components/views/Requests';
 
 function App() {
   const [dbInitialized, setDbInitialized] = useState(false);
@@ -82,6 +83,7 @@ function App() {
           {currentView === 'creators'       && <Creators />}
           {currentView === 'chatters'       && <Chatters />}
           {currentView === 'analytics'      && <Analytics />}
+          {currentView === 'requests'       && <Requests />}
         </div>
       </main>
 

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   LayoutDashboard, TrendingUp, BarChart3, Star, CheckSquare,
-  Users, MessageSquare, Brain, FileText, DollarSign,
+  Users, MessageSquare, Brain, FileText, DollarSign, ClipboardList,
 } from 'lucide-react';
 import { useStore } from '../store.js';
 
@@ -16,6 +16,7 @@ const ICON_HEX = {
   'brain-dump':     '#9d4edd',
   'reports':        '#ff006e',
   'payroll':        '#00ff88',
+  'requests':       '#9d4edd',
 };
 
 const navItems = [
@@ -29,6 +30,7 @@ const navItems = [
   { id: 'brain-dump',     label: 'Brain Dump',     icon: Brain },
   { id: 'reports',        label: 'Reports',        icon: FileText },
   { id: 'payroll',        label: 'Payroll',        icon: DollarSign },
+  { id: 'requests',       label: 'Requests',       icon: ClipboardList },
 ];
 
 const getScale = (idx, hoveredIdx) => {
@@ -43,12 +45,14 @@ const getScale = (idx, hoveredIdx) => {
 const Dock = () => {
   const currentView  = useStore(s => s.currentView);
   const setCurrentView = useStore(s => s.setCurrentView);
-  const tasks        = useStore(s => s.tasks);
+  const tasks          = useStore(s => s.tasks);
+  const creatorRequests = useStore(s => s.creatorRequests);
   const [hoveredIdx, setHoveredIdx]   = useState(-1);
   const [focusedIdx, setFocusedIdx]   = useState(-1);
 
   const today = new Date().toISOString().split('T')[0];
   const overdueCount = tasks.filter(t => !t.is_completed && t.due_date && t.due_date < today).length;
+  const pendingRequestsCount = creatorRequests.filter(r => r.status === 'inquiry' || r.status === 'pending').length;
 
   return (
     <div className="flex justify-center items-end flex-shrink-0 relative z-40" style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}>
@@ -105,9 +109,13 @@ const Dock = () => {
                 onClick={() => setCurrentView(item.id)}
                 onFocus={() => setFocusedIdx(i)}
                 onBlur={() => setFocusedIdx(-1)}
-                aria-label={item.id === 'tasks' && overdueCount > 0
-                  ? `${item.label} — ${overdueCount} overdue`
-                  : item.label}
+                aria-label={
+                  item.id === 'tasks' && overdueCount > 0
+                    ? `${item.label} — ${overdueCount} overdue`
+                    : item.id === 'requests' && pendingRequestsCount > 0
+                    ? `${item.label} — ${pendingRequestsCount} pending`
+                    : item.label
+                }
                 aria-current={isActive ? 'page' : undefined}
                 className="dock-icon-btn relative flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-accent-cyan/40"
                 style={{
@@ -137,6 +145,22 @@ const Dock = () => {
                     }}
                   >
                     {overdueCount}
+                  </span>
+                )}
+                {/* Requests pending badge */}
+                {item.id === 'requests' && pendingRequestsCount > 0 && (
+                  <span
+                    aria-hidden="true"
+                    className="absolute -top-1 -right-1 flex items-center justify-center text-white font-bold z-10"
+                    style={{
+                      width: 16,
+                      height: 16,
+                      borderRadius: '50%',
+                      background: '#9d4edd',
+                      fontSize: 9,
+                    }}
+                  >
+                    {pendingRequestsCount > 9 ? '9+' : pendingRequestsCount}
                   </span>
                 )}
                 <Icon

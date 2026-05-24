@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Search, LayoutDashboard, TrendingUp, BarChart3, Star, CheckSquare,
-  Users, MessageSquare, Brain, FileText, DollarSign, X, ArrowRight,
+  Users, MessageSquare, Brain, FileText, DollarSign, X, ArrowRight, ClipboardList,
 } from 'lucide-react';
 import { useStore } from '../store.js';
 
@@ -23,6 +23,7 @@ const COMMANDS = [
   { id: 'nav-brain-dump',     label: 'Go to Brain Dump',     icon: Brain,           view: 'brain-dump',     group: 'Navigate' },
   { id: 'nav-reports',        label: 'Go to Reports',        icon: FileText,        view: 'reports',        group: 'Navigate' },
   { id: 'nav-payroll',        label: 'Go to Payroll',        icon: DollarSign,      view: 'payroll',        group: 'Navigate' },
+  { id: 'nav-requests',       label: 'Go to Requests',       icon: ClipboardList,   view: 'requests',       group: 'Navigate' },
 ];
 
 const CommandPalette = () => {

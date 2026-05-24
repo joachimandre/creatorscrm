@@ -48,12 +48,14 @@ export async function initDB() {
       agencies: [], creators: [], daily_earnings: [], tasks: [],
       brain_dump: [], chatters: [], payroll_records: [], teams: [],
       team_members: [], team_chatters: [], team_schedules: [],
-      team_day_notes: [], creator_subscribers: [],
+      team_day_notes: [], creator_subscribers: [], creator_notes: [],
+      creator_campaigns: [], creator_requests: [],
       _nextIds: {
         agencies: 1, creators: 1, daily_earnings: 1, tasks: 1,
         brain_dump: 1, chatters: 1, payroll_records: 1,
         team: 1, team_member: 1, team_chatter: 1,
         team_schedule: 1, team_day_note: 1, creator_subscribers: 1,
+        creator_notes: 1, creator_campaigns: 1, creator_requests: 1,
       }
     };
   }
@@ -109,6 +111,10 @@ function runMigrations() {
   if (!db.creator_campaigns) { db.creator_campaigns = []; db._nextIds.creator_campaigns = 1; }
   // hours worked per schedule entry
   db.team_schedules.forEach(s => { if (s.hours_worked === undefined) s.hours_worked = null; });
+  // model_info_url on creators
+  db.creators.forEach(c => { if (c.model_info_url === undefined) c.model_info_url = ''; });
+  // creator_requests table
+  if (!db.creator_requests) { db.creator_requests = []; db._nextIds.creator_requests = 1; }
 }
 
 export function saveDB() {
@@ -180,7 +186,7 @@ export function getCreator(id) {
   return db.creators.find(c => c.id === id);
 }
 
-export function createCreator(agencyId, stageName, dailyGoal = 0, weeklyGoal = 0, monthlyGoal = 0, notes = '', commissionRate = 0, driveUrl = '') {
+export function createCreator(agencyId, stageName, dailyGoal = 0, weeklyGoal = 0, monthlyGoal = 0, notes = '', commissionRate = 0, driveUrl = '', modelInfoUrl = '') {
   const id = getNextId('creators');
   const creator = {
     id,
@@ -193,6 +199,7 @@ export function createCreator(agencyId, stageName, dailyGoal = 0, weeklyGoal = 0
     notes,
     commission_rate: commissionRate,
     drive_url: driveUrl,
+    model_info_url: modelInfoUrl,
     created_at: now(),
     updated_at: now(),
   };
@@ -201,7 +208,7 @@ export function createCreator(agencyId, stageName, dailyGoal = 0, weeklyGoal = 0
   return id;
 }
 
-export function updateCreator(id, stageName, dailyGoal, weeklyGoal, monthlyGoal, notes, isActive, commissionRate, driveUrl) {
+export function updateCreator(id, stageName, dailyGoal, weeklyGoal, monthlyGoal, notes, isActive, commissionRate, driveUrl, modelInfoUrl) {
   const creator = db.creators.find(c => c.id === id);
   if (creator) {
     creator.stage_name = stageName;
@@ -212,6 +219,7 @@ export function updateCreator(id, stageName, dailyGoal, weeklyGoal, monthlyGoal,
     creator.is_active = isActive ? 1 : 0;
     if (commissionRate !== undefined) creator.commission_rate = commissionRate;
     if (driveUrl !== undefined) creator.drive_url = driveUrl;
+    if (modelInfoUrl !== undefined) creator.model_info_url = modelInfoUrl;
     creator.updated_at = now();
     saveDB();
   }
@@ -901,6 +909,59 @@ export function spawnRecurringTask(task) {
   db.tasks.push(newTask);
   saveDB();
   return newTask;
+}
+
+// ─── Creator Requests ─────────────────────────────────────────────────────────
+
+export function createCreatorRequest(creatorId, agencyId, fanName, fanId, amountPaid, duration, details, earliestDate, latestDate, submittedBy = '') {
+  const id = getNextId('creator_requests');
+  const req = {
+    id,
+    creator_id:    creatorId,
+    agency_id:     agencyId,
+    fan_name:      fanName,
+    fan_id:        fanId,
+    amount_paid:   amountPaid,
+    duration,
+    details,
+    earliest_date: earliestDate,
+    latest_date:   latestDate,
+    status:        'inquiry',
+    submitted_by:  submittedBy,
+    notes:         '',
+    created_at:    now(),
+    updated_at:    now(),
+  };
+  db.creator_requests.push(req);
+  saveDB();
+  return id;
+}
+
+export function getAllCreatorRequests({ agencyId, creatorId, status } = {}) {
+  let records = [...db.creator_requests];
+  if (agencyId  !== undefined) records = records.filter(r => r.agency_id   === agencyId);
+  if (creatorId !== undefined) records = records.filter(r => r.creator_id  === creatorId);
+  if (status)                  records = records.filter(r => r.status      === status);
+  return records.sort((a, b) => b.created_at.localeCompare(a.created_at));
+}
+
+export function updateCreatorRequestStatus(id, status) {
+  const req = db.creator_requests.find(r => r.id === id);
+  if (req) { req.status = status; req.updated_at = now(); saveDB(); }
+}
+
+export function updateCreatorRequest(id, updates) {
+  const req = db.creator_requests.find(r => r.id === id);
+  if (!req) return;
+  const allowed = ['fan_name','fan_id','amount_paid','duration','details','earliest_date','latest_date','status','submitted_by','notes'];
+  allowed.forEach(f => { if (updates[f] !== undefined) req[f] = updates[f]; });
+  req.updated_at = now();
+  saveDB();
+}
+
+export function deleteCreatorRequest(id) {
+  db.creator_requests = db.creator_requests.filter(r => r.id !== id);
+  saveDB();
 }
 
 // ─── Creator display order (UI pref — local only, not synced to cloud) ────────

@@ -1,11 +1,11 @@
 import { useEffect, useRef } from 'react';
-import { X, AlertCircle, CheckSquare, DollarSign, TrendingDown } from 'lucide-react';
+import { X, AlertCircle, CheckSquare, DollarSign, TrendingDown, ClipboardList } from 'lucide-react';
 import { useStore } from '../store.js';
 import * as db from '../db/index.js';
 
 const TODAY = new Date().toISOString().split('T')[0];
 
-function buildNotifications(tasks, creators, payrollPeriod) {
+function buildNotifications(tasks, creators, payrollPeriod, creatorRequests) {
   const notes = [];
 
   // Overdue tasks
@@ -89,6 +89,20 @@ function buildNotifications(tasks, creators, payrollPeriod) {
     });
   }
 
+  // Pending creator requests (inquiry status)
+  const inquiryCount = (creatorRequests || []).filter(r => r.status === 'inquiry').length;
+  if (inquiryCount > 0) {
+    notes.push({
+      id:    'pending-requests',
+      type:  'info',
+      icon:  ClipboardList,
+      color: '#9d4edd',
+      title: `${inquiryCount} new request${inquiryCount > 1 ? 's' : ''} awaiting review`,
+      body:  'Custom / video call requests submitted by chatters.',
+      view:  'requests',
+    });
+  }
+
   if (notes.length === 0) {
     notes.push({
       id:    'all-clear',
@@ -105,13 +119,14 @@ function buildNotifications(tasks, creators, payrollPeriod) {
 }
 
 const NotificationPanel = ({ onClose }) => {
-  const tasks         = useStore(s => s.tasks);
-  const creators      = useStore(s => s.creators);
-  const payrollPeriod = useStore(s => s.payrollPeriod);
-  const setCurrentView = useStore(s => s.setCurrentView);
-  const panelRef      = useRef(null);
+  const tasks           = useStore(s => s.tasks);
+  const creators        = useStore(s => s.creators);
+  const payrollPeriod   = useStore(s => s.payrollPeriod);
+  const creatorRequests = useStore(s => s.creatorRequests);
+  const setCurrentView  = useStore(s => s.setCurrentView);
+  const panelRef        = useRef(null);
 
-  const notes = buildNotifications(tasks, creators, payrollPeriod);
+  const notes = buildNotifications(tasks, creators, payrollPeriod, creatorRequests);
 
   // Close on outside click
   useEffect(() => {

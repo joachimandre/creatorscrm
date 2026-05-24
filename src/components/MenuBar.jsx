@@ -14,6 +14,7 @@ const VIEW_NAMES = {
   'brain-dump':     'Brain Dump',
   'reports':        'Reports',
   'payroll':        'Payroll',
+  'requests':       'Requests',
 };
 
 const LiveClock = () => {
@@ -37,11 +38,14 @@ const LiveClock = () => {
 const TODAY = new Date().toISOString().split('T')[0];
 
 const MenuBar = () => {
-  const currentView   = useStore(s => s.currentView);
-  const tasks         = useStore(s => s.tasks);
+  const currentView     = useStore(s => s.currentView);
+  const tasks           = useStore(s => s.tasks);
+  const creatorRequests = useStore(s => s.creatorRequests);
   const [notifOpen, setNotifOpen] = useState(false);
 
-  const overdueCount = tasks.filter(t => !t.is_completed && t.due_date && t.due_date < TODAY).length;
+  const overdueCount    = tasks.filter(t => !t.is_completed && t.due_date && t.due_date < TODAY).length;
+  const inquiryCount    = creatorRequests.filter(r => r.status === 'inquiry').length;
+  const bellBadgeCount  = overdueCount + inquiryCount;
 
   return (
     <header
@@ -95,9 +99,9 @@ const MenuBar = () => {
             style={{ width: 28, height: 28 }}
           >
             <Bell size={11} aria-hidden="true" />
-            {overdueCount > 0 && (
+            {bellBadgeCount > 0 && (
               <span className="absolute -top-[3px] -right-[3px] w-3 h-3 rounded-full bg-accent-pink flex items-center justify-center text-[7px] font-black text-white leading-none">
-                {overdueCount > 9 ? '9+' : overdueCount}
+                {bellBadgeCount > 9 ? '9+' : bellBadgeCount}
               </span>
             )}
           </button>

@@ -31,6 +31,9 @@ export const useStore = create((set, get) => ({
   teamSchedule: [],
   teamDayNotes: [],
 
+  // Creator Requests
+  creatorRequests: [],
+
   // UI Actions
   setSelectedCreator: (creatorId) => set({ selectedCreatorId: creatorId }),
   setSelectedAgency: (agencyId) => set({ selectedAgencyId: agencyId }),
@@ -58,6 +61,8 @@ export const useStore = create((set, get) => ({
       const teamMembers  = db.getAllTeamMembers();
       const teamChatters = db.getAllTeamChatters();
 
+      const creatorRequests = db.getAllCreatorRequests();
+
       set({
         agencies,
         creators: allCreators,
@@ -67,6 +72,7 @@ export const useStore = create((set, get) => ({
         teams,
         teamMembers,
         teamChatters,
+        creatorRequests,
       });
     } catch (error) {
       console.error('Error loading data:', error);
@@ -105,8 +111,8 @@ export const useStore = create((set, get) => ({
   },
 
   // Creator operations
-  addCreator: (agencyId, stageName, dailyGoal = 0, weeklyGoal = 0, monthlyGoal = 0, notes = '', commissionRate = 0, driveUrl = '') => {
-    const id = db.createCreator(agencyId, stageName, dailyGoal, weeklyGoal, monthlyGoal, notes, commissionRate, driveUrl);
+  addCreator: (agencyId, stageName, dailyGoal = 0, weeklyGoal = 0, monthlyGoal = 0, notes = '', commissionRate = 0, driveUrl = '', modelInfoUrl = '') => {
+    const id = db.createCreator(agencyId, stageName, dailyGoal, weeklyGoal, monthlyGoal, notes, commissionRate, driveUrl, modelInfoUrl);
     const creator = {
       id,
       agency_id: agencyId,
@@ -118,6 +124,7 @@ export const useStore = create((set, get) => ({
       notes,
       commission_rate: commissionRate,
       drive_url: driveUrl,
+      model_info_url: modelInfoUrl,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -126,13 +133,13 @@ export const useStore = create((set, get) => ({
     return id;
   },
 
-  updateCreatorData: (id, stageName, dailyGoal, weeklyGoal, monthlyGoal, notes, isActive, commissionRate, driveUrl) => {
-    db.updateCreator(id, stageName, dailyGoal, weeklyGoal, monthlyGoal, notes, isActive, commissionRate, driveUrl);
+  updateCreatorData: (id, stageName, dailyGoal, weeklyGoal, monthlyGoal, notes, isActive, commissionRate, driveUrl, modelInfoUrl) => {
+    db.updateCreator(id, stageName, dailyGoal, weeklyGoal, monthlyGoal, notes, isActive, commissionRate, driveUrl, modelInfoUrl);
     const state = get();
     set({
       creators: state.creators.map(c =>
         c.id === id
-          ? { ...c, stage_name: stageName, daily_goal: dailyGoal, weekly_goal: weeklyGoal, monthly_goal: monthlyGoal, notes, is_active: isActive ? 1 : 0, commission_rate: commissionRate !== undefined ? commissionRate : (c.commission_rate || 0), drive_url: driveUrl !== undefined ? driveUrl : (c.drive_url || ''), updated_at: new Date().toISOString() }
+          ? { ...c, stage_name: stageName, daily_goal: dailyGoal, weekly_goal: weeklyGoal, monthly_goal: monthlyGoal, notes, is_active: isActive ? 1 : 0, commission_rate: commissionRate !== undefined ? commissionRate : (c.commission_rate || 0), drive_url: driveUrl !== undefined ? driveUrl : (c.drive_url || ''), model_info_url: modelInfoUrl !== undefined ? modelInfoUrl : (c.model_info_url || ''), updated_at: new Date().toISOString() }
           : c
       )
     });
@@ -280,6 +287,37 @@ export const useStore = create((set, get) => ({
   },
   getCreatorNotes: (creatorId) => db.getCreatorNotes(creatorId),
   deleteCreatorNote: (noteId) => { db.deleteCreatorNote(noteId); },
+
+  // Creator Requests
+  addCreatorRequest: (creatorId, agencyId, fanName, fanId, amountPaid, duration, details, earliestDate, latestDate, submittedBy) => {
+    const id = db.createCreatorRequest(creatorId, agencyId, fanName, fanId, amountPaid, duration, details, earliestDate, latestDate, submittedBy);
+    const newReq = db.getAllCreatorRequests().find(r => r.id === id);
+    if (newReq) set(state => ({ creatorRequests: [newReq, ...state.creatorRequests] }));
+    return id;
+  },
+
+  updateCreatorRequestStatus: (id, status) => {
+    db.updateCreatorRequestStatus(id, status);
+    set(state => ({
+      creatorRequests: state.creatorRequests.map(r =>
+        r.id === id ? { ...r, status, updated_at: new Date().toISOString() } : r
+      )
+    }));
+  },
+
+  updateCreatorRequestData: (id, updates) => {
+    db.updateCreatorRequest(id, updates);
+    set(state => ({
+      creatorRequests: state.creatorRequests.map(r =>
+        r.id === id ? { ...r, ...updates, updated_at: new Date().toISOString() } : r
+      )
+    }));
+  },
+
+  deleteCreatorRequest: (id) => {
+    db.deleteCreatorRequest(id);
+    set(state => ({ creatorRequests: state.creatorRequests.filter(r => r.id !== id) }));
+  },
 
   // Brain dump operations
   addBrainDumpNote: (creatorId, content) => {

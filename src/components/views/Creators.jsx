@@ -5,7 +5,7 @@ import {
   Star, ExternalLink, Pencil, X, Check, Plus, Trash2,
   Search, ChevronDown, ChevronUp, Target, Link2, Users, GripVertical,
   StickyNote, Download, Send, TrendingUp, TrendingDown, AlertTriangle,
-  Megaphone, Calendar,
+  Megaphone, Calendar, BookOpen, ClipboardList,
 } from 'lucide-react';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -136,6 +136,36 @@ const Creators = () => {
   const handleDeleteNote = (creatorId, noteId) => {
     deleteCreatorNote(noteId);
     setNotesList(prev => ({ ...prev, [creatorId]: getCreatorNotes(creatorId) }));
+  };
+
+  // Request submission panel state
+  const [requestOpen, setRequestOpen] = useState(null); // creatorId or null
+  const [requestForm, setRequestForm] = useState({
+    fanName: '', fanId: '', amountPaid: '', duration: '',
+    details: '', earliestDate: '', latestDate: '', submittedBy: '',
+  });
+  const addCreatorRequest = useStore(s => s.addCreatorRequest);
+
+  const openRequestPanel = (creatorId) => {
+    setRequestOpen(creatorId);
+    setRequestForm({ fanName: '', fanId: '', amountPaid: '', duration: '', details: '', earliestDate: todayIso, latestDate: '', submittedBy: '' });
+  };
+
+  const handleSubmitRequest = (creator) => {
+    if (!requestForm.fanName.trim() || !requestForm.amountPaid) return;
+    addCreatorRequest(
+      creator.id,
+      creator.agency_id,
+      requestForm.fanName.trim(),
+      requestForm.fanId.trim(),
+      parseFloat(requestForm.amountPaid) || 0,
+      requestForm.duration.trim(),
+      requestForm.details.trim(),
+      requestForm.earliestDate,
+      requestForm.latestDate,
+      requestForm.submittedBy.trim(),
+    );
+    setRequestOpen(null);
   };
 
   // Subscriber tracker state
@@ -369,6 +399,7 @@ const Creators = () => {
       monthlyGoal:    String(creator.monthly_goal || ''),
       commissionRate: String(creator.commission_rate || ''),
       driveUrl:       creator.drive_url || '',
+      modelInfoUrl:   creator.model_info_url || '',
       notes:          creator.notes || '',
       isActive:       !!creator.is_active,
     });
@@ -385,6 +416,7 @@ const Creators = () => {
       editForm.isActive,
       parseFloat(editForm.commissionRate) || 0,
       editForm.driveUrl.trim(),
+      editForm.modelInfoUrl.trim(),
     );
     setEditingId(null);
   };
@@ -435,6 +467,7 @@ const Creators = () => {
     const isInactive  = !creator.is_active;
     const subData     = subscriberCounts[creator.id] || null;
 
+    const hasModelInfo = !!creator.model_info_url;
     const isDragging = sortBy === 'custom' && !isInactive;
     return (
       <div key={creator.id}
@@ -480,21 +513,39 @@ const Creators = () => {
               <span className="text-[11px] text-text-tertiary/40 italic">No Team</span>
             )}
 
-            {/* Drive link icon */}
-            <button
-              onClick={e => {
-                e.stopPropagation();
-                if (hasDrive) window.open(creator.drive_url, '_blank', 'noopener,noreferrer');
-                else openEdit(creator);
-              }}
-              title={hasDrive ? 'Open Google Drive' : 'Add Drive link (click to edit)'}
-              className={`flex items-center gap-xs p-xs rounded-lg transition-all
-                ${hasDrive
-                  ? 'text-accent-cyan hover:bg-accent-cyan/10 hover:text-accent-cyan'
-                  : 'text-text-tertiary/25 hover:text-text-tertiary/60 hover:bg-white/5'
-                }`}>
-              <ExternalLink size={13} />
-            </button>
+            {/* Right-side icon group: model info + drive */}
+            <div className="flex items-center gap-[2px]">
+              {/* Model info icon */}
+              <button
+                onClick={e => {
+                  e.stopPropagation();
+                  if (hasModelInfo) window.open(creator.model_info_url, '_blank', 'noopener,noreferrer');
+                  else openEdit(creator);
+                }}
+                title={hasModelInfo ? 'Open Model Info' : 'Add Model Info URL (click to edit)'}
+                className={`flex items-center gap-xs p-xs rounded-lg transition-all
+                  ${hasModelInfo
+                    ? 'text-accent-purple hover:bg-accent-purple/10'
+                    : 'text-text-tertiary/25 hover:text-text-tertiary/60 hover:bg-white/5'
+                  }`}>
+                <BookOpen size={13} />
+              </button>
+              {/* Drive link icon */}
+              <button
+                onClick={e => {
+                  e.stopPropagation();
+                  if (hasDrive) window.open(creator.drive_url, '_blank', 'noopener,noreferrer');
+                  else openEdit(creator);
+                }}
+                title={hasDrive ? 'Open Google Drive' : 'Add Drive link (click to edit)'}
+                className={`flex items-center gap-xs p-xs rounded-lg transition-all
+                  ${hasDrive
+                    ? 'text-accent-cyan hover:bg-accent-cyan/10'
+                    : 'text-text-tertiary/25 hover:text-text-tertiary/60 hover:bg-white/5'
+                  }`}>
+                <ExternalLink size={13} />
+              </button>
+            </div>
           </div>
 
           {/* Avatar + name row */}
@@ -774,6 +825,18 @@ const Creators = () => {
               />
             </div>
 
+            {/* Model Info URL */}
+            <div>
+              <label className="text-xs text-text-tertiary mb-xs flex items-center gap-xs">
+                <BookOpen size={10} /> Model Info URL
+              </label>
+              <input type="url" value={editForm.modelInfoUrl}
+                onChange={e => setEditForm(f => ({ ...f, modelInfoUrl: e.target.value }))}
+                placeholder="https://docs.google.com/spreadsheets/..."
+                className="w-full rounded-lg px-sm py-xs text-text-primary text-xs focus:outline-none focus:border-accent-purple/50 transition-all placeholder-text-tertiary/30"
+              />
+            </div>
+
             {/* Notes */}
             <div>
               <label className="text-xs text-text-tertiary mb-xs block">Notes</label>
@@ -919,9 +982,122 @@ const Creators = () => {
           </div>
         )}
 
+        {/* Request submission panel */}
+        {requestOpen === creator.id && (
+          <div className="border-t border-white/10 bg-bg-primary/60 p-md space-y-xs animate-slide-up"
+            onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-xs">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-text-tertiary flex items-center gap-xs">
+                <ClipboardList size={10} /> Custom / Video Call Request
+              </span>
+              <button onClick={() => setRequestOpen(null)} className="text-text-tertiary hover:text-text-primary transition-colors">
+                <X size={12} />
+              </button>
+            </div>
+
+            {/* Fan Name + Fan ID */}
+            <div className="grid grid-cols-2 gap-xs">
+              <div>
+                <label className="text-[9px] text-text-tertiary/50 mb-[2px] block">Fan Name *</label>
+                <input type="text" value={requestForm.fanName} autoFocus
+                  onChange={e => setRequestForm(f => ({ ...f, fanName: e.target.value }))}
+                  placeholder="e.g. JohnDoe99"
+                  className="w-full rounded-lg px-xs py-[3px] text-text-primary text-xs focus:outline-none focus:border-accent-purple/50 placeholder-text-tertiary/25 transition-all"
+                />
+              </div>
+              <div>
+                <label className="text-[9px] text-text-tertiary/50 mb-[2px] block">Fan ID</label>
+                <input type="text" value={requestForm.fanId}
+                  onChange={e => setRequestForm(f => ({ ...f, fanId: e.target.value }))}
+                  placeholder="Platform username"
+                  className="w-full rounded-lg px-xs py-[3px] text-text-primary text-xs focus:outline-none focus:border-accent-purple/50 placeholder-text-tertiary/25 transition-all"
+                />
+              </div>
+            </div>
+
+            {/* Amount + Duration */}
+            <div className="grid grid-cols-2 gap-xs">
+              <div>
+                <label className="text-[9px] text-text-tertiary/50 mb-[2px] block">Amount Paid ($) *</label>
+                <input type="number" min="0" step="0.01" value={requestForm.amountPaid}
+                  onChange={e => setRequestForm(f => ({ ...f, amountPaid: e.target.value }))}
+                  placeholder="0.00"
+                  className="w-full rounded-lg px-xs py-[3px] text-text-primary text-xs focus:outline-none focus:border-accent-lime/50 placeholder-text-tertiary/25 transition-all"
+                />
+              </div>
+              <div>
+                <label className="text-[9px] text-text-tertiary/50 mb-[2px] block">Duration</label>
+                <input type="text" value={requestForm.duration}
+                  onChange={e => setRequestForm(f => ({ ...f, duration: e.target.value }))}
+                  placeholder="e.g. 15 min"
+                  className="w-full rounded-lg px-xs py-[3px] text-text-primary text-xs focus:outline-none focus:border-accent-purple/50 placeholder-text-tertiary/25 transition-all"
+                />
+              </div>
+            </div>
+
+            {/* Details */}
+            <div>
+              <label className="text-[9px] text-text-tertiary/50 mb-[2px] block">Details</label>
+              <textarea value={requestForm.details} rows={2}
+                onChange={e => setRequestForm(f => ({ ...f, details: e.target.value }))}
+                placeholder="Describe the request…"
+                className="w-full rounded-lg px-xs py-[3px] text-text-primary text-xs focus:outline-none focus:border-accent-purple/50 placeholder-text-tertiary/25 transition-all resize-none"
+              />
+            </div>
+
+            {/* Date range */}
+            <div className="grid grid-cols-2 gap-xs">
+              <div>
+                <label className="text-[9px] text-text-tertiary/50 mb-[2px] block">Earliest Completion</label>
+                <input type="date" value={requestForm.earliestDate}
+                  onChange={e => setRequestForm(f => ({ ...f, earliestDate: e.target.value }))}
+                  className="w-full rounded-lg px-xs py-[3px] text-text-tertiary/70 text-[10px] focus:outline-none focus:border-accent-cyan/50 transition-all"
+                />
+              </div>
+              <div>
+                <label className="text-[9px] text-text-tertiary/50 mb-[2px] block">Latest Completion</label>
+                <input type="date" value={requestForm.latestDate}
+                  onChange={e => setRequestForm(f => ({ ...f, latestDate: e.target.value }))}
+                  className="w-full rounded-lg px-xs py-[3px] text-text-tertiary/70 text-[10px] focus:outline-none focus:border-accent-cyan/50 transition-all"
+                />
+              </div>
+            </div>
+
+            {/* Submitted by */}
+            <div>
+              <label className="text-[9px] text-text-tertiary/50 mb-[2px] block">Submitted By (your name)</label>
+              <input type="text" value={requestForm.submittedBy}
+                onChange={e => setRequestForm(f => ({ ...f, submittedBy: e.target.value }))}
+                placeholder="Optional — your chatter username"
+                className="w-full rounded-lg px-xs py-[3px] text-text-primary text-xs focus:outline-none focus:border-accent-purple/50 placeholder-text-tertiary/25 transition-all"
+              />
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-xs pt-xs">
+              <button
+                onClick={() => handleSubmitRequest(creator)}
+                disabled={!requestForm.fanName.trim() || !requestForm.amountPaid}
+                className="flex-1 py-[3px] bg-accent-purple/70 hover:bg-accent-purple/90 text-white text-xs font-bold rounded-lg disabled:opacity-30 transition-all flex items-center justify-center gap-xs">
+                <ClipboardList size={9} /> Submit Request
+              </button>
+              <button onClick={() => setRequestOpen(null)}
+                className="px-sm py-[3px] neu-btn text-text-tertiary text-xs rounded-lg hover:text-text-primary transition-all">
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Hover action buttons */}
-        {!isEditing && notesOpen !== creator.id && campaignOpen !== creator.id && (
+        {!isEditing && notesOpen !== creator.id && campaignOpen !== creator.id && requestOpen !== creator.id && (
           <div className="absolute bottom-md right-md opacity-0 group-hover:opacity-100 transition-all flex items-center gap-xs">
+            <button
+              onClick={e => { e.stopPropagation(); openRequestPanel(creator.id); }}
+              title="Submit Custom / Video Call Request"
+              className="flex items-center gap-xs px-sm py-[4px] bg-bg-secondary/90 border border-white/15 rounded-lg text-xs text-text-tertiary hover:text-accent-purple hover:border-accent-purple/30 shadow-lg transition-all">
+              <ClipboardList size={10} />
+            </button>
             <button
               onClick={e => { e.stopPropagation(); openCampaigns(creator.id); }}
               title="Campaigns"
