@@ -16,25 +16,34 @@ import Creators from './components/views/Creators';
 import Chatters from './components/views/Chatters';
 import Analytics from './components/views/Analytics';
 import Requests from './components/views/Requests';
+import LoginView from './components/views/LoginView';
+import PendingApprovalView from './components/views/PendingApprovalView';
+import UserManagementView from './components/views/UserManagementView';
 
 function App() {
   const [dbInitialized, setDbInitialized] = useState(false);
-  const currentView = useStore(state => state.currentView);
-  const loadAllData = useStore(state => state.loadAllData);
+  const currentView  = useStore(state => state.currentView);
+  const loadAllData  = useStore(state => state.loadAllData);
+  const initAuth     = useStore(state => state.initAuth);
+  const authUser     = useStore(state => state.authUser);
+  const userProfile  = useStore(state => state.userProfile);
 
   useEffect(() => {
     const initializeApp = async () => {
       try {
-        await initDB();
-        await loadAllData();
+        await initAuth();      // restore existing session
+        await initDB();        // load shared CRM data from Supabase
+        await loadAllData();   // hydrate Zustand
         setDbInitialized(true);
       } catch (error) {
         console.error('Failed to initialize app:', error);
+        setDbInitialized(true);
       }
     };
     initializeApp();
-  }, [loadAllData]);
+  }, [loadAllData, initAuth]);
 
+  // ── Loading spinner ──────────────────────────────────────────────────────────
   if (!dbInitialized) {
     return (
       <div className="flex items-center justify-center h-screen bg-bg-primary">
@@ -57,9 +66,14 @@ function App() {
     );
   }
 
+  // ── Auth guard ───────────────────────────────────────────────────────────────
+  if (!authUser) return <LoginView />;
+  if (!userProfile?.approved) return <PendingApprovalView />;
+
+  // ── Full app ─────────────────────────────────────────────────────────────────
   return (
     <div className="flex flex-col h-screen bg-bg-primary overflow-hidden">
-      {/* Skip link — lets keyboard users jump past the dock straight to content */}
+      {/* Skip link */}
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:top-10 focus:left-4 focus:z-[300] focus:px-md focus:py-sm focus:rounded-xl focus:bg-accent-cyan focus:text-bg-primary focus:font-semibold focus:text-sm"
@@ -67,10 +81,8 @@ function App() {
         Skip to content
       </a>
 
-      {/* OS top menu bar */}
       <MenuBar />
 
-      {/* Main content — key causes remount + view-enter animation on every view change */}
       <main id="main-content" className="flex-1 overflow-hidden relative">
         <div key={currentView} className="h-full overflow-auto animate-view-enter">
           {currentView === 'dashboard'      && <Dashboard />}
@@ -84,13 +96,11 @@ function App() {
           {currentView === 'chatters'       && <Chatters />}
           {currentView === 'analytics'      && <Analytics />}
           {currentView === 'requests'       && <Requests />}
+          {currentView === 'users'          && <UserManagementView />}
         </div>
       </main>
 
-      {/* OS bottom dock (replaces sidebar) */}
       <Dock />
-
-      {/* Global overlays */}
       <CommandPalette />
       <QuickActionFAB />
     </div>

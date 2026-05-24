@@ -66,9 +66,13 @@ const Creators = () => {
   const creators          = useStore(s => s.creators);
   const teams             = useStore(s => s.teams);
   const teamMembers       = useStore(s => s.teamMembers);
+  const teamChatters      = useStore(s => s.teamChatters);
+  const userProfile       = useStore(s => s.userProfile);
   const addCreator        = useStore(s => s.addCreator);
   const updateCreatorData = useStore(s => s.updateCreatorData);
   const deleteCreatorData = useStore(s => s.deleteCreatorData);
+
+  const isChatter = userProfile?.role === 'chatter';
 
   // ── UI state ─────────────────────────────────────────────────────────────────
   const [selectedAgency, setSelectedAgency] = useState(null);
@@ -333,6 +337,18 @@ const Creators = () => {
       return 0;
     });
 
+  // Chatters see only creators in their assigned teams
+  const visibleCreators = (() => {
+    if (!isChatter || !userProfile?.chatter_id) return filteredCreators;
+    const myTeamIds = new Set(
+      teamChatters.filter(tc => tc.chatter_id === userProfile.chatter_id).map(tc => tc.team_id)
+    );
+    const myCreatorIds = new Set(
+      teamMembers.filter(tm => myTeamIds.has(tm.team_id)).map(tm => tm.creator_id)
+    );
+    return filteredCreators.filter(c => myCreatorIds.has(c.id));
+  })();
+
   // Drag handlers (only active in 'custom' sort mode)
   const handleDragStart = (e, creatorId) => {
     setDraggedId(creatorId);
@@ -361,8 +377,8 @@ const Creators = () => {
   };
   const handleDragEnd = () => { setDraggedId(null); setDragOverId(null); };
 
-  const activeCreators   = filteredCreators.filter(c => c.is_active);
-  const inactiveCreators = filteredCreators.filter(c => !c.is_active);
+  const activeCreators   = visibleCreators.filter(c => c.is_active);
+  const inactiveCreators = visibleCreators.filter(c => !c.is_active);
 
   // ── CSV Export ───────────────────────────────────────────────────────────────
   const exportCSV = () => {
@@ -570,6 +586,9 @@ const Creators = () => {
             </div>
           </div>
 
+          {/* Financial data — hidden for chatters */}
+          {!isChatter && (<>
+
           {/* Monthly goal progress */}
           <div className="space-y-xs">
             <div className="flex items-center justify-between">
@@ -669,6 +688,8 @@ const Creators = () => {
               {getAgencyPct(creator.id)}% of agency
             </div>
           )}
+
+          </>)}{/* end !isChatter financial block */}
 
           {/* ── Subscriber tracker ─────────────────────────────────────────── */}
           {!isInactive && (

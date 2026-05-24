@@ -1,7 +1,20 @@
 import { create } from 'zustand';
 import * as db from './db/index.js';
+import {
+  supabase,
+  fetchUserProfile,
+  upsertUserProfile,
+  updateUserProfile,
+  fetchAllProfiles,
+  deleteUserProfile,
+} from './lib/supabase.js';
 
 export const useStore = create((set, get) => ({
+  // Auth State
+  authUser: null,
+  userProfile: null,
+  userProfiles: [],
+
   // UI State
   selectedCreatorId: null,
   selectedAgencyId: null,
@@ -549,5 +562,76 @@ export const useStore = create((set, get) => ({
       const filtered = state.teamDayNotes.filter(n => !(n.team_id === teamId && n.date === date));
       return { teamDayNotes: [...filtered, { team_id: teamId, date, notes }] };
     });
+  },
+
+  // ── Auth ──────────────────────────────────────────────────────────────────
+
+  // Called once on app boot — restores existing session if any
+  initAuth: async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const profile = await fetchUserProfile(session.user.id);
+        set({ authUser: session.user, userProfile: profile });
+      }
+    } catch (e) {
+      console.warn('[Auth] initAuth failed:', e.message);
+    }
+  },
+
+  signIn: async (email, password) => {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    const profile = await fetchUserProfile(data.user.id);
+    set({ authUser: data.user, userProfile: profile });
+    return profile;
+  },
+
+  signOut: async () => {
+    await supabase.auth.signOut();
+    set({ authUser: null, userProfile: null, userProfiles: [] });
+  },
+
+  signUp: async (email, password, fullName) => {
+    const { data, error } = await supabase.auth.signUp({ email, password });
+    if (error) throw error;
+
+    const adminEmail = import.meta.env.VITE_ADMIN_EMAIL;
+    const isAdmin = adminEmail && email.toLowerCase() === adminEmail.toLowerCase();
+
+    const profile = await upsertUserProfile({
+      id: data.user.id,
+      email,
+      full_name: fullName || '',
+      role: isAdmin ? 'admin' : 'chatter',
+      approved: isAdmin ? true : false,
+      chatter_id: null,
+    });
+    set({ authUser: data.user, userProfile: profile });
+    return profile;
+  },
+
+  // Admin: load all user profiles
+  loadUserProfiles: async () => {
+    const profiles = await fetchAllProfiles();
+    set({ userProfiles: profiles });
+  },
+
+  approveUser: async (userId, role, chatterId = null) => {
+    await updateUserProfile(userId, { approved: true, role, chatter_id: chatterId });
+    const profiles = await fetchAllProfiles();
+    set({ userProfiles: profiles });
+  },
+
+  rejectUser: async (userId) => {
+    await deleteUserProfile(userId);
+    const profiles = await fetchAllProfiles();
+    set({ userProfiles: profiles });
+  },
+
+  updateUserRole: async (userId, role) => {
+    await updateUserProfile(userId, { role });
+    const profiles = await fetchAllProfiles();
+    set({ userProfiles: profiles });
   },
 }));

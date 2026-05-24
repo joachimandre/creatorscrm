@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Search, LayoutDashboard, TrendingUp, BarChart3, Star, CheckSquare,
-  Users, MessageSquare, Brain, FileText, DollarSign, X, ArrowRight, ClipboardList,
+  Users, MessageSquare, Brain, FileText, DollarSign, X, ArrowRight, ClipboardList, ShieldCheck,
 } from 'lucide-react';
 import { useStore } from '../store.js';
 
@@ -24,6 +24,7 @@ const COMMANDS = [
   { id: 'nav-reports',        label: 'Go to Reports',        icon: FileText,        view: 'reports',        group: 'Navigate' },
   { id: 'nav-payroll',        label: 'Go to Payroll',        icon: DollarSign,      view: 'payroll',        group: 'Navigate' },
   { id: 'nav-requests',       label: 'Go to Requests',       icon: ClipboardList,   view: 'requests',       group: 'Navigate' },
+  { id: 'nav-users',          label: 'Go to User Management', icon: ShieldCheck,     view: 'users',          group: 'Navigate' },
 ];
 
 const CommandPalette = () => {

@@ -407,6 +407,8 @@ const Dashboard = () => {
   const chatters = useStore(state => state.chatters);
   const addAgency = useStore(state => state.addAgency);
   const deleteAgencyData = useStore(state => state.deleteAgencyData);
+  const userProfile = useStore(state => state.userProfile);
+  const isChatter = userProfile?.role === 'chatter';
 
   const [selectedAgency, setSelectedAgency] = useState(null); // null = overview
   const [showAddAgency, setShowAddAgency] = useState(false);
@@ -489,8 +491,8 @@ const Dashboard = () => {
               <Trash2 size={12} /> Remove Agency
             </button>
           )}
-          {/* Customize dashboard */}
-          {!selectedAgency && (
+          {/* Customize dashboard — admin/manager only */}
+          {!selectedAgency && !isChatter && (
             <div className="relative">
               <button
                 onClick={() => setShowCustomize(v => !v)}
@@ -578,7 +580,7 @@ const Dashboard = () => {
             <Plus size={16} /> Create Agency
           </button>
         </div>
-      ) : selectedAgency ? (
+      ) : selectedAgency && !isChatter ? (
         <AgencyPanel
           agency={selectedAgencyObj}
           accentColor={AGENCY_COLORS[agencies.findIndex(a => a.id === selectedAgency) % AGENCY_COLORS.length]}
@@ -594,7 +596,7 @@ const Dashboard = () => {
           allEarnings={allEarnings}
           chatters={chatters}
           tasks={allTasks}
-          widgets={widgets}
+          widgets={isChatter ? { kpiStats: false, topCreators: true, agencyBreakdown: false } : widgets}
         />
       )}
 

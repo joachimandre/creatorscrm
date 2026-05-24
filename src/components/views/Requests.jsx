@@ -82,10 +82,24 @@ const Requests = () => {
   const agencies              = useStore(s => s.agencies);
   const creators              = useStore(s => s.creators);
   const creatorRequests       = useStore(s => s.creatorRequests);
+  const teamChatters          = useStore(s => s.teamChatters);
+  const teamMembers           = useStore(s => s.teamMembers);
+  const userProfile           = useStore(s => s.userProfile);
   const updateCreatorRequestStatus = useStore(s => s.updateCreatorRequestStatus);
   const updateCreatorRequestData   = useStore(s => s.updateCreatorRequestData);
   const deleteCreatorRequest       = useStore(s => s.deleteCreatorRequest);
   const setCurrentView             = useStore(s => s.setCurrentView);
+
+  // Compute the set of creator IDs a chatter can see
+  const chatterCreatorIds = useMemo(() => {
+    if (userProfile?.role !== 'chatter' || !userProfile?.chatter_id) return null;
+    const myTeamIds = new Set(
+      teamChatters.filter(tc => tc.chatter_id === userProfile.chatter_id).map(tc => tc.team_id)
+    );
+    return new Set(
+      teamMembers.filter(tm => myTeamIds.has(tm.team_id)).map(tm => tm.creator_id)
+    );
+  }, [userProfile, teamChatters, teamMembers]);
 
   const [activeTab, setActiveTab] = useState('inquiry');
   const [agencyFilter, setAgencyFilter]   = useState('');
@@ -96,6 +110,8 @@ const Requests = () => {
   // Filtered list (all statuses — used for counts)
   const baseFiltered = useMemo(() => {
     return creatorRequests.filter(r => {
+      // Chatters only see requests for their assigned creators
+      if (chatterCreatorIds && !chatterCreatorIds.has(r.creator_id)) return false;
       if (agencyFilter && String(r.agency_id) !== agencyFilter) return false;
       if (creatorFilter && String(r.creator_id) !== creatorFilter) return false;
       if (search) {
