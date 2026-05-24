@@ -595,18 +595,29 @@ export const useStore = create((set, get) => ({
   signUp: async (email, password, fullName) => {
     const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) throw error;
+    // Supabase returns null user when email confirmation is enabled and the
+    // email was already registered (even unconfirmed). Guard against it.
+    if (!data?.user) {
+      throw new Error('Account already registered or email confirmation is required. Check your inbox or disable email confirmation in Supabase.');
+    }
 
     const adminEmail = import.meta.env.VITE_ADMIN_EMAIL;
     const isAdmin = adminEmail && email.toLowerCase() === adminEmail.toLowerCase();
 
-    const profile = await upsertUserProfile({
-      id: data.user.id,
-      email,
-      full_name: fullName || '',
-      role: isAdmin ? 'admin' : 'chatter',
-      approved: isAdmin ? true : false,
-      chatter_id: null,
-    });
+    let profile = null;
+    try {
+      profile = await upsertUserProfile({
+        id: data.user.id,
+        email,
+        full_name: fullName || '',
+        role: isAdmin ? 'admin' : 'chatter',
+        approved: isAdmin ? true : false,
+        chatter_id: null,
+      });
+    } catch (profileErr) {
+      console.error('[Auth] Failed to create user profile:', profileErr.message);
+      throw new Error('Account created but profile setup failed. Make sure the user_profiles table exists in Supabase (run the setup SQL).');
+    }
     set({ authUser: data.user, userProfile: profile });
     return profile;
   },
