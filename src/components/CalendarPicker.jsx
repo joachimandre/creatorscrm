@@ -94,7 +94,8 @@ const CalendarPicker = ({ currentStart, currentEnd, onApply, onClose }) => {
     const isEnd   = iso === stagingEnd;
     const inRange = stagingStart && effectiveEnd && iso > stagingStart && iso < effectiveEnd;
     const isToday = iso === today;
-    let cls = 'relative flex items-center justify-center w-8 h-8 text-xs font-medium cursor-pointer select-none transition-all ';
+    // w-full h-11 (44px) meets WCAG 2.5.5 touch target minimum
+    let cls = 'relative flex items-center justify-center w-full h-11 text-xs font-medium select-none transition-all focus:outline-none focus-visible:ring-1 focus-visible:ring-accent-cyan/60 ';
     if (isStart || isEnd) cls += 'bg-accent-lime text-bg-primary rounded-full font-bold shadow-glow-lime z-10 ';
     else if (inRange)     cls += 'bg-accent-lime/20 text-accent-lime ';
     else                  cls += 'text-text-secondary hover:bg-white/10 hover:text-text-primary rounded-full ';
@@ -160,26 +161,29 @@ const CalendarPicker = ({ currentStart, currentEnd, onApply, onClose }) => {
         {/* Day-of-week labels */}
         <div className="grid grid-cols-7 mb-xs">
           {DAY_LABELS.map(d => (
-            <div key={d} className="flex items-center justify-center w-8 h-6 text-[10px] font-bold text-text-tertiary/50 uppercase">
+            <div key={d} className="flex items-center justify-center h-8 text-[10px] font-bold text-text-tertiary/50 uppercase">
               {d}
             </div>
           ))}
         </div>
-        {/* Day cells */}
-        <div className="grid grid-cols-7 gap-y-xs">
+        {/* Day cells — each is a <button> for keyboard + screen reader access */}
+        <div className="grid grid-cols-7">
           {cells.map((day, idx) => {
-            if (!day) return <div key={`e-${idx}`} className="w-8 h-8" />;
+            if (!day) return <div key={`e-${idx}`} className="h-11" />;
             const iso = isoDate(calYear, calMonth, day);
             return (
-              <div
+              <button
                 key={iso}
+                type="button"
+                aria-label={iso}
+                aria-pressed={iso === stagingStart || iso === stagingEnd}
                 className={dayClass(iso)}
                 onClick={() => handleDayClick(iso)}
                 onMouseEnter={() => selectStep === 'end' && stagingStart && setHoverDate(iso)}
                 onMouseLeave={() => setHoverDate('')}
               >
                 {day}
-              </div>
+              </button>
             );
           })}
         </div>

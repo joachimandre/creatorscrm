@@ -23,13 +23,8 @@ const ApproveModal = ({ user, chatters, onConfirm, onClose }) => {
       onClick={onClose}
     >
       <div
-        className="relative p-xl rounded-2xl space-y-lg animate-scale-in"
-        style={{
-          background: '#252b36',
-          boxShadow: '10px 10px 20px rgba(0,0,0,0.5), -10px -10px 20px rgba(255,255,255,0.04)',
-          border: '1px solid rgba(255,255,255,0.07)',
-          maxWidth: 360, width: '90%',
-        }}
+        className="neu-card relative p-xl space-y-lg animate-scale-in w-[90%]"
+        style={{ maxWidth: 360 }}
         onClick={e => e.stopPropagation()}
       >
         <div>
@@ -107,7 +102,10 @@ const UserManagementView = () => {
   const [approveModal, setApproveModal] = useState(null); // profile object
   const [confirmReject, setConfirmReject] = useState(null); // userId
 
-  useEffect(() => { loadUserProfiles(); }, [loadUserProfiles]);
+  // Hard guard — only admins may load profiles. Dock already prevents non-admins
+  // from reaching this view, but we defend in depth here too.
+  const isAdmin = currentUser?.role === 'admin';
+  useEffect(() => { if (isAdmin) loadUserProfiles(); }, [isAdmin, loadUserProfiles]);
 
   const pending = useMemo(() => userProfiles.filter(p => !p.approved), [userProfiles]);
   const active  = useMemo(() => userProfiles.filter(p => p.approved), [userProfiles]);
@@ -121,6 +119,9 @@ const UserManagementView = () => {
     await rejectUser(userId);
     setConfirmReject(null);
   };
+
+  // Render nothing if somehow a non-admin reaches this view
+  if (!isAdmin) return null;
 
   const rows = activeTab === 'pending' ? pending : active;
 

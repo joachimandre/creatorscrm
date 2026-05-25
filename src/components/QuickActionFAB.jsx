@@ -246,10 +246,10 @@ const QuickActionFAB = () => {
         </div>
       )}
 
-      {/* Main FAB */}
+      {/* Main FAB — sits above the Dock (~80px tall) */}
       <button
         onClick={() => { if (panel) closePanel(); else setOpen(v => !v); }}
-        className="fixed bottom-lg right-lg w-14 h-14 bg-gradient-to-br from-accent-cyan to-accent-blue text-bg-primary rounded-full shadow-glow hover:shadow-glow transition-all flex items-center justify-center z-50 dock-icon-btn"
+        className="fixed bottom-[84px] right-lg w-14 h-14 bg-gradient-to-br from-accent-cyan to-accent-blue text-bg-primary rounded-full shadow-glow hover:shadow-glow transition-all flex items-center justify-center z-50 dock-icon-btn"
         aria-label={open ? 'Close quick actions' : 'Quick actions'}
         aria-expanded={open}
       >
