@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+﻿import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useStore } from '../../store.js';
 import * as db from '../../db/index.js';
@@ -7,15 +7,16 @@ import {
   Pencil, Trash2, Copy, Printer, Zap, Check, TrendingUp,
   Calendar, X, AlertTriangle, Settings2, CheckSquare, Square, Download,
 } from 'lucide-react';
+import StatCard from '../StatCard.jsx';
 
-// ─── Constants ──────────────────────────────────────────────────────────────
+// â”€â”€â”€ Constants â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const AGENCY_COLORS = ['#00d9ff', '#9d4edd', '#ff6b35', '#ff006e', '#00ff88'];
 const MONTH_NAMES   = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const MONTH_SHORT   = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const DAY_LABELS    = ['Su','Mo','Tu','We','Th','Fr','Sa'];
 
-// ─── Pure helpers ────────────────────────────────────────────────────────────
+// â”€â”€â”€ Pure helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const pad       = n  => String(n).padStart(2, '0');
 const isoDate   = (y, m, d) => `${y}-${pad(m)}-${pad(d)}`;
@@ -44,10 +45,10 @@ function periodLabel(start, end) {
   const endStr   = sy === ey
     ? (sm === em ? parseInt(ed) : `${MONTH_SHORT[parseInt(em) - 1]} ${parseInt(ed)}`)
     : `${MONTH_SHORT[parseInt(em) - 1]} ${parseInt(ed)}, ${ey}`;
-  return `${startStr} – ${endStr}, ${sy}`;
+  return `${startStr} â€“ ${endStr}, ${sy}`;
 }
 
-// ─── Sub-components ──────────────────────────────────────────────────────────
+// â”€â”€â”€ Sub-components â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const StatusBadge = ({ status, onClick }) => {
   const styles = {
@@ -63,246 +64,10 @@ const StatusBadge = ({ status, onClick }) => {
   );
 };
 
-const StatCard = ({ label, value, sub, color, icon: Icon }) => (
-  <div className="neu-card p-lg relative overflow-hidden group transition-all">
-    <div className="absolute inset-0 opacity-5 group-hover:opacity-10 transition-opacity rounded-2xl"
-      style={{ background: `radial-gradient(circle at top right, ${color}, transparent 60%)` }} />
-    <div className="flex items-start justify-between mb-sm relative">
-      <p className="text-xs font-medium text-text-tertiary">{label}</p>
-      <div className="p-sm rounded-xl border border-white/8" style={{ background: `${color}15` }}>
-        <Icon size={14} style={{ color }} />
-      </div>
-    </div>
-    <p className="text-2xl font-black text-text-primary relative font-mono">{value}</p>
-    {sub && <p className="text-xs text-text-tertiary/60 mt-xs relative">{sub}</p>}
-  </div>
-);
+import CalendarPicker from '../CalendarPicker.jsx';
 
-// ─── Calendar Picker ─────────────────────────────────────────────────────────
 
-const CalendarPicker = ({ currentStart, currentEnd, onApply, onClose }) => {
-  const today = new Date().toISOString().split('T')[0];
-  const todayParts = today.split('-');
-  const todayYear  = parseInt(todayParts[0]);
-  const todayMonth = parseInt(todayParts[1]);
-
-  const [calYear,  setCalYear]  = useState(() => {
-    if (currentStart) return parseInt(currentStart.split('-')[0]);
-    return todayYear;
-  });
-  const [calMonth, setCalMonth] = useState(() => {
-    if (currentStart) return parseInt(currentStart.split('-')[1]);
-    return todayMonth;
-  });
-  const [stagingStart, setStagingStart] = useState(currentStart || '');
-  const [stagingEnd,   setStagingEnd]   = useState(currentEnd   || '');
-  const [hoverDate,    setHoverDate]    = useState('');
-  const [selectStep,   setSelectStep]   = useState('start');
-
-  const navMonth = (dir) => {
-    let nm = calMonth + dir, ny = calYear;
-    if (nm < 1)  { nm = 12; ny--; }
-    if (nm > 12) { nm = 1;  ny++; }
-    setCalMonth(nm); setCalYear(ny);
-  };
-
-  const applyPreset = (start, end) => {
-    setStagingStart(start);
-    setStagingEnd(end);
-    setSelectStep('start');
-    const [py, pm] = start.split('-');
-    setCalYear(parseInt(py)); setCalMonth(parseInt(pm));
-  };
-
-  const presets = [
-    {
-      label: '1st – 15th',
-      fn: () => applyPreset(isoDate(calYear, calMonth, 1), isoDate(calYear, calMonth, 15)),
-    },
-    {
-      label: '16th – End',
-      fn: () => applyPreset(isoDate(calYear, calMonth, 16), isoDate(calYear, calMonth, daysIn(calYear, calMonth))),
-    },
-    {
-      label: 'Full Month',
-      fn: () => applyPreset(isoDate(calYear, calMonth, 1), isoDate(calYear, calMonth, daysIn(calYear, calMonth))),
-    },
-    {
-      label: 'Last 7d',
-      fn: () => {
-        const end   = new Date(); end.setDate(end.getDate());
-        const start = new Date(); start.setDate(start.getDate() - 6);
-        const es = end.toISOString().split('T')[0];
-        const ss = start.toISOString().split('T')[0];
-        applyPreset(ss, es);
-      },
-    },
-    {
-      label: 'Last 14d',
-      fn: () => {
-        const end   = new Date();
-        const start = new Date(); start.setDate(start.getDate() - 13);
-        const es = end.toISOString().split('T')[0];
-        const ss = start.toISOString().split('T')[0];
-        applyPreset(ss, es);
-      },
-    },
-  ];
-
-  const handleDayClick = (iso) => {
-    if (selectStep === 'start') {
-      setStagingStart(iso);
-      setStagingEnd('');
-      setSelectStep('end');
-    } else {
-      if (iso < stagingStart) {
-        // Clicked before start — flip
-        setStagingEnd(stagingStart);
-        setStagingStart(iso);
-      } else {
-        setStagingEnd(iso);
-      }
-      setSelectStep('start');
-    }
-  };
-
-  const effectiveEnd = stagingEnd || hoverDate;
-
-  const dayClass = (iso) => {
-    const isStart  = iso === stagingStart;
-    const isEnd    = iso === stagingEnd;
-    const inRange  = stagingStart && effectiveEnd && iso > stagingStart && iso < effectiveEnd;
-    const isToday  = iso === today;
-
-    let cls = 'relative flex items-center justify-center w-8 h-8 text-xs font-medium cursor-pointer select-none transition-all ';
-    if (isStart || isEnd) {
-      cls += 'bg-accent-lime text-bg-primary rounded-full font-bold shadow-glow-lime z-10 ';
-    } else if (inRange) {
-      cls += 'bg-accent-lime/20 text-accent-lime rounded-none ';
-    } else {
-      cls += 'text-text-secondary hover:bg-white/10 hover:text-text-primary rounded-full ';
-    }
-    if (isToday && !isStart && !isEnd) cls += 'ring-1 ring-accent-cyan/50 rounded-full ';
-    return cls;
-  };
-
-  // Build calendar grid
-  const totalDays = daysIn(calYear, calMonth);
-  const startOffset = firstDay(calYear, calMonth);
-  const cells = [];
-  for (let i = 0; i < startOffset; i++) cells.push(null);
-  for (let d = 1; d <= totalDays; d++) cells.push(d);
-
-  const canApply = stagingStart && stagingEnd && stagingStart <= stagingEnd;
-
-  return (
-    <div className="neu-card shadow-2xl w-[340px] overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center justify-between px-lg py-md border-b border-white/8">
-        <div className="flex items-center gap-sm">
-          <Calendar size={14} className="text-accent-lime" />
-          <span className="text-xs font-bold uppercase tracking-widest text-text-tertiary">Select Pay Period</span>
-        </div>
-        <button onClick={onClose} className="text-text-tertiary hover:text-text-primary transition-colors p-xs rounded-lg hover:bg-white/5">
-          <X size={14} />
-        </button>
-      </div>
-
-      {/* Quick presets */}
-      <div className="px-lg pt-md pb-sm">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-text-tertiary/60 mb-sm">Quick Select</p>
-        <div className="flex flex-wrap gap-xs">
-          {presets.map(p => (
-            <button key={p.label} onClick={p.fn}
-              className="px-sm py-xs text-[11px] font-semibold rounded-lg border border-white/10 text-text-secondary hover:text-accent-lime hover:border-accent-lime/40 hover:bg-accent-lime/5 transition-all">
-              {p.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Month navigator */}
-      <div className="flex items-center justify-between px-lg py-sm">
-        <button onClick={() => navMonth(-1)} className="p-xs text-text-tertiary hover:text-text-primary transition-colors rounded-lg hover:bg-white/5">
-          <ChevronLeft size={14} />
-        </button>
-        <span className="text-sm font-bold text-text-primary">{MONTH_NAMES[calMonth - 1]} {calYear}</span>
-        <button onClick={() => navMonth(1)} className="p-xs text-text-tertiary hover:text-text-primary transition-colors rounded-lg hover:bg-white/5">
-          <ChevronRight size={14} />
-        </button>
-      </div>
-
-      {/* Calendar grid */}
-      <div className="px-lg pb-md">
-        {/* Day-of-week labels */}
-        <div className="grid grid-cols-7 mb-xs">
-          {DAY_LABELS.map(d => (
-            <div key={d} className="flex items-center justify-center w-8 h-6 text-[10px] font-bold text-text-tertiary/50 uppercase">{d}</div>
-          ))}
-        </div>
-        {/* Day cells */}
-        <div className="grid grid-cols-7 gap-y-xs">
-          {cells.map((day, idx) => {
-            if (!day) return <div key={`e-${idx}`} className="w-8 h-8" />;
-            const iso = isoDate(calYear, calMonth, day);
-            return (
-              <div key={iso} className={dayClass(iso)}
-                onClick={() => handleDayClick(iso)}
-                onMouseEnter={() => selectStep === 'end' && stagingStart && setHoverDate(iso)}
-                onMouseLeave={() => setHoverDate('')}>
-                {day}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Selection summary */}
-      <div className="mx-lg mb-md neu-card-inset rounded-xl px-md py-sm">
-        <div className="flex items-center justify-between text-xs">
-          <div>
-            <p className="text-[10px] text-text-tertiary uppercase tracking-widest mb-[2px]">From</p>
-            <p className={`font-mono font-semibold ${stagingStart ? 'text-accent-lime' : 'text-text-tertiary/40'}`}>
-              {stagingStart ? fullDateLabel(stagingStart) : 'Click a day'}
-            </p>
-          </div>
-          <ChevronRight size={12} className="text-text-tertiary/30 mx-sm" />
-          <div className="text-right">
-            <p className="text-[10px] text-text-tertiary uppercase tracking-widest mb-[2px]">To</p>
-            <p className={`font-mono font-semibold ${stagingEnd ? 'text-accent-cyan' : 'text-text-tertiary/40'}`}>
-              {stagingEnd ? fullDateLabel(stagingEnd) : (stagingStart ? 'Click end date' : '—')}
-            </p>
-          </div>
-        </div>
-        {stagingStart && stagingEnd && (
-          <p className="text-[10px] text-text-tertiary/50 mt-xs text-center">
-            {(() => {
-              const d1 = new Date(stagingStart), d2 = new Date(stagingEnd);
-              const days = Math.round((d2 - d1) / 86400000) + 1;
-              return `${days} day${days === 1 ? '' : 's'}`;
-            })()}
-          </p>
-        )}
-      </div>
-
-      {/* Footer buttons */}
-      <div className="flex items-center gap-sm px-lg pb-lg">
-        <button onClick={onClose}
-          className="flex-1 py-sm neu-btn rounded-xl text-xs text-text-secondary hover:text-text-primary transition-all">
-          Cancel
-        </button>
-        <button
-          disabled={!canApply}
-          onClick={() => onApply(stagingStart, stagingEnd)}
-          className="flex-1 py-sm bg-gradient-to-r from-accent-lime to-accent-cyan text-bg-primary font-bold rounded-xl text-xs transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:opacity-90 flex items-center justify-center gap-xs">
-          <Check size={12} /> Apply Period
-        </button>
-      </div>
-    </div>
-  );
-};
-
-// ─── Main Component ──────────────────────────────────────────────────────────
+// â”€â”€â”€ Main Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const Payroll = () => {
   const agencies          = useStore(state => state.agencies);
@@ -322,7 +87,7 @@ const Payroll = () => {
 
   const { periodStart, periodEnd } = payrollPeriod;
 
-  // ── UI state ───────────────────────────────────────────────────────────────
+  // â”€â”€ UI state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const [selectedAgency,  setSelectedAgency]  = useState(null);
   const [selectedTeam,    setSelectedTeam]    = useState(null);
   const [generating,      setGenerating]      = useState(false);
@@ -340,11 +105,11 @@ const Payroll = () => {
   const pickerBtnRef = useRef(null);
   const pickerDropRef = useRef(null);
 
-  // ── Inline editing ─────────────────────────────────────────────────────────
+  // â”€â”€ Inline editing â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const [editing,      setEditing]      = useState(null); // { recordId, field }
   const [pendingValue, setPendingValue] = useState('');
 
-  // ── Effects ────────────────────────────────────────────────────────────────
+  // â”€â”€ Effects â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
     loadPayrollRecords(periodStart, periodEnd);
     setHistoryPeriods(db.getPayrollHistory());
@@ -367,7 +132,7 @@ const Payroll = () => {
     };
   }, [pickerOpen]);
 
-  // ── Inline edit handlers ───────────────────────────────────────────────────
+  // â”€â”€ Inline edit handlers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const startEdit = (recordId, field, currentValue) => {
     setEditing({ recordId, field });
     setPendingValue(String(currentValue ?? ''));
@@ -381,14 +146,14 @@ const Payroll = () => {
   };
   const cancelEdit = () => { setEditing(null); setPendingValue(''); };
 
-  // ── Period picker apply ────────────────────────────────────────────────────
+  // â”€â”€ Period picker apply â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const applyPeriod = (start, end) => {
     setPickerOpen(false);
     setPayrollPeriod(start, end);
     loadPayrollRecords(start, end);
   };
 
-  // ── Generate ───────────────────────────────────────────────────────────────
+  // â”€â”€ Generate â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const handleGenerate = () => {
     const hasExisting = payrollRecords.length > 0;
     if (hasExisting && !showConfirmGen) { setShowConfirmGen(true); return; }
@@ -404,7 +169,7 @@ const Payroll = () => {
   // Reset team filter when agency changes
   const handleSetAgency = (id) => { setSelectedAgency(id); setSelectedTeam(null); };
 
-  // ── Derived data ───────────────────────────────────────────────────────────
+  // â”€â”€ Derived data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const agencyTeams = useMemo(() =>
     teams.filter(t => selectedAgency === null ? true : t.agency_id === selectedAgency),
     [teams, selectedAgency]
@@ -443,7 +208,7 @@ const Payroll = () => {
     updatePayrollEntry(record.id, { status: order[(order.indexOf(record.status) + 1) % order.length] });
   };
 
-  // ── History management ─────────────────────────────────────────────────────
+  // â”€â”€ History management â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const toggleHistorySelect = (key) => {
     setHistorySelected(prev => {
       const next = new Set(prev);
@@ -485,26 +250,26 @@ const Payroll = () => {
     setConfirmDelete({ type: 'bulk', payload: toDelete });
   };
 
-  // ── History navigation ─────────────────────────────────────────────────────
+  // â”€â”€ History navigation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const navigateToPeriod = (p) => {
     setPayrollPeriod(p.period_start, p.period_end);
     loadPayrollRecords(p.period_start, p.period_end);
   };
 
-  // ── Export ─────────────────────────────────────────────────────────────────
+  // â”€â”€ Export â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const buildExportText = () => {
     const agencyName = selectedAgency ? agencies.find(a => a.id === selectedAgency)?.name : 'All Agencies';
     const lines = [
-      `PAYROLL REPORT — ${periodLabel(periodStart, periodEnd)}`,
+      `PAYROLL REPORT â€” ${periodLabel(periodStart, periodEnd)}`,
       `Generated: ${new Date().toLocaleDateString()}`,
       `Agency: ${agencyName}`,
-      '─'.repeat(52), '',
+      'â”€'.repeat(52), '',
     ];
     if (creatorRecords.length > 0) {
       lines.push('CREATORS');
       creatorRecords.forEach(r => {
         lines.push(`  ${getCreatorName(r.person_id)}: ${fmt(r.net_pay)}  [${r.status}]`);
-        lines.push(`    Total Sales: ${fmt(r.base_revenue)}  ×  ${r.commission_rate}%  =  ${fmt(r.commission_amount)}`);
+        lines.push(`    Total Sales: ${fmt(r.base_revenue)}  Ã—  ${r.commission_rate}%  =  ${fmt(r.commission_amount)}`);
         if (r.deductions > 0) lines.push(`    Deductions: -${fmt(r.deductions)}`);
         if (r.bonuses > 0) lines.push(`    Bonuses: +${fmt(r.bonuses)}`);
       });
@@ -515,15 +280,15 @@ const Payroll = () => {
       chatterRecords.forEach(r => {
         const role = getChatterRole(r.person_id);
         lines.push(`  ${getChatterName(r.person_id)}${role ? ` (${role})` : ''}: ${fmt(r.net_pay)}  [${r.status}]`);
-        if (r.hourly_rate > 0) lines.push(`    Hourly: $${r.hourly_rate}/hr × ${r.hours_worked}h = ${fmt(r.hourly_amount)}`);
-        if (r.commission_rate > 0) lines.push(`    Commission: ${r.commission_rate}% × ${fmt(r.base_revenue)} = ${fmt(r.commission_amount)}`);
+        if (r.hourly_rate > 0) lines.push(`    Hourly: $${r.hourly_rate}/hr Ã— ${r.hours_worked}h = ${fmt(r.hourly_amount)}`);
+        if (r.commission_rate > 0) lines.push(`    Commission: ${r.commission_rate}% Ã— ${fmt(r.base_revenue)} = ${fmt(r.commission_amount)}`);
         if (r.deductions > 0) lines.push(`    Deductions: -${fmt(r.deductions)}`);
         if (r.bonuses > 0) lines.push(`    Bonuses: +${fmt(r.bonuses)}`);
         if (r.notes) lines.push(`    Note: ${r.notes}`);
       });
       lines.push('');
     }
-    lines.push('─'.repeat(52));
+    lines.push('â”€'.repeat(52));
     lines.push(`TOTAL PAYOUT: ${fmt(totalNet)}`);
     lines.push(`  Creators: ${fmt(creatorNet)}  |  Chatters: ${fmt(chatterNet)}`);
     return lines.join('\n');
@@ -564,7 +329,7 @@ const Payroll = () => {
     setTimeout(() => document.getElementById('payroll-print-style')?.remove(), 1000);
   };
 
-  // ── Editable cell ──────────────────────────────────────────────────────────
+  // â”€â”€ Editable cell â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const EditableCell = ({ record, field, display, color = 'text-text-secondary', step = '0.01' }) => {
     const isActive = editing?.recordId === record.id && editing?.field === field;
     if (isActive) return (
@@ -585,7 +350,7 @@ const Payroll = () => {
     );
   };
 
-  // ── Row renderers ──────────────────────────────────────────────────────────
+  // â”€â”€ Row renderers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const renderCreatorRow = record => {
     const name    = getCreatorName(record.person_id);
     const initials = name.slice(0, 2).toUpperCase();
@@ -609,10 +374,10 @@ const Payroll = () => {
           <span className="font-mono text-xs text-text-secondary">{fmt(record.commission_amount)}</span>
         </td>
         <td className="text-right px-3 py-3">
-          <EditableCell record={record} field="deductions" display={record.deductions > 0 ? `-${fmt(record.deductions)}` : '—'} color={record.deductions > 0 ? 'text-accent-pink' : 'text-white/20'} />
+          <EditableCell record={record} field="deductions" display={record.deductions > 0 ? `-${fmt(record.deductions)}` : 'â€”'} color={record.deductions > 0 ? 'text-accent-pink' : 'text-white/20'} />
         </td>
         <td className="text-right px-3 py-3">
-          <EditableCell record={record} field="bonuses" display={record.bonuses > 0 ? `+${fmt(record.bonuses)}` : '—'} color={record.bonuses > 0 ? 'text-accent-lime' : 'text-white/20'} />
+          <EditableCell record={record} field="bonuses" display={record.bonuses > 0 ? `+${fmt(record.bonuses)}` : 'â€”'} color={record.bonuses > 0 ? 'text-accent-lime' : 'text-white/20'} />
         </td>
         <td className="text-right px-3 py-3">
           <span className="font-bold text-accent-cyan font-mono">{fmt(record.net_pay)}</span>
@@ -649,25 +414,25 @@ const Payroll = () => {
           <EditableCell record={record} field="base_revenue" display={fmt(record.base_revenue)} />
         </td>
         <td className="text-right px-3 py-3">
-          <EditableCell record={record} field="hourly_rate" display={record.hourly_rate > 0 ? `$${record.hourly_rate}/hr` : '—'} color={record.hourly_rate > 0 ? 'text-accent-orange' : 'text-white/20'} step="0.01" />
+          <EditableCell record={record} field="hourly_rate" display={record.hourly_rate > 0 ? `$${record.hourly_rate}/hr` : 'â€”'} color={record.hourly_rate > 0 ? 'text-accent-orange' : 'text-white/20'} step="0.01" />
         </td>
         <td className="text-right px-3 py-3">
-          <EditableCell record={record} field="hours_worked" display={record.hours_worked > 0 ? `${record.hours_worked}h` : '—'} color={record.hours_worked > 0 ? 'text-accent-orange' : 'text-white/20'} step="0.5" />
+          <EditableCell record={record} field="hours_worked" display={record.hours_worked > 0 ? `${record.hours_worked}h` : 'â€”'} color={record.hours_worked > 0 ? 'text-accent-orange' : 'text-white/20'} step="0.5" />
         </td>
         <td className="text-right px-3 py-3">
-          <span className="font-mono text-xs text-accent-orange/80">{record.hourly_amount > 0 ? fmt(record.hourly_amount) : '—'}</span>
+          <span className="font-mono text-xs text-accent-orange/80">{record.hourly_amount > 0 ? fmt(record.hourly_amount) : 'â€”'}</span>
         </td>
         <td className="text-right px-3 py-3">
           <EditableCell record={record} field="commission_rate" display={`${record.commission_rate || 0}%`} color="text-accent-lime" step="0.01" />
         </td>
         <td className="text-right px-3 py-3">
-          <span className="font-mono text-xs text-accent-lime/80">{record.commission_amount > 0 ? fmt(record.commission_amount) : '—'}</span>
+          <span className="font-mono text-xs text-accent-lime/80">{record.commission_amount > 0 ? fmt(record.commission_amount) : 'â€”'}</span>
         </td>
         <td className="text-right px-3 py-3">
-          <EditableCell record={record} field="deductions" display={record.deductions > 0 ? `-${fmt(record.deductions)}` : '—'} color={record.deductions > 0 ? 'text-accent-pink' : 'text-white/20'} />
+          <EditableCell record={record} field="deductions" display={record.deductions > 0 ? `-${fmt(record.deductions)}` : 'â€”'} color={record.deductions > 0 ? 'text-accent-pink' : 'text-white/20'} />
         </td>
         <td className="text-right px-3 py-3">
-          <EditableCell record={record} field="bonuses" display={record.bonuses > 0 ? `+${fmt(record.bonuses)}` : '—'} color={record.bonuses > 0 ? 'text-accent-lime' : 'text-white/20'} />
+          <EditableCell record={record} field="bonuses" display={record.bonuses > 0 ? `+${fmt(record.bonuses)}` : 'â€”'} color={record.bonuses > 0 ? 'text-accent-lime' : 'text-white/20'} />
         </td>
         <td className="text-right px-3 py-3">
           <span className="font-bold text-accent-cyan font-mono">{fmt(record.net_pay)}</span>
@@ -683,7 +448,7 @@ const Payroll = () => {
     );
   };
 
-  // ── Confirm modal content ──────────────────────────────────────────────────
+  // â”€â”€ Confirm modal content â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const confirmModalContent = () => {
     if (!confirmDelete) return null;
     if (confirmDelete.type === 'record') {
@@ -695,7 +460,7 @@ const Payroll = () => {
       const p = confirmDelete.payload;
       return {
         title: 'Delete Period?',
-        body: `Delete all ${p.record_count} payroll records for ${parseDateLabel(p.period_start)}–${parseDateLabel(p.period_end)}? This cannot be undone.`,
+        body: `Delete all ${p.record_count} payroll records for ${parseDateLabel(p.period_start)}â€“${parseDateLabel(p.period_end)}? This cannot be undone.`,
       };
     }
     if (confirmDelete.type === 'bulk') {
@@ -708,11 +473,11 @@ const Payroll = () => {
     }
   };
 
-  // ── Render ─────────────────────────────────────────────────────────────────
+  // â”€â”€ Render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   return (
     <div className="p-lg h-full overflow-auto space-y-lg">
 
-      {/* ── Header ── */}
+      {/* â”€â”€ Header â”€â”€ */}
       <div className="flex items-center justify-between flex-wrap gap-md">
         <div className="flex items-center gap-md">
           <DollarSign size={28} className="text-accent-lime" />
@@ -753,13 +518,13 @@ const Payroll = () => {
               {generating
                 ? <div className="w-4 h-4 border-2 border-bg-primary border-t-transparent rounded-full animate-spin" />
                 : <Zap size={14} />}
-              {generated ? '✓ Generated!' : 'Generate Payroll'}
+              {generated ? 'âœ“ Generated!' : 'Generate Payroll'}
             </button>
           )}
         </div>
       </div>
 
-      {/* ── Period bar + picker ── */}
+      {/* â”€â”€ Period bar + picker â”€â”€ */}
       <div>
         <button
           ref={pickerBtnRef}
@@ -803,17 +568,17 @@ const Payroll = () => {
         )}
 
         <p className="text-xs text-text-tertiary/40 mt-sm hidden sm:block">
-          Click any value in the table to edit · Enter to save · Esc to cancel
+          Click any value in the table to edit Â· Enter to save Â· Esc to cancel
         </p>
       </div>
 
-      {/* ── Export panel ── */}
+      {/* â”€â”€ Export panel â”€â”€ */}
       {showExport && (
         <div className="neu-card p-lg flex items-center gap-md animate-slide-up flex-wrap">
           <p className="text-sm text-text-secondary flex-1">{periodLabel(periodStart, periodEnd)}</p>
           <button onClick={handleCopy}
             className="flex items-center gap-xs px-lg py-sm neu-btn rounded-lg text-sm text-text-secondary hover:text-text-primary hover:border-accent-cyan/30 transition-all">
-            <Copy size={14} />{copied ? '✓ Copied!' : 'Copy to clipboard'}
+            <Copy size={14} />{copied ? 'âœ“ Copied!' : 'Copy to clipboard'}
           </button>
           <button onClick={handlePrint}
             className="flex items-center gap-xs px-lg py-sm neu-btn rounded-lg text-sm text-text-secondary hover:text-text-primary hover:border-accent-cyan/30 transition-all">
@@ -822,7 +587,7 @@ const Payroll = () => {
         </div>
       )}
 
-      {/* ── History ── */}
+      {/* â”€â”€ History â”€â”€ */}
       {historyPeriods.length > 0 && (
         <div className="neu-card overflow-hidden">
           {/* History header */}
@@ -879,12 +644,12 @@ const Payroll = () => {
                       </button>
                     )}
 
-                    {/* Period info — clickable to navigate */}
+                    {/* Period info â€” clickable to navigate */}
                     <button onClick={() => !historyManage && navigateToPeriod(p)}
                       className={`flex-1 flex items-center gap-lg text-left ${historyManage ? 'pointer-events-none' : ''}`}>
                       <div className="min-w-[130px]">
                         <p className={`text-sm font-semibold ${isActive ? 'text-accent-lime' : 'text-text-primary'}`}>
-                          {parseDateLabel(p.period_start)} – {parseDateLabel(p.period_end)}, {p.period_year}
+                          {parseDateLabel(p.period_start)} â€“ {parseDateLabel(p.period_end)}, {p.period_year}
                         </p>
                       </div>
                       <div className="flex items-center gap-lg text-xs text-text-tertiary">
@@ -896,7 +661,7 @@ const Payroll = () => {
                       )}
                     </button>
 
-                    {/* Individual delete — only in normal mode, on hover */}
+                    {/* Individual delete â€” only in normal mode, on hover */}
                     {!historyManage && (
                       <button onClick={() => confirmDeletePeriod(p)}
                         className="opacity-0 group-hover:opacity-100 p-xs text-text-tertiary hover:text-accent-pink rounded-lg transition-all flex-shrink-0">
@@ -911,7 +676,7 @@ const Payroll = () => {
         </div>
       )}
 
-      {/* ── Agency tabs ── */}
+      {/* â”€â”€ Agency tabs â”€â”€ */}
       {agencies.length > 1 && (
         <div className="flex items-center gap-sm flex-wrap">
           <button onClick={() => handleSetAgency(null)}
@@ -934,7 +699,7 @@ const Payroll = () => {
         </div>
       )}
 
-      {/* ── Team filter row ── */}
+      {/* â”€â”€ Team filter row â”€â”€ */}
       {agencyTeams.length > 0 && (
         <div className="flex items-center gap-sm flex-wrap">
           <span className="text-xs text-text-tertiary/60 font-semibold uppercase tracking-widest mr-xs">Team</span>
@@ -960,17 +725,17 @@ const Payroll = () => {
         </div>
       )}
 
-      {/* ── Stat cards ── */}
+      {/* â”€â”€ Stat cards â”€â”€ */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-md">
-        <StatCard label="Total Payout"  value={fmt(totalNet)}     sub={`${visibleRecords.length} records`}        color="#00ff88" icon={DollarSign} />
-        <StatCard label="Creators"      value={fmt(creatorNet)}   sub={`${creatorRecords.length} creators`}        color="#00d9ff" icon={TrendingUp} />
-        <StatCard label="Chatters"      value={fmt(chatterNet)}   sub={`${chatterRecords.length} chatters`}        color="#9d4edd" icon={Users} />
+        <StatCard label="Total Payout"  value={fmt(totalNet)}     sub={`${visibleRecords.length} records`}        color="#00ff88" icon={DollarSign} mono />
+        <StatCard label="Creators"      value={fmt(creatorNet)}   sub={`${creatorRecords.length} creators`}        color="#00d9ff" icon={TrendingUp} mono />
+        <StatCard label="Chatters"      value={fmt(chatterNet)}   sub={`${chatterRecords.length} chatters`}        color="#9d4edd" icon={Users} mono />
         <StatCard label="Status"        value={`${statusCounts.paid || 0} paid`}
-          sub={`${statusCounts.pending || 0} pending · ${statusCounts.approved || 0} approved`}
+          sub={`${statusCounts.pending || 0} pending Â· ${statusCounts.approved || 0} approved`}
           color="#ff6b35" icon={Check} />
       </div>
 
-      {/* ── Tables ── */}
+      {/* â”€â”€ Tables â”€â”€ */}
       {visibleRecords.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-2xl neu-card-inset rounded-2xl text-center">
           <DollarSign size={36} className="text-text-tertiary/20 mb-md" />
@@ -987,7 +752,7 @@ const Payroll = () => {
               <div className="px-lg py-sm border-b border-white/8 bg-bg-primary flex items-center gap-sm">
                 <TrendingUp size={14} className="text-accent-cyan" />
                 <span className="text-xs font-bold uppercase tracking-widest text-accent-cyan/70">
-                  {selectedTeamObj ? `${selectedTeamObj.name} — ` : ''}Creators ({creatorRecords.length})
+                  {selectedTeamObj ? `${selectedTeamObj.name} â€” ` : ''}Creators ({creatorRecords.length})
                 </span>
               </div>
               <div className="overflow-x-auto">
@@ -1024,7 +789,7 @@ const Payroll = () => {
               <div className="px-lg py-sm border-b border-white/8 bg-bg-primary flex items-center gap-sm">
                 <Users size={14} className="text-accent-purple" />
                 <span className="text-xs font-bold uppercase tracking-widest text-accent-purple/70">
-                  {selectedTeamObj ? `${selectedTeamObj.name} — ` : ''}Chatters &amp; Managers ({chatterRecords.length})
+                  {selectedTeamObj ? `${selectedTeamObj.name} â€” ` : ''}Chatters &amp; Managers ({chatterRecords.length})
                 </span>
               </div>
               <div className="overflow-x-auto">
@@ -1068,7 +833,7 @@ const Payroll = () => {
         </div>
       )}
 
-      {/* ── Confirm modal ── */}
+      {/* â”€â”€ Confirm modal â”€â”€ */}
       {confirmDelete && (() => {
         const content = confirmModalContent();
         return (

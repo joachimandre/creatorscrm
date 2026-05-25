@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, X } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import Modal from './Modal';
 import Button from './Button';
 import * as db from '../db/index.js';
@@ -34,12 +34,8 @@ const QuickCaptureButton = () => {
         title="Quick Capture"
         footer={
           <>
-            <Button variant="secondary" onClick={() => setIsOpen(false)} size="sm">
-              Cancel
-            </Button>
-            <Button onClick={handleCapture} size="sm">
-              Save
-            </Button>
+            <Button variant="secondary" onClick={() => setIsOpen(false)} size="sm">Cancel</Button>
+            <Button onClick={handleCapture} size="sm">Save</Button>
           </>
         }
       >
@@ -53,7 +49,7 @@ const QuickCaptureButton = () => {
             autoFocus
             placeholder="What's on your mind?"
             rows="5"
-            className="w-full bg-surface-0 border border-surface-2 rounded-lg px-lg py-sm text-text-primary placeholder-text-tertiary focus:border-accent-primary focus:outline-none resize-none"
+            className="w-full resize-none"
           />
         </div>
       </Modal>

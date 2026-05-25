@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useStore } from '../../store.js';
 import { Building2, Plus, UserPlus } from 'lucide-react';
-import Card from '../Card';
 import Button from '../Button';
 import Modal from '../Modal';
 import * as db from '../../db/index.js';
@@ -41,19 +40,13 @@ const AgencyCreatorDirectory = () => {
       parseFloat(creatorFormData.weeklyGoal),
       parseFloat(creatorFormData.monthlyGoal)
     );
-    setCreatorFormData({
-      agencyId: '',
-      stageName: '',
-      dailyGoal: 0,
-      weeklyGoal: 0,
-      monthlyGoal: 0,
-    });
+    setCreatorFormData({ agencyId: '', stageName: '', dailyGoal: 0, weeklyGoal: 0, monthlyGoal: 0 });
     setIsCreatorModalOpen(false);
   };
 
   return (
     <>
-      <Card>
+      <div className="neu-card p-lg">
         <div className="flex items-center justify-between mb-lg">
           <h2 className="text-lg font-semibold text-text-primary flex items-center gap-sm">
             <Building2 size={20} />
@@ -78,7 +71,7 @@ const AgencyCreatorDirectory = () => {
             agencies.map(agency => {
               const agencyCreators = creators.filter(c => c.agency_id === agency.id && c.is_active);
               return (
-                <div key={agency.id} className="bg-surface-2 rounded-lg p-md">
+                <div key={agency.id} className="neu-card-inset rounded-xl p-md">
                   <div className="flex items-center justify-between mb-sm">
                     <h3 className="font-semibold text-text-primary text-sm">{agency.name}</h3>
                     <Button
@@ -100,10 +93,10 @@ const AgencyCreatorDirectory = () => {
                           key={creator.id}
                           onClick={() => setSelectedCreator(creator.id)}
                           className={`
-                            w-full text-left px-sm py-xs rounded-md text-sm transition-all
+                            w-full text-left px-sm py-xs rounded-lg text-sm transition-all
                             ${selectedCreatorId === creator.id
-                              ? 'bg-accent-primary text-white font-medium'
-                              : 'text-text-secondary hover:text-text-primary hover:bg-surface-1'
+                              ? 'bg-accent-cyan/15 text-accent-cyan font-semibold'
+                              : 'text-text-secondary hover:text-text-primary hover:bg-white/5'
                             }
                           `}
                         >
@@ -117,7 +110,7 @@ const AgencyCreatorDirectory = () => {
             })
           )}
         </div>
-      </Card>
+      </div>
 
       {/* Add Agency Modal */}
       <Modal
@@ -126,38 +119,30 @@ const AgencyCreatorDirectory = () => {
         title="Add Agency"
         footer={
           <>
-            <Button variant="secondary" onClick={() => setIsAgencyModalOpen(false)} size="sm">
-              Cancel
-            </Button>
-            <Button onClick={handleAddAgency} size="sm">
-              Add
-            </Button>
+            <Button variant="secondary" onClick={() => setIsAgencyModalOpen(false)} size="sm">Cancel</Button>
+            <Button onClick={handleAddAgency} size="sm">Add</Button>
           </>
         }
       >
         <div className="space-y-md">
           <div>
-            <label className="block text-sm font-medium text-text-secondary mb-sm">
-              Agency Name
-            </label>
+            <label className="block text-sm font-medium text-text-secondary mb-sm">Agency Name</label>
             <input
               type="text"
               value={agencyFormData.name}
               onChange={(e) => setAgencyFormData({ ...agencyFormData, name: e.target.value })}
               placeholder="e.g., Elite Talent Agency"
-              className="w-full bg-surface-0 border border-surface-2 rounded-lg px-lg py-sm text-text-primary placeholder-text-tertiary focus:border-accent-primary focus:outline-none"
+              className="w-full"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-text-secondary mb-sm">
-              Notes
-            </label>
+            <label className="block text-sm font-medium text-text-secondary mb-sm">Notes</label>
             <textarea
               value={agencyFormData.notes}
               onChange={(e) => setAgencyFormData({ ...agencyFormData, notes: e.target.value })}
               placeholder="Optional notes about this agency"
               rows="2"
-              className="w-full bg-surface-0 border border-surface-2 rounded-lg px-lg py-sm text-text-primary placeholder-text-tertiary focus:border-accent-primary focus:outline-none resize-none"
+              className="w-full resize-none"
             />
           </div>
         </div>
@@ -170,82 +155,66 @@ const AgencyCreatorDirectory = () => {
         title="Add Creator"
         footer={
           <>
-            <Button variant="secondary" onClick={() => setIsCreatorModalOpen(false)} size="sm">
-              Cancel
-            </Button>
-            <Button onClick={handleAddCreator} size="sm">
-              Add
-            </Button>
+            <Button variant="secondary" onClick={() => setIsCreatorModalOpen(false)} size="sm">Cancel</Button>
+            <Button onClick={handleAddCreator} size="sm">Add</Button>
           </>
         }
       >
         <div className="space-y-md">
           <div>
-            <label className="block text-sm font-medium text-text-secondary mb-sm">
-              Agency
-            </label>
+            <label className="block text-sm font-medium text-text-secondary mb-sm">Agency</label>
             <select
               value={creatorFormData.agencyId}
               onChange={(e) => setCreatorFormData({ ...creatorFormData, agencyId: e.target.value })}
-              className="w-full bg-surface-0 border border-surface-2 rounded-lg px-lg py-sm text-text-primary focus:border-accent-primary focus:outline-none"
+              className="w-full"
             >
               <option value="">Select an agency</option>
               {agencies.map(agency => (
-                <option key={agency.id} value={agency.id}>
-                  {agency.name}
-                </option>
+                <option key={agency.id} value={agency.id}>{agency.name}</option>
               ))}
             </select>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-text-secondary mb-sm">
-              Stage Name
-            </label>
+            <label className="block text-sm font-medium text-text-secondary mb-sm">Stage Name</label>
             <input
               type="text"
               value={creatorFormData.stageName}
               onChange={(e) => setCreatorFormData({ ...creatorFormData, stageName: e.target.value })}
               placeholder="Creator's stage name"
-              className="w-full bg-surface-0 border border-surface-2 rounded-lg px-lg py-sm text-text-primary placeholder-text-tertiary focus:border-accent-primary focus:outline-none"
+              className="w-full"
             />
           </div>
 
           <div className="grid grid-cols-3 gap-sm">
             <div>
-              <label className="block text-xs font-medium text-text-secondary mb-xs">
-                Daily Goal
-              </label>
+              <label className="block text-xs font-medium text-text-secondary mb-xs">Daily Goal</label>
               <input
                 type="number"
                 value={creatorFormData.dailyGoal}
                 onChange={(e) => setCreatorFormData({ ...creatorFormData, dailyGoal: e.target.value })}
                 placeholder="0"
-                className="w-full bg-surface-0 border border-surface-2 rounded-lg px-sm py-xs text-text-primary font-mono text-sm focus:border-accent-primary focus:outline-none"
+                className="w-full"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-text-secondary mb-xs">
-                Weekly Goal
-              </label>
+              <label className="block text-xs font-medium text-text-secondary mb-xs">Weekly Goal</label>
               <input
                 type="number"
                 value={creatorFormData.weeklyGoal}
                 onChange={(e) => setCreatorFormData({ ...creatorFormData, weeklyGoal: e.target.value })}
                 placeholder="0"
-                className="w-full bg-surface-0 border border-surface-2 rounded-lg px-sm py-xs text-text-primary font-mono text-sm focus:border-accent-primary focus:outline-none"
+                className="w-full"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-text-secondary mb-xs">
-                Monthly Goal
-              </label>
+              <label className="block text-xs font-medium text-text-secondary mb-xs">Monthly Goal</label>
               <input
                 type="number"
                 value={creatorFormData.monthlyGoal}
                 onChange={(e) => setCreatorFormData({ ...creatorFormData, monthlyGoal: e.target.value })}
                 placeholder="0"
-                className="w-full bg-surface-0 border border-surface-2 rounded-lg px-sm py-xs text-text-primary font-mono text-sm focus:border-accent-primary focus:outline-none"
+                className="w-full"
               />
             </div>
           </div>

@@ -7,33 +7,10 @@ import {
 import { AreaChart, Area, ResponsiveContainer, Tooltip } from 'recharts';
 import AgencyRevenueChart from '../charts/AgencyRevenueChart.jsx';
 import CreatorGoalProgress from '../charts/CreatorGoalProgress.jsx';
+import StatCard from '../StatCard.jsx';
 import * as db from '../../db/index.js';
 
 const AGENCY_COLORS = ['#00d9ff', '#9d4edd', '#ff6b35', '#ff006e', '#00ff88'];
-
-// ─── Stat card ────────────────────────────────────────────────────────────────
-const StatCard = ({ icon: Icon, label, value, sub, chip, chipColor, color = '#00d9ff', pulse }) => (
-  <div className="neu-card p-lg relative overflow-hidden group">
-    <div className="absolute inset-0 opacity-5 group-hover:opacity-10 transition-opacity rounded-2xl"
-      style={{ background: `radial-gradient(circle at top right, ${color}, transparent 60%)` }} />
-    {/* Top row: icon badge (left) + chip (right) */}
-    <div className="flex items-start justify-between mb-md relative">
-      <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-        style={{ background: `linear-gradient(135deg, ${color}40, ${color}15)` }}>
-        <Icon size={20} style={{ color }} className={pulse ? 'animate-pulse' : ''} />
-      </div>
-      {chip && (
-        <span className="text-xs px-sm py-[3px] rounded-full font-semibold leading-none"
-          style={{ background: `${chipColor || color}25`, color: chipColor || color }}>
-          {chip}
-        </span>
-      )}
-    </div>
-    <p className="text-2xl font-black text-text-primary relative">{value}</p>
-    <p className="text-xs font-medium text-text-tertiary mt-xs relative">{label}</p>
-    {sub && <p className="text-xs text-text-tertiary/60 mt-xs relative">{sub}</p>}
-  </div>
-);
 
 // ─── Task pill ─────────────────────────────────────────────────────────────────
 const TaskPill = ({ task, color }) => (

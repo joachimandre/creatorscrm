@@ -1,12 +1,13 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+﻿import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import {
   Clock, DollarSign, TrendingUp, Wallet,
   ChevronLeft, ChevronRight, ChevronDown,
   Plus, Trash2, AlertTriangle, X, Pencil,
 } from 'lucide-react';
 import { useStore } from '../../store.js';
+import StatCard from '../StatCard.jsx';
 
-// ── Date helpers ──────────────────────────────────────────────────────────────
+// â”€â”€ Date helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const pad = n => String(n).padStart(2, '0');
 const isoDate = (y, m, d) => `${y}-${pad(m)}-${pad(d)}`;
 const daysIn  = (y, m) => new Date(y, m, 0).getDate();
@@ -37,8 +38,8 @@ const periodLabel = (s, e) => {
   if (!s || !e) return 'Select Period';
   const [sy, sm, sd] = s.split('-').map(Number);
   const [, em, ed]   = e.split('-').map(Number);
-  if (sm === em) return `${MONTH_SHORT[sm-1]} ${sd}–${ed}, ${sy}`;
-  return `${MONTH_SHORT[sm-1]} ${sd} – ${MONTH_SHORT[em-1]} ${ed}, ${sy}`;
+  if (sm === em) return `${MONTH_SHORT[sm-1]} ${sd}â€“${ed}, ${sy}`;
+  return `${MONTH_SHORT[sm-1]} ${sd} â€“ ${MONTH_SHORT[em-1]} ${ed}, ${sy}`;
 };
 
 const shiftPeriod = (start, end, dir) => {
@@ -49,146 +50,10 @@ const shiftPeriod = (start, end, dir) => {
   return { periodStart: fmt(s), periodEnd: fmt(e) };
 };
 
-// ── StatCard ──────────────────────────────────────────────────────────────────
-const StatCard = ({ label, value, sub, color, icon: Icon }) => (
-  <div className="neu-card p-lg relative overflow-hidden group transition-all">
-    <div className="absolute inset-0 opacity-5 group-hover:opacity-10 transition-opacity rounded-2xl"
-      style={{ background: `radial-gradient(circle at top right, ${color}, transparent 60%)` }} />
-    <div className="flex items-start justify-between mb-sm relative">
-      <p className="text-xs font-medium text-text-tertiary">{label}</p>
-      <div className="p-sm rounded-xl border border-white/8" style={{ background: `${color}15` }}>
-        <Icon size={14} style={{ color }} />
-      </div>
-    </div>
-    <p className="text-2xl font-black text-text-primary relative font-mono">{value}</p>
-    {sub && <p className="text-xs text-text-tertiary/60 mt-xs relative">{sub}</p>}
-  </div>
-);
+import CalendarPicker from '../CalendarPicker.jsx';
 
-// ── CalendarPicker ────────────────────────────────────────────────────────────
-const CalendarPicker = ({ periodStart, periodEnd, onSelect, onClose }) => {
-  const initY = periodStart ? parseInt(periodStart.split('-')[0]) : new Date().getFullYear();
-  const initM = periodStart ? parseInt(periodStart.split('-')[1]) : new Date().getMonth() + 1;
 
-  const [viewYear, setViewYear]  = useState(initY);
-  const [viewMonth, setViewMonth] = useState(initM);
-  const [selStart, setSelStart]  = useState(periodStart || '');
-  const [selEnd, setSelEnd]      = useState(periodEnd   || '');
-  const [hoverDate, setHoverDate] = useState('');
-  const [phase, setPhase]        = useState(0); // 0 = pick start, 1 = pick end
-
-  const prevMonth = () => { if (viewMonth === 1) { setViewYear(y=>y-1); setViewMonth(12); } else setViewMonth(m=>m-1); };
-  const nextMonth = () => { if (viewMonth === 12) { setViewYear(y=>y+1); setViewMonth(1); } else setViewMonth(m=>m+1); };
-
-  const handleDay = (d) => {
-    const iso = isoDate(viewYear, viewMonth, d);
-    if (phase === 0) { setSelStart(iso); setSelEnd(''); setPhase(1); }
-    else { let [s, e] = [selStart, iso]; if (e < s) [s, e] = [e, s]; setSelStart(s); setSelEnd(e); setPhase(2); }
-  };
-
-  const inRange = (iso) => {
-    const anchor = phase === 1 ? hoverDate : selEnd;
-    if (!selStart || !anchor) return false;
-    const [lo, hi] = selStart <= anchor ? [selStart, anchor] : [anchor, selStart];
-    return iso > lo && iso < hi;
-  };
-
-  const today = new Date();
-  const ty = today.getFullYear(), tm = today.getMonth() + 1, td = today.getDate();
-  const last14 = new Date(today); last14.setDate(td - 13);
-  const presets = [
-    { label: '1st–14th', s: isoDate(ty, tm, 1),   e: isoDate(ty, tm, 14) },
-    { label: '15th–End', s: isoDate(ty, tm, 15),  e: isoDate(ty, tm, daysIn(ty, tm)) },
-    { label: 'Last 14d', s: `${last14.getFullYear()}-${pad(last14.getMonth()+1)}-${pad(last14.getDate())}`, e: isoDate(ty, tm, td) },
-  ];
-
-  const totalDays    = daysIn(viewYear, viewMonth);
-  const startPadding = firstDay(viewYear, viewMonth);
-  const cells = [...Array(startPadding).fill(null), ...Array.from({ length: totalDays }, (_, i) => i+1)];
-
-  return (
-    <div
-      className="absolute right-0 top-full mt-xs z-[200] animate-fade-in"
-      style={{
-        background: '#252b36',
-        borderRadius: 16,
-        boxShadow: '10px 10px 20px rgba(0,0,0,0.5), -4px -4px 12px rgba(255,255,255,0.03)',
-        border: '1px solid rgba(255,255,255,0.07)',
-        padding: 16,
-        width: 276,
-      }}
-      onMouseDown={e => e.stopPropagation()}
-    >
-      {/* Quick presets */}
-      <div className="flex gap-xs mb-md">
-        {presets.map(p => (
-          <button key={p.label}
-            onClick={() => { setSelStart(p.s); setSelEnd(p.e); setPhase(2); }}
-            className="flex-1 text-[10px] py-xs rounded-lg text-text-tertiary hover:text-text-primary transition-colors"
-            style={{ background: '#1d2027', border: '1px solid rgba(255,255,255,0.06)' }}>
-            {p.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Month navigator */}
-      <div className="flex items-center justify-between mb-sm">
-        <button onClick={prevMonth} className="p-xs rounded-lg text-text-tertiary hover:text-text-primary transition-colors">
-          <ChevronLeft size={14} />
-        </button>
-        <span className="text-sm font-semibold text-text-primary">{MONTHS[viewMonth-1]} {viewYear}</span>
-        <button onClick={nextMonth} className="p-xs rounded-lg text-text-tertiary hover:text-text-primary transition-colors">
-          <ChevronRight size={14} />
-        </button>
-      </div>
-
-      {/* Day-of-week headers */}
-      <div className="grid grid-cols-7 mb-xs">
-        {DAYS_HDR.map(d => <div key={d} className="text-center text-[10px] text-text-tertiary/50 py-xs">{d}</div>)}
-      </div>
-
-      {/* Calendar grid */}
-      <div className="grid grid-cols-7 gap-[2px]">
-        {cells.map((d, i) => {
-          if (!d) return <div key={`e${i}`} />;
-          const iso  = isoDate(viewYear, viewMonth, d);
-          const isS  = iso === selStart, isE = iso === selEnd, inR = inRange(iso);
-          return (
-            <button key={iso} onClick={() => handleDay(d)}
-              onMouseEnter={() => setHoverDate(iso)}
-              onMouseLeave={() => setHoverDate('')}
-              className="h-7 w-full rounded-md text-xs transition-all"
-              style={{
-                background: (isS || isE) ? '#ff6b35' : inR ? '#ff6b3525' : 'transparent',
-                color:      (isS || isE) ? '#fff'    : inR ? '#ff6b35'   : '#94a3b8',
-                fontWeight: (isS || isE) ? 700 : 400,
-              }}>
-              {d}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Selection summary + Apply */}
-      <div className="mt-md pt-md border-t border-white/6 flex items-center justify-between min-h-[32px]">
-        <span className="text-[10px] text-text-tertiary">
-          {selStart && <span className="text-text-secondary">{selStart}</span>}
-          {selEnd   && <span> → <span className="text-text-secondary">{selEnd}</span></span>}
-          {!selStart && <span>Click to select start date</span>}
-        </span>
-        {selStart && selEnd && (
-          <button onClick={() => { onSelect(selStart, selEnd); onClose(); }}
-            className="text-xs px-md py-xs rounded-lg font-semibold text-white transition-all ml-sm"
-            style={{ background: '#ff6b35' }}>
-            Apply
-          </button>
-        )}
-      </div>
-    </div>
-  );
-};
-
-// ── Main view ─────────────────────────────────────────────────────────────────
+// â”€â”€ Main view â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const TimesheetView = () => {
   const userProfile       = useStore(s => s.userProfile);
   const chatters          = useStore(s => s.chatters);
@@ -212,19 +77,19 @@ const TimesheetView = () => {
   const isViewer  = userProfile?.role === 'viewer';
   const isAdmin   = userProfile?.role === 'admin' || userProfile?.role === 'manager';
 
-  // ── Period state ─────────────────────────────────────────────────────────
+  // â”€â”€ Period state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const [period, setPeriod]     = useState(getDefaultPeriod);
   const [pickerOpen, setPickerOpen] = useState(false);
   const pickerRef = useRef(null);
 
-  // ── Chatter selection (admin / manager) ──────────────────────────────────
+  // â”€â”€ Chatter selection (admin / manager) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const [selectedChatterId, setSelectedChatterId] = useState(null);
 
-  // ── Hours editing state ──────────────────────────────────────────────────
+  // â”€â”€ Hours editing state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const [editingDate, setEditingDate]   = useState(null);
   const [pendingHours, setPendingHours] = useState('');
 
-  // ── Sales state ──────────────────────────────────────────────────────────
+  // â”€â”€ Sales state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const [addSaleCreatorId, setAddSaleCreatorId] = useState(null);
   const [newSale, setNewSale]           = useState({ date: '', grossAmount: '', notes: '' });
   const [editingSaleId, setEditingSaleId]       = useState(null);
@@ -232,10 +97,10 @@ const TimesheetView = () => {
   const [confirmDeleteSale, setConfirmDeleteSale] = useState(null);
   const [collapsedCreators, setCollapsedCreators] = useState(new Set());
 
-  // ── History accordion ────────────────────────────────────────────────────
+  // â”€â”€ History accordion â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const [showHistory, setShowHistory] = useState(false);
 
-  // ── Effective chatter ────────────────────────────────────────────────────
+  // â”€â”€ Effective chatter â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const effectiveChatterId = useMemo(() => {
     if (isChatter) return userProfile?.chatter_id || null;
     return selectedChatterId;
@@ -252,7 +117,7 @@ const TimesheetView = () => {
     }
   }, [isAdmin, chatters, selectedChatterId]);
 
-  // ── Load data on period / chatter change ─────────────────────────────────
+  // â”€â”€ Load data on period / chatter change â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
     if (!period.periodStart || !period.periodEnd) return;
     loadTimesheetData(period.periodStart, period.periodEnd, effectiveChatterId ?? undefined);
@@ -262,7 +127,7 @@ const TimesheetView = () => {
     loadTimesheetHistory(effectiveChatterId ?? undefined);
   }, [effectiveChatterId, loadTimesheetHistory]);
 
-  // ── Close picker on outside click ────────────────────────────────────────
+  // â”€â”€ Close picker on outside click â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
     if (!pickerOpen) return;
     const handler = e => {
@@ -272,12 +137,12 @@ const TimesheetView = () => {
     return () => document.removeEventListener('mousedown', handler);
   }, [pickerOpen]);
 
-  // ── Computed: dates in period ────────────────────────────────────────────
+  // â”€â”€ Computed: dates in period â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const datesInPeriod = useMemo(() =>
     getDatesInPeriod(period.periodStart, period.periodEnd),
   [period]);
 
-  // ── Computed: assigned creators ──────────────────────────────────────────
+  // â”€â”€ Computed: assigned creators â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const assignedCreatorIds = useMemo(() => {
     if (!effectiveChatterId) return new Set();
     const myTeamIds = new Set(
@@ -292,7 +157,7 @@ const TimesheetView = () => {
     creators.filter(c => assignedCreatorIds.has(c.id) && c.is_active),
   [creators, assignedCreatorIds]);
 
-  // ── Computed: filtered timesheet data ────────────────────────────────────
+  // â”€â”€ Computed: filtered timesheet data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const filteredHours = useMemo(() =>
     effectiveChatterId
       ? timesheetHours.filter(h => h.chatter_id === effectiveChatterId)
@@ -305,7 +170,7 @@ const TimesheetView = () => {
       : timesheetSales,
   [timesheetSales, effectiveChatterId]);
 
-  // ── Computed: totals ─────────────────────────────────────────────────────
+  // â”€â”€ Computed: totals â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const totalHours      = useMemo(() => filteredHours.reduce((sum, h) => sum + (h.hours_worked || 0), 0), [filteredHours]);
   const totalGross      = useMemo(() => filteredSales.reduce((sum, s) => sum + (s.gross_amount || 0), 0), [filteredSales]);
   const totalCommission = useMemo(() => filteredSales.reduce((sum, s) => sum + (s.commission_amount || 0), 0), [filteredSales]);
@@ -314,7 +179,7 @@ const TimesheetView = () => {
     (effectiveChatter?.hourly_rate || 0) * totalHours + totalCommission,
   [effectiveChatter, totalHours, totalCommission]);
 
-  // ── Hours handlers ────────────────────────────────────────────────────────
+  // â”€â”€ Hours handlers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const startEditHours = (date) => {
     const existing = filteredHours.find(h => h.date === date);
     setEditingDate(date);
@@ -334,7 +199,7 @@ const TimesheetView = () => {
     setEditingDate(null);
   }, [editingDate, pendingHours, effectiveChatterId, filteredHours, period, addTimesheetHours, updateTimesheetHours, deleteTimesheetHours]);
 
-  // ── Sales handlers ────────────────────────────────────────────────────────
+  // â”€â”€ Sales handlers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const startAddSale = (creatorId) => {
     setAddSaleCreatorId(creatorId);
     setNewSale({ date: new Date().toISOString().split('T')[0], grossAmount: '', notes: '' });
@@ -372,7 +237,7 @@ const TimesheetView = () => {
     <div className="h-full overflow-y-auto px-xl py-xl">
       <div className="max-w-6xl mx-auto space-y-xl">
 
-        {/* ── Header ──────────────────────────────────────────────────────── */}
+        {/* â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <div className="flex items-start justify-between flex-wrap gap-md">
           <div>
             <h1 className="text-3xl font-black bg-gradient-to-r from-accent-orange to-accent-pink bg-clip-text text-transparent">
@@ -409,17 +274,19 @@ const TimesheetView = () => {
             </button>
 
             {pickerOpen && (
-              <CalendarPicker
-                periodStart={period.periodStart}
-                periodEnd={period.periodEnd}
-                onSelect={(s, e) => setPeriod({ periodStart: s, periodEnd: e })}
-                onClose={() => setPickerOpen(false)}
-              />
+              <div className="absolute right-0 top-full mt-xs z-[200] animate-scale-in">
+                <CalendarPicker
+                  currentStart={period.periodStart}
+                  currentEnd={period.periodEnd}
+                  onApply={(s, e) => { setPeriod({ periodStart: s, periodEnd: e }); setPickerOpen(false); }}
+                  onClose={() => setPickerOpen(false)}
+                />
+              </div>
             )}
           </div>
         </div>
 
-        {/* ── Chatter selector (admin / manager only) ───────────────────────── */}
+        {/* â”€â”€ Chatter selector (admin / manager only) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         {isAdmin && chatters.length > 0 && (
           <div className="flex items-center gap-sm flex-wrap">
             {chatters.map(c => {
@@ -451,7 +318,7 @@ const TimesheetView = () => {
           </div>
         )}
 
-        {/* ── Main content (only shown when a chatter is selected / linked) ── */}
+        {/* â”€â”€ Main content (only shown when a chatter is selected / linked) â”€â”€ */}
         {(effectiveChatterId || (isAdmin && !selectedChatterId)) && (
 
           /* Show prompt if admin hasn't selected anyone yet */
@@ -463,20 +330,20 @@ const TimesheetView = () => {
           <>
             {/* Stats row */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-md">
-              <StatCard label="Total Hours"  value={`${totalHours.toFixed(1)}h`}  color="#ff6b35" icon={Clock}
+              <StatCard label="Total Hours"  value={`${totalHours.toFixed(1)}h`}  color="#ff6b35" icon={Clock} mono
                 sub={effectiveChatter?.hourly_rate ? `@ $${effectiveChatter.hourly_rate}/hr` : 'No hourly rate set'} />
-              <StatCard label="Gross Sales"  value={fmt$(totalGross)}              color="#00ff88" icon={DollarSign}
+              <StatCard label="Gross Sales"  value={fmt$(totalGross)}              color="#00ff88" icon={DollarSign} mono
                 sub={`${filteredSales.length} transaction${filteredSales.length !== 1 ? 's' : ''}`} />
-              <StatCard label="Commission"   value={fmt$(totalCommission)}         color="#00d9ff" icon={TrendingUp}
+              <StatCard label="Commission"   value={fmt$(totalCommission)}         color="#00d9ff" icon={TrendingUp} mono
                 sub={`${commissionRate}% rate`} />
-              <StatCard label="Est. Pay"     value={fmt$(estPay)}                  color="#9d4edd" icon={Wallet}
+              <StatCard label="Est. Pay"     value={fmt$(estPay)}                  color="#9d4edd" icon={Wallet} mono
                 sub="Hours earnings + commission" />
             </div>
 
             {/* Two-column content */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-xl">
 
-              {/* ── Left: Hours Tracker ──────────────────────────────────── */}
+              {/* â”€â”€ Left: Hours Tracker â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
               <div className="neu-card p-lg">
                 <div className="flex items-center gap-sm mb-lg">
                   <div className="p-sm rounded-xl" style={{ background: '#ff6b3518' }}>
@@ -520,7 +387,7 @@ const TimesheetView = () => {
                           onClick={() => !isViewer && startEditHours(date)}
                           disabled={isViewer}
                           className={`font-mono text-xs w-16 text-right transition-colors ${hrs > 0 ? 'text-accent-orange' : 'text-text-tertiary/30'} ${!isViewer ? 'hover:text-accent-orange cursor-text' : 'cursor-default'}`}>
-                          {hrs > 0 ? `${hrs}h` : '—'}
+                          {hrs > 0 ? `${hrs}h` : 'â€”'}
                         </button>
                       )}
                     </div>
@@ -537,7 +404,7 @@ const TimesheetView = () => {
                 </div>
               </div>
 
-              {/* ── Right: Sales Entries ──────────────────────────────────── */}
+              {/* â”€â”€ Right: Sales Entries â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
               <div className="neu-card p-lg">
                 <div className="flex items-center gap-sm mb-lg">
                   <div className="p-sm rounded-xl" style={{ background: '#00ff8818' }}>
@@ -575,7 +442,7 @@ const TimesheetView = () => {
                             <div className="text-right flex-shrink-0">
                               <span className="text-xs font-mono text-accent-lime">{fmt$(cGross)}</span>
                               {cComm > 0 && (
-                                <span className="text-[10px] text-text-tertiary ml-sm">→ {fmt$(cComm)}</span>
+                                <span className="text-[10px] text-text-tertiary ml-sm">â†’ {fmt$(cComm)}</span>
                               )}
                             </div>
                           </button>
@@ -708,7 +575,7 @@ const TimesheetView = () => {
               </div>
             </div>
 
-            {/* ── History accordion ────────────────────────────────────────── */}
+            {/* â”€â”€ History accordion â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             <div className="neu-card overflow-hidden">
               <button onClick={() => setShowHistory(h => !h)}
                 className="w-full flex items-center gap-md px-lg py-md hover:bg-white/[0.02] transition-colors">
@@ -758,7 +625,7 @@ const TimesheetView = () => {
         ))}
       </div>
 
-      {/* ── Confirm delete sale modal ────────────────────────────────────── */}
+      {/* â”€â”€ Confirm delete sale modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {confirmDeleteSale && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50"
           onClick={() => setConfirmDeleteSale(null)}>

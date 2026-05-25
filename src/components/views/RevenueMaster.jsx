@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '../../store.js';
 import { BarChart3, Copy, ChevronDown, Plus, Trash2, Pencil, GripVertical } from 'lucide-react';
-import Card from '../Card';
 import AgencyRevenueChart from '../charts/AgencyRevenueChart.jsx';
 import CreatorGoalProgress from '../charts/CreatorGoalProgress.jsx';
 import * as db from '../../db/index.js';
