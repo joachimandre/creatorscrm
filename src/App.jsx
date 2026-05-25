@@ -16,6 +16,7 @@ import Creators from './components/views/Creators';
 import Chatters from './components/views/Chatters';
 import Analytics from './components/views/Analytics';
 import Requests from './components/views/Requests';
+import TimesheetView from './components/views/Timesheet';
 import LoginView from './components/views/LoginView';
 import PendingApprovalView from './components/views/PendingApprovalView';
 import UserManagementView from './components/views/UserManagementView';
@@ -97,6 +98,7 @@ function App() {
           {currentView === 'analytics'      && <Analytics />}
           {currentView === 'requests'       && <Requests />}
           {currentView === 'users'          && <UserManagementView />}
+          {currentView === 'timesheet'      && <TimesheetView />}
         </div>
       </main>
 

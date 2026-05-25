@@ -50,12 +50,14 @@ export async function initDB() {
       team_members: [], team_chatters: [], team_schedules: [],
       team_day_notes: [], creator_subscribers: [], creator_notes: [],
       creator_campaigns: [], creator_requests: [],
+      timesheet_hours: [], timesheet_sales: [],
       _nextIds: {
         agencies: 1, creators: 1, daily_earnings: 1, tasks: 1,
         brain_dump: 1, chatters: 1, payroll_records: 1,
         team: 1, team_member: 1, team_chatter: 1,
         team_schedule: 1, team_day_note: 1, creator_subscribers: 1,
         creator_notes: 1, creator_campaigns: 1, creator_requests: 1,
+        timesheet_hour: 1, timesheet_sale: 1,
       }
     };
   }
@@ -115,6 +117,9 @@ function runMigrations() {
   db.creators.forEach(c => { if (c.model_info_url === undefined) c.model_info_url = ''; });
   // creator_requests table
   if (!db.creator_requests) { db.creator_requests = []; db._nextIds.creator_requests = 1; }
+  // timesheet tables
+  if (!db.timesheet_hours) { db.timesheet_hours = []; db._nextIds.timesheet_hour = 1; }
+  if (!db.timesheet_sales) { db.timesheet_sales = []; db._nextIds.timesheet_sale = 1; }
 }
 
 export function saveDB() {
@@ -962,6 +967,136 @@ export function updateCreatorRequest(id, updates) {
 export function deleteCreatorRequest(id) {
   db.creator_requests = db.creator_requests.filter(r => r.id !== id);
   saveDB();
+}
+
+// ─── Timesheet Hours ─────────────────────────────────────────────────────────
+
+export function createTimesheetHours(chatterId, periodStart, periodEnd, date, hoursWorked) {
+  // Upsert: only one entry per chatter per date
+  const existing = db.timesheet_hours.find(
+    h => h.chatter_id === chatterId && h.date === date && h.period_start === periodStart
+  );
+  if (existing) {
+    existing.hours_worked = hoursWorked;
+    existing.updated_at = now();
+    saveDB();
+    return existing;
+  }
+  const entry = {
+    id: db._nextIds.timesheet_hour++,
+    chatter_id: chatterId,
+    period_start: periodStart,
+    period_end: periodEnd,
+    date,
+    hours_worked: hoursWorked,
+    created_at: now(),
+    updated_at: now(),
+  };
+  db.timesheet_hours.push(entry);
+  saveDB();
+  return entry;
+}
+
+export function updateTimesheetHours(id, hoursWorked) {
+  const entry = db.timesheet_hours.find(h => h.id === id);
+  if (entry) {
+    entry.hours_worked = hoursWorked;
+    entry.updated_at = now();
+    saveDB();
+  }
+  return entry;
+}
+
+export function deleteTimesheetHours(id) {
+  db.timesheet_hours = db.timesheet_hours.filter(h => h.id !== id);
+  saveDB();
+}
+
+export function getTimesheetHoursForPeriod(periodStart, periodEnd, chatterId) {
+  let records = db.timesheet_hours.filter(
+    h => h.period_start === periodStart && h.period_end === periodEnd
+  );
+  if (chatterId !== undefined) records = records.filter(h => h.chatter_id === chatterId);
+  return records;
+}
+
+// ─── Timesheet Sales ──────────────────────────────────────────────────────────
+
+export function createTimesheetSale(chatterId, creatorId, periodStart, periodEnd, date, grossAmount, commissionRate, notes) {
+  const commissionAmount = grossAmount * (commissionRate / 100);
+  const entry = {
+    id: db._nextIds.timesheet_sale++,
+    chatter_id: chatterId,
+    creator_id: creatorId,
+    period_start: periodStart,
+    period_end: periodEnd,
+    date,
+    gross_amount: grossAmount,
+    commission_amount: commissionAmount,
+    notes: notes || '',
+    created_at: now(),
+    updated_at: now(),
+  };
+  db.timesheet_sales.push(entry);
+  saveDB();
+  return entry;
+}
+
+export function updateTimesheetSale(id, updates) {
+  const entry = db.timesheet_sales.find(s => s.id === id);
+  if (entry) {
+    if (updates.date !== undefined) entry.date = updates.date;
+    if (updates.gross_amount !== undefined) entry.gross_amount = updates.gross_amount;
+    if (updates.commission_amount !== undefined) entry.commission_amount = updates.commission_amount;
+    if (updates.notes !== undefined) entry.notes = updates.notes;
+    entry.updated_at = now();
+    saveDB();
+  }
+  return entry;
+}
+
+export function deleteTimesheetSale(id) {
+  db.timesheet_sales = db.timesheet_sales.filter(s => s.id !== id);
+  saveDB();
+}
+
+export function getTimesheetSalesForPeriod(periodStart, periodEnd, chatterId) {
+  let records = db.timesheet_sales.filter(
+    s => s.period_start === periodStart && s.period_end === periodEnd
+  );
+  if (chatterId !== undefined) records = records.filter(s => s.chatter_id === chatterId);
+  return records;
+}
+
+export function getTimesheetHistory(chatterId, limit = 12) {
+  const seen = new Set();
+  const periods = [];
+  const allEntries = [...db.timesheet_hours, ...db.timesheet_sales];
+  const relevant = chatterId !== undefined
+    ? allEntries.filter(e => e.chatter_id === chatterId)
+    : allEntries;
+  relevant.forEach(e => {
+    const key = `${e.period_start}_${e.period_end}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      const hrs = db.timesheet_hours.filter(h =>
+        h.period_start === e.period_start &&
+        (chatterId === undefined || h.chatter_id === chatterId)
+      );
+      const sales = db.timesheet_sales.filter(s =>
+        s.period_start === e.period_start &&
+        (chatterId === undefined || s.chatter_id === chatterId)
+      );
+      periods.push({
+        period_start: e.period_start,
+        period_end: e.period_end,
+        key,
+        total_hours: hrs.reduce((sum, h) => sum + (h.hours_worked || 0), 0),
+        total_commission: sales.reduce((sum, s) => sum + (s.commission_amount || 0), 0),
+      });
+    }
+  });
+  return periods.sort((a, b) => b.key.localeCompare(a.key)).slice(0, limit);
 }
 
 // ─── Creator display order (UI pref — local only, not synced to cloud) ────────

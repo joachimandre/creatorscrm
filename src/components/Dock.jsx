@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   LayoutDashboard, TrendingUp, BarChart3, Star, CheckSquare,
-  Users, MessageSquare, Brain, FileText, DollarSign, ClipboardList, ShieldCheck,
+  Users, MessageSquare, Brain, FileText, DollarSign, ClipboardList, ShieldCheck, Clock,
 } from 'lucide-react';
 import { useStore } from '../store.js';
 
@@ -18,6 +18,7 @@ const ICON_HEX = {
   'payroll':        '#00ff88',
   'requests':       '#9d4edd',
   'users':          '#9d4edd',
+  'timesheet':      '#ff6b35',
 };
 
 const ALL_NAV_ITEMS = [
@@ -33,13 +34,14 @@ const ALL_NAV_ITEMS = [
   { id: 'payroll',        label: 'Payroll',        icon: DollarSign },
   { id: 'requests',       label: 'Requests',       icon: ClipboardList },
   { id: 'users',          label: 'Users',          icon: ShieldCheck },
+  { id: 'timesheet',      label: 'Timesheet',      icon: Clock },
 ];
 
 const ROLE_VIEWS = {
-  admin:   ['dashboard','analytics','revenue-master','creators','tasks','team','chatters','brain-dump','reports','payroll','requests','users'],
-  manager: ['dashboard','analytics','revenue-master','creators','tasks','team','chatters','brain-dump','reports','requests'],
-  chatter: ['dashboard','creators','requests','team'],
-  viewer:  ['dashboard','analytics','revenue-master','creators','tasks','team','chatters','reports','requests'],
+  admin:   ['dashboard','analytics','revenue-master','creators','tasks','team','chatters','brain-dump','reports','payroll','requests','users','timesheet'],
+  manager: ['dashboard','analytics','revenue-master','creators','tasks','team','chatters','brain-dump','reports','requests','timesheet'],
+  chatter: ['dashboard','creators','requests','team','timesheet'],
+  viewer:  ['dashboard','analytics','revenue-master','creators','tasks','team','chatters','reports','requests','timesheet'],
 };
 
 const getScale = (idx, hoveredIdx) => {

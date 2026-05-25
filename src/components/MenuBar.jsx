@@ -16,6 +16,7 @@ const VIEW_NAMES = {
   'payroll':        'Payroll',
   'requests':       'Requests',
   'users':          'User Management',
+  'timesheet':      'Timesheet',
 };
 
 const ROLE_COLORS = {

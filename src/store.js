@@ -47,6 +47,12 @@ export const useStore = create((set, get) => ({
   // Creator Requests
   creatorRequests: [],
 
+  // Timesheet
+  timesheetHours: [],
+  timesheetSales: [],
+  timesheetPeriod: { periodStart: '', periodEnd: '' },
+  timesheetHistory: [],
+
   // UI Actions
   setSelectedCreator: (creatorId) => set({ selectedCreatorId: creatorId }),
   setSelectedAgency: (agencyId) => set({ selectedAgencyId: agencyId }),
@@ -414,13 +420,24 @@ export const useStore = create((set, get) => ({
         const commissionAmount = baseRevenue * (commissionRate / 100);
         db.upsertPayrollRecord(periodStart, periodEnd, 'creator', creator.id, agency.id, baseRevenue, commissionRate, commissionAmount, 0);
       });
-      // Chatters
+      // Chatters — use timesheet data if available, else fall back to agency revenue
       const chatters = db.getChattersForAgency(agency.id);
       chatters.forEach(chatter => {
         const commissionRate = chatter.commission_rate || 0;
         const hourlyRate = chatter.hourly_rate || 0;
-        const commissionAmount = agencyRevenue * (commissionRate / 100);
-        db.upsertPayrollRecord(periodStart, periodEnd, 'chatter', chatter.id, agency.id, agencyRevenue, commissionRate, commissionAmount, hourlyRate);
+        // Pull hours + sales from timesheet for this period
+        const tsHours = db.getTimesheetHoursForPeriod(periodStart, periodEnd, chatter.id);
+        const tsSales = db.getTimesheetSalesForPeriod(periodStart, periodEnd, chatter.id);
+        const totalHrs = tsHours.reduce((sum, h) => sum + (h.hours_worked || 0), 0);
+        const totalRev = tsSales.length > 0
+          ? tsSales.reduce((sum, s) => sum + (s.gross_amount || 0), 0)
+          : agencyRevenue; // fall back to agency revenue if no timesheet sales logged
+        const commissionAmount = totalRev * (commissionRate / 100);
+        const record = db.upsertPayrollRecord(periodStart, periodEnd, 'chatter', chatter.id, agency.id, totalRev, commissionRate, commissionAmount, hourlyRate);
+        // Inject timesheet hours into the payroll record (only if pending — preserve approved/paid)
+        if (record.status === 'pending' && totalHrs > 0) {
+          db.updatePayrollRecord(record.id, { hours_worked: totalHrs });
+        }
       });
     });
     const records = db.getPayrollRecordsForPeriod(periodStart, periodEnd);
@@ -644,5 +661,58 @@ export const useStore = create((set, get) => ({
     await updateUserProfile(userId, { role });
     const profiles = await fetchAllProfiles();
     set({ userProfiles: profiles });
+  },
+
+  // ── Timesheet ────────────────────────────────────────────────────────────
+
+  loadTimesheetData: (periodStart, periodEnd, chatterId) => {
+    const hours = db.getTimesheetHoursForPeriod(periodStart, periodEnd, chatterId);
+    const sales = db.getTimesheetSalesForPeriod(periodStart, periodEnd, chatterId);
+    set({ timesheetHours: hours, timesheetSales: sales, timesheetPeriod: { periodStart, periodEnd } });
+  },
+
+  loadTimesheetHistory: (chatterId) => {
+    const history = db.getTimesheetHistory(chatterId);
+    set({ timesheetHistory: history });
+  },
+
+  addTimesheetHours: (chatterId, periodStart, periodEnd, date, hours) => {
+    const entry = db.createTimesheetHours(chatterId, periodStart, periodEnd, date, hours);
+    set(state => {
+      // Replace if same id (upsert may have returned existing), otherwise append
+      const without = state.timesheetHours.filter(h => h.id !== entry.id);
+      return { timesheetHours: [...without, entry] };
+    });
+  },
+
+  updateTimesheetHours: (id, hours) => {
+    db.updateTimesheetHours(id, hours);
+    set(state => ({
+      timesheetHours: state.timesheetHours.map(h => h.id === id ? { ...h, hours_worked: hours } : h),
+    }));
+  },
+
+  deleteTimesheetHours: (id) => {
+    db.deleteTimesheetHours(id);
+    set(state => ({ timesheetHours: state.timesheetHours.filter(h => h.id !== id) }));
+  },
+
+  addTimesheetSale: (chatterId, creatorId, periodStart, periodEnd, date, grossAmount, commissionRate, notes) => {
+    const entry = db.createTimesheetSale(chatterId, creatorId, periodStart, periodEnd, date, grossAmount, commissionRate, notes);
+    set(state => ({ timesheetSales: [...state.timesheetSales, entry] }));
+  },
+
+  updateTimesheetSale: (id, updates) => {
+    const updated = db.updateTimesheetSale(id, updates);
+    if (updated) {
+      set(state => ({
+        timesheetSales: state.timesheetSales.map(s => s.id === id ? { ...updated } : s),
+      }));
+    }
+  },
+
+  deleteTimesheetSale: (id) => {
+    db.deleteTimesheetSale(id);
+    set(state => ({ timesheetSales: state.timesheetSales.filter(s => s.id !== id) }));
   },
 }));
