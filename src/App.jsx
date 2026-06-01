@@ -28,6 +28,7 @@ function App() {
   const initAuth     = useStore(state => state.initAuth);
   const authUser     = useStore(state => state.authUser);
   const userProfile  = useStore(state => state.userProfile);
+  const profileError = useStore(state => state.profileError);
 
   useEffect(() => {
     const initializeApp = async () => {
@@ -69,7 +70,9 @@ function App() {
 
   // ── Auth guard ───────────────────────────────────────────────────────────────
   if (!authUser) return <LoginView />;
-  if (!userProfile?.approved) return <PendingApprovalView />;
+  // A blocked profile read (e.g. an RLS policy error) must NOT masquerade as a
+  // pending account — show the real error so it's diagnosable instead of a dead end.
+  if (!userProfile?.approved) return <PendingApprovalView blocked={profileError} />;
 
   // ── Full app ─────────────────────────────────────────────────────────────────
   return (

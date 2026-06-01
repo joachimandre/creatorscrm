@@ -8,12 +8,18 @@ export const supabase = createClient(supabaseUrl, supabaseKey);
 // ── User Profile Helpers ──────────────────────────────────────────────────────
 
 export async function fetchUserProfile(userId) {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('user_profiles')
     .select('*')
     .eq('id', userId)
     .single();
-  return data || null;
+  // PGRST116 = "no rows" (a genuinely missing profile, not a failure).
+  // Anything else (e.g. 42P17 infinite recursion in an RLS policy) means the
+  // read was BLOCKED — surface it so it isn't mistaken for "not approved".
+  if (error && error.code !== 'PGRST116') {
+    console.error('[Auth] profile read failed:', error.code, error.message);
+  }
+  return { data: data || null, error: error || null };
 }
 
 export async function upsertUserProfile(profile) {

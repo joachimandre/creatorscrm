@@ -14,6 +14,7 @@ export const useStore = create((set, get) => ({
   authUser: null,
   userProfile: null,
   userProfiles: [],
+  profileError: null,   // set when the profile read is BLOCKED (e.g. RLS), not just missing
 
   // UI State
   selectedCreatorId: null,
@@ -588,8 +589,8 @@ export const useStore = create((set, get) => ({
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        const profile = await fetchUserProfile(session.user.id);
-        set({ authUser: session.user, userProfile: profile });
+        const { data: profile, error } = await fetchUserProfile(session.user.id);
+        set({ authUser: session.user, userProfile: profile, profileError: error });
       }
     } catch (e) {
       console.warn('[Auth] initAuth failed:', e.message);
@@ -599,14 +600,14 @@ export const useStore = create((set, get) => ({
   signIn: async (email, password) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
-    const profile = await fetchUserProfile(data.user.id);
-    set({ authUser: data.user, userProfile: profile });
+    const { data: profile, error: profileErr } = await fetchUserProfile(data.user.id);
+    set({ authUser: data.user, userProfile: profile, profileError: profileErr });
     return profile;
   },
 
   signOut: async () => {
     await supabase.auth.signOut();
-    set({ authUser: null, userProfile: null, userProfiles: [] });
+    set({ authUser: null, userProfile: null, userProfiles: [], profileError: null });
   },
 
   signUp: async (email, password, fullName) => {
@@ -635,7 +636,7 @@ export const useStore = create((set, get) => ({
       console.error('[Auth] Failed to create user profile:', profileErr.message);
       throw new Error('Account created but profile setup failed. Make sure the user_profiles table exists in Supabase (run the setup SQL).');
     }
-    set({ authUser: data.user, userProfile: profile });
+    set({ authUser: data.user, userProfile: profile, profileError: null });
     return profile;
   },
 
